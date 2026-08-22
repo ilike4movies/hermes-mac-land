@@ -79,7 +79,11 @@ curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/s
 - **`gh auth login`** — Mac uploads private `moltbot` tip tarball to `.11` (read access to `ilike4movies/moltbot`)
 - SSH BatchMode to `.11` (jump `grok-cos-1` optional; land skips jump by default)
 
-Optional: `LINEAR_API_KEY` in `~/.hermes/.env` for STARTED/FAILED/DIAGNOSTIC on RAL-800.
+Optional in `~/.hermes/.env`:
+- `LINEAR_API_KEY` — STARTED/FAILED/DIAGNOSTIC on RAL-800
+- `HERMES_HOST_SSH_PRIVATE_KEY` — PEM for BatchMode SSH to `.11` (land auto-loads if unset in shell)
+
+**After 2026-08-22 host-key install:** re-run land even if an earlier attempt failed pre-key.
 
 ## Expect
 
