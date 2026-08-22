@@ -3,7 +3,10 @@
 # Public repo: https://github.com/ilike4movies/hermes-mac-land
 # Download this file from GitHub (public — no private blob 404), then double-click.
 # Requires: Tailscale up + SSH BatchMode to grok-cos-1 + gh auth (or git) to private moltbot.
+# Public hermes-mac-land.sh posts best-effort Linear STARTED/FAILED on RAL-800.
 set -euo pipefail
+
+export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:-public-command}"
 
 cd "${TMPDIR:-/tmp}"
 echo "=== Hermes Mac land (public bootstrap) ==="

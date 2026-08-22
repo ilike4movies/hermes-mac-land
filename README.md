@@ -22,9 +22,10 @@ curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/h
 - Tailscale up
 - SSH BatchMode to `grok-cos-1`
 - `gh auth` (or git SSH/HTTPS) to private `ilike4movies/moltbot`
+- Optional: `LINEAR_API_KEY` in `~/.hermes/.env` so failed Mac attempts still post STARTED/FAILED on RAL-800 before tip fetch
 
 ## Expect
 
-Linear RAL-800: Mac land STARTED → Host surgical-apply OK → RAL-793 Hermes CLAIMED.
+Linear RAL-800: Mac land STARTED (early from public bootstrap) → Host surgical-apply OK → RAL-793 Hermes CLAIMED.
 
 No Slack rockets.
