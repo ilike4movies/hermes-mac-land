@@ -35,8 +35,8 @@ DIAG="/tmp/hermes-mac-land-diag-fetched-$$.sh"
 LAND="/tmp/hermes-mac-land-fetched-$$.sh"
 
 if ! _fetch "$DIAG" 'Mac land DIAGNOSTIC' \
-  "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/shared-scripts/hermes-moltbot-mac-land-diag.sh" \
-  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-moltbot-mac-land-diag.sh"
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-moltbot-mac-land-diag.sh" \
+  "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/shared-scripts/hermes-moltbot-mac-land-diag.sh"
 then
   echo "FAILED: could not download diag script"
   osascript -e 'display notification "Diag download FAILED." with title "Hermes DIAGNOSE→LAND FAILED" sound name "Basso"' 2>/dev/null || true
@@ -52,13 +52,13 @@ set -e
 echo "diag_exit=$DIAG_RC"
 
 if ! _fetch "$LAND" 'via-ssh only' \
-  "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh" \
-  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh"
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh" \
+  "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh"
 then
   # older tip used different marker
   if ! _fetch "$LAND" 'no private moltbot' \
-    "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh" \
-    "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh"
+    "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh" \
+    "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh"
   then
     echo "FAILED: could not download land script"
     osascript -e 'display notification "Land download FAILED." with title "Hermes DIAGNOSE→LAND FAILED" sound name "Basso"' 2>/dev/null || true

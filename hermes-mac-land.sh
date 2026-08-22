@@ -39,8 +39,8 @@ _fetch_vendor() {
     shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh
   )
   local bases=(
-    "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main"
     "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main"
+    "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main"
   )
   local base f ok
   for base in "${bases[@]}"; do
