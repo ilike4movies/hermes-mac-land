@@ -99,13 +99,13 @@ else
     read -r -p "Press Enter to close…" _
     exit 1
   fi
-  if ! _fetch "$LAND" 'via-ssh only' \
+  if ! _fetch "$LAND" 'tarball upload' \
     "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/hermes-mac-land.sh" \
     "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh" \
     "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@${PIN}/hermes-mac-land.sh" \
     "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh"
   then
-    if ! _fetch "$LAND" 'no private moltbot' \
+    if ! _fetch "$LAND" 'HERMES_PREFER_DIRECT_HOST' \
       "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/hermes-mac-land.sh" \
       "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh"
     then
@@ -125,6 +125,13 @@ set -e
 echo "diag_exit=$DIAG_RC"
 
 echo "--- LAND ---"
+export HERMES_PREFER_DIRECT_HOST="${HERMES_PREFER_DIRECT_HOST:-1}"
+export HERMES_UPLOAD_TIP_FROM_CALLER="${HERMES_UPLOAD_TIP_FROM_CALLER:-1}"
+if ! command -v gh >/dev/null 2>&1; then
+  echo "WARN: gh not installed — land may fall back to host git clone on .11"
+elif ! gh auth status >/dev/null 2>&1; then
+  echo "WARN: gh not logged in — run: gh auth login"
+fi
 set +e
 bash "$LAND"
 LAND_RC=$?
