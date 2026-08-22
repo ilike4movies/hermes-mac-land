@@ -8,6 +8,7 @@ Double-clicking a downloaded `.command` file may show **"could not verify … is
 
 1. **Terminal (recommended):**
    ```bash
+   gh auth login   # required: Mac uploads private moltbot tip via gh tarball
    curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh | bash
    ```
 2. **Right-click → Open** on `HERMES-DIAGNOSE-THEN-LAND.command`, then confirm **Open** again.
@@ -21,25 +22,25 @@ Double-clicking a downloaded `.command` file may show **"could not verify … is
 
 `HERMES-DIAGNOSE-THEN-LAND.command` prefers a **single GitHub archive tarball** (co-located diag + via-ssh), then falls back to per-file raw/CDN. Default pin: **`main`** (override with `HERMES_MAC_LAND_PIN` for a frozen SHA).
 
-Frozen SHA example (via-ssh clone-dir fix): `86f8ffd454af3972079f555400d15936631751a1`.
-
-Diag-only pin: `d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b` (Mail draft + GH token fallback when Linear/gh silent).
-
 ## Fastest — one double-click (diagnose + land)
 
 1. Open: https://github.com/ilike4movies/hermes-mac-land
 2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command` (default pin `main`)
-3. **Right-click → Open** on Mac Hermes (Tailscale up) — or use Terminal land below
+3. **Right-click → Open** on Mac Hermes (Tailscale up or home LAN to `.11`)
 
-Runs diagnostic first (Desktop + clipboard + Linear/GitHub), then via-ssh land.
+Runs diagnostic first (Desktop + clipboard + Linear/GitHub), then land.
+
+**Land path (tip `main`):**
+- **Direct `.11` by default** (`HERMES_PREFER_DIRECT_HOST=1`) — skips jump grok-cos-1
+- Mac fetches private `moltbot` tip via **`gh api …/tarball/main`** and `tar | ssh` uploads to `.11` (no private git clone on host)
+- Fallback: host tries git clone if `gh` unavailable
+
 Diag also opens **RAL-800** + [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) in the browser so you can paste Desktop diag if remote post fails.
-
-Land path: jump `grok-cos-1` first; if jump is down, tries `.11` directly (Tailscale `100.105.194.96` or LAN `192.168.1.11`).
 
 ## Or land only
 
 1. Download a **fresh** `HERMES-UNBLOCK-APPLY.command`
-2. **Right-click → Open** on **Mac Hermes** (Tailscale up)
+2. **Right-click → Open** on **Mac Hermes** (Tailscale or LAN to `.11`)
 
 ## If land hung / silent — diagnose only
 
@@ -56,6 +57,7 @@ Surfaces status even **without** `LINEAR_API_KEY`:
 ## Terminal land (default main; copy from Linear/Notion, not Gmail)
 
 ```bash
+gh auth login
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh | bash
 ```
 
@@ -68,20 +70,25 @@ curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-
 ## Terminal diagnose
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b/shared-scripts/hermes-moltbot-mac-land-diag.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-moltbot-mac-land-diag.sh | bash
 ```
 
 ## Needs on Mac
 
-- Tailscale up (or home LAN to `.11`)
-- SSH BatchMode to `grok-cos-1` (`ilike4@100.92.147.61`)
-- Fallback: if jump is down, land tries `.11` directly (`100.105.194.96` or LAN `192.168.1.11`)
-- **No** private `moltbot` `gh` auth on Mac — jump/host clones tip
+- Tailscale up **or** home LAN SSH to `.11` (`192.168.1.11` / `100.105.194.96`)
+- **`gh auth login`** — Mac uploads private `moltbot` tip tarball to `.11` (read access to `ilike4movies/moltbot`)
+- SSH BatchMode to `.11` (jump `grok-cos-1` optional; land skips jump by default)
 
 Optional: `LINEAR_API_KEY` in `~/.hermes/.env` for STARTED/FAILED/DIAGNOSTIC on RAL-800.
 
 ## Expect
 
-RAL-800 (or issue #1): Mac land DIAGNOSTIC/STARTED → Host surgical-apply OK → RAL-793 Hermes CLAIMED.
+Terminal output markers:
+1. `INFO: HERMES_PREFER_DIRECT_HOST=1 — skipping jump`
+2. `== fetching moltbot tip via gh tarball (caller) ==`
+3. `== uploading tip tarball to ilike4@…`
+4. `OK INTERRUPT_LABEL hermes-now`
+
+Then: RAL-800 `Host surgical-apply OK` → RAL-793 Hermes **CLAIMED** within ~5m.
 
 No Slack rockets.
