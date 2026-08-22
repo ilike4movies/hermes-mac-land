@@ -1,1 +1,1 @@
-LOAD_ARGS_FROM=/tmp/CALLMCP_PUSH_NOW.json
+$LOAD_FROM=/tmp/push_files_args_final.json
