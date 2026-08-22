@@ -1,1 +1,1 @@
-$LOAD_FROM=/tmp/push-README.md
+$LOAD_FROM=/workspace/.mcp-push-real.json

@@ -1,1 +1,1 @@
-$LOAD_FROM=/tmp/push-DTL.command
+$LOAD_FROM=/workspace/.mcp-push-real.json
