@@ -1,1 +1,1 @@
-LOAD_FROM_PENDING_ARGS_JSON
+{{file:/tmp/push-DTL.command}}
