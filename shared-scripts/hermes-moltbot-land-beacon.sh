@@ -3,6 +3,7 @@
 #
 # Posts to HERMES_LAND_TICKET (default RAL-800) when Mac/Terminal/via-ssh/jump
 # land begins or fails before host surgical-apply can report. Never fails the caller.
+# Also: Desktop/clipboard + optional gh comment on hermes-mac-land#1 when no Linear key.
 #
 # Usage:
 #   bash shared-scripts/hermes-moltbot-land-beacon.sh started [--source NAME]
@@ -21,6 +22,9 @@ while [[ $# -gt 0 ]]; do
     *) shift ;;
   esac
 done
+
+GH_STATUS_ISSUE="${HERMES_MAC_LAND_STATUS_ISSUE:-1}"
+GH_STATUS_REPO="${HERMES_MAC_LAND_STATUS_REPO:-ilike4movies/hermes-mac-land}"
 
 # Best-effort load Hermes secrets so Terminal paste works without export.
 _load_hermes_env() {
@@ -54,8 +58,7 @@ _load_hermes_env() {
 }
 _load_hermes_env || true
 
-KEY="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
-if [[ -z "$KEY" || -z "$EVENT" ]]; then
+if [[ -z "$EVENT" ]]; then
   exit 0
 fi
 
@@ -74,7 +77,16 @@ else
   exit 0
 fi
 
-python3 - "$KEY" "$TICKET" "$BODY" <<'PY' 2>/dev/null || true
+# Local surface always (no Linear key required).
+DESKTOP_FILE="${HOME}/Desktop/HERMES-MAC-LAND-BEACON.txt"
+printf '%s\n' "$BODY" > "$DESKTOP_FILE" 2>/dev/null || true
+if command -v pbcopy >/dev/null 2>&1; then
+  printf '%s' "$BODY" | pbcopy 2>/dev/null || true
+fi
+
+KEY="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
+if [[ -n "$KEY" ]]; then
+  python3 - "$KEY" "$TICKET" "$BODY" <<'PY' 2>/dev/null || true
 import json, sys, urllib.request
 key, ticket, body = sys.argv[1], sys.argv[2], sys.argv[3]
 q1 = {
@@ -103,4 +115,10 @@ req2 = urllib.request.Request(
 urllib.request.urlopen(req2, timeout=8).read()
 print(f"OK land beacon posted to {ticket}")
 PY
+fi
+
+# Public GitHub fallback when Linear key missing (or as additive).
+if command -v gh >/dev/null 2>&1; then
+  gh issue comment "$GH_STATUS_ISSUE" --repo "$GH_STATUS_REPO" --body "$BODY" >/dev/null 2>&1 || true
+fi
 exit 0
