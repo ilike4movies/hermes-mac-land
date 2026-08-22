@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
 # One-shot cloud bootstrap: fetch public waiter + vendor scripts, start background waiters.
-# Usage: curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/PIN/shared-scripts/hermes-cloud-bootstrap-waiter.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-bootstrap-waiter.sh | bash
 set -euo pipefail
-PIN="${HERMES_MAC_LAND_PIN:-86f8ffd454af3972079f555400d15936631751a1}"
+PIN="${HERMES_MAC_LAND_PIN:-main}"
 DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 mkdir -p "$DIR"
 cd "$DIR"
 _fetch() {
   local path="$1" dest="$2"
-  for base in \
-    "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}" \
-    "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main"
-  do
+  local bases=( "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main" )
+  if [[ "$PIN" != "main" ]]; then
+    bases+=( "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}" )
+  fi
+  for base in "${bases[@]}"; do
     if curl -fsSL "$base/$path" -o "$dest"; then
-      chmod +x "$dest" 2>/dev/null || true
-      echo "OK fetched $path from $base"
-      return 0
+      if head -1 "$dest" | grep -q '^#!/'; then
+        chmod +x "$dest" 2>/dev/null || true
+        echo "OK fetched $path from $base"
+        return 0
+      fi
+      echo "WARN stub/base64 rejected for $path from $base" >&2
     fi
   done
   return 1
