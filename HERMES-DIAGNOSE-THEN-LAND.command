@@ -1,1 +1,1 @@
-$LOAD_FROM=/tmp/callmcp_push_files_args.json
+$LOAD_FROM=/tmp/mcp_push_exact.json:files[0].content

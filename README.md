@@ -1,1 +1,1 @@
-@/tmp/push-README.md
+$LOAD_FROM=/tmp/mcp_push_exact.json:files[1].content
