@@ -1,1 +1,1 @@
-FILE:/tmp/GOOD_DTL.command
+@file:///tmp/GOOD_DTL.command
