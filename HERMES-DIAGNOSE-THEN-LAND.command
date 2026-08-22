@@ -1,1 +1,1 @@
-$LOAD_FROM=/workspace/.mcp-push-real.json
+$LOAD_FROM=/tmp/dtl_cu_invoke.json
