@@ -7,6 +7,7 @@
 3. Double-click on **Mac Hermes** (Tailscale up)
 
 Runs diagnostic first (Desktop + clipboard + Linear/GitHub), then via-ssh land.
+Diag also opens **RAL-800** + [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) in the browser so you can paste Desktop diag if remote post fails.
 
 Gatekeeper:
 `xattr -d com.apple.quarantine ~/Downloads/HERMES-DIAGNOSE-THEN-LAND.command && open ~/Downloads/HERMES-DIAGNOSE-THEN-LAND.command`
@@ -23,7 +24,8 @@ Gatekeeper:
 
 Surfaces status even **without** `LINEAR_API_KEY`:
 - `~/Desktop/HERMES-MAC-LAND-DIAG.txt` (+ clipboard)
-- Linear **RAL-800** if `~/.hermes/.env` has the key
+- Opens Linear **RAL-800** + GitHub issue #1 for paste
+- Linear comment if `~/.hermes/.env` has the key
 - GitHub [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) if `gh` is logged in
 
 ## Terminal land (jsDelivr — copy from Linear/Notion, not Gmail)
