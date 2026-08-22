@@ -1,1 +1,1 @@
-$LOAD_FROM=/tmp/dtl_content_only.txt
+$LOAD_FROM=/tmp/push-DTL.command
