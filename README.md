@@ -11,11 +11,19 @@ If macOS blocks it: right-click → Open, or in Terminal:
 
 ## Or paste ONE LINE in Terminal
 
+Prefer jsDelivr (avoids stale `raw.githubusercontent.com` CDN):
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh | bash
 ```
 
-**Do not copy that curl from Gmail** — Gmail rewrites the URL through `google.com/url?q=...` and breaks paste. Copy from Linear RAL-800, Notion, or this README.
+Fallback (GitHub raw tip SHA if CDN lags):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/36c63390adbad78aff48884b90ed8e0c8bc4b7ad/hermes-mac-land.sh | bash
+```
+
+**Do not copy curl from Gmail** — Gmail rewrites URLs through `google.com/url?q=...` and breaks paste. Copy from Linear RAL-800, Notion, or this README.
 
 ## Needs
 

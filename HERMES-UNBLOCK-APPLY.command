@@ -4,6 +4,7 @@
 # Download this file from GitHub (public — no private blob 404), then double-click.
 # Requires: Tailscale up + SSH BatchMode to grok-cos-1 + gh auth (or git) to private moltbot.
 # Public hermes-mac-land.sh posts best-effort Linear STARTED/FAILED on RAL-800.
+# Prefer jsDelivr (fresher than raw.githubusercontent.com CDN for tip).
 set -euo pipefail
 
 export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:-public-command}"
@@ -17,7 +18,16 @@ osascript -e 'display notification "Landing tip interrupt/apply on .11…" with 
 xattr -d com.apple.quarantine "$0" 2>/dev/null || true
 chmod +x "$0" 2>/dev/null || true
 
-if curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh | bash; then
+_run() {
+  local url="$1"
+  echo "Fetching: $url"
+  curl -fsSL "$url" | bash
+}
+
+if _run "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh" \
+  || _run "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@36c63390adbad78aff48884b90ed8e0c8bc4b7ad/hermes-mac-land.sh" \
+  || _run "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/36c63390adbad78aff48884b90ed8e0c8bc4b7ad/hermes-mac-land.sh" \
+  || _run "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh"; then
   echo "OK hermes-mac-land finished"
   osascript -e 'display notification "Land finished. Check Linear for Host surgical-apply OK." with title "Hermes UNBLOCK OK" sound name "Hero"' 2>/dev/null || true
   say "Hermes land complete. Check Linear." 2>/dev/null || true
