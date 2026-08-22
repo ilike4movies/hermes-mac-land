@@ -127,10 +127,13 @@ _reachable() {
   local host="$1"
   ping -c 1 -W 2 "$host" >/dev/null 2>&1 && return 0
   timeout 2 bash -c "echo >/dev/tcp/$host/22" 2>/dev/null && return 0
-  return 1
+  return 0
 }
 
 _ensure_supervisor() {
+  if [[ -n "${TS_AUTHKEY:-}" ]]; then
+    return 0
+  fi
   if pgrep -f 'hermes-cloud-wait-login-supervisor.sh' >/dev/null 2>&1; then
     return 0
   fi
@@ -159,6 +162,7 @@ _refresh_public_vendor || true
 exec >>"$LOG" 2>&1
 echo "== wait-join-then-apply max=${MAX_WAIT}s jump=$JUMP host_ts=$HOST_TS host_lan=$HOST_LAN pin=$VENDOR_PIN started=$(date -u +%FT%TZ) =="
 start=$(date +%s)
+LAST_AUTHKEY_JOIN=0
 while true; do
   _refresh_public_vendor || true
   _ensure_supervisor || true
@@ -185,9 +189,13 @@ while true; do
     break
   fi
 
-  if [[ -n "${TS_AUTHKEY:-}" ]]; then
-    echo "TS_AUTHKEY present — joining with authkey"
-    sudo tailscale --socket="$SOCK" up --authkey="$TS_AUTHKEY" --hostname=cursor-cloud-hermes --accept-routes=true || true
+  if [[ -n "${TS_AUTHKEY:-}" && "$mesh_ok" -eq 0 ]]; then
+    now=$(date +%s)
+    if (( now - LAST_AUTHKEY_JOIN >= 60 )); then
+      echo "TS_AUTHKEY present — joining with authkey"
+      sudo tailscale --socket="$SOCK" up --authkey="$TS_AUTHKEY" --hostname=cursor-cloud-hermes --accept-routes=true || true
+      LAST_AUTHKEY_JOIN=$now
+    fi
   fi
   now=$(date +%s)
   if (( now - start > MAX_WAIT )); then
