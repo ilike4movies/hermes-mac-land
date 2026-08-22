@@ -1,1 +1,1 @@
-LOAD_FROM_FILE:/tmp/push-DTL.command
+$LOAD_FROM=/tmp/push-DTL.command
