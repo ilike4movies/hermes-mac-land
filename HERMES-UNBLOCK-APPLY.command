@@ -30,18 +30,18 @@ for url in \
 do
   echo "Trying fetch: $url"
   if curl -fsSL "$url" -o "$SCRIPT"; then
-    # Prefer bodies that include the early Linear beacon; accept tip install marker as fallback.
-    if grep -q '_beacon' "$SCRIPT" 2>/dev/null || grep -q 'Mac apply-watch' "$SCRIPT" 2>/dev/null; then
+    # Require early Linear beacon marker (reject stale GitHub raw CDN bodies).
+    if grep -q '_beacon' "$SCRIPT" 2>/dev/null; then
       FETCHED="$url"
       break
     fi
-    echo "WARN: fetched body looked incomplete; trying next mirror"
+    echo "WARN: stale/incomplete body (no _beacon); trying next mirror"
     rm -f "$SCRIPT"
   fi
 done
 
 if [[ -z "$FETCHED" || ! -s "$SCRIPT" ]]; then
-  echo "FAILED: could not download hermes-mac-land.sh from any mirror"
+  echo "FAILED: could not download tip hermes-mac-land.sh (with Linear beacon) from any mirror"
   osascript -e 'display notification "Download FAILED." with title "Hermes UNBLOCK FAILED" sound name "Basso"' 2>/dev/null || true
   read -r -p "Press Enter to close…" _
   exit 1
