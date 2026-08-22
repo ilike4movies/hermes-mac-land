@@ -1,6 +1,6 @@
 # Hermes Mac land (public bootstrap)
 
-`HERMES-DIAGNOSE-THEN-LAND.command` is **self-contained** (embeds diag + via-ssh). Double-click works even if raw/CDN fetch fails after download.
+`HERMES-DIAGNOSE-THEN-LAND.command` prefers a **single GitHub archive tarball** (co-located diag + via-ssh), then falls back to per-file raw/CDN. Pin `d274105a…`.
 
 Pinned tip: `d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b` (Mail draft + GH token fallback when Linear/gh silent; raw-first + PLACEHOLDER reject; diag probes jump + direct `.11`).
 
