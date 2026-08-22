@@ -1,1 +1,0 @@
-https://raw.githubusercontent.com/ilike4movies/Ooterverse-Saturns-Quest/cursor/hermes-dtl-staging-0942/.mcp-push/hermes-mac-land-staging/HERMES-DIAGNOSE-THEN-LAND.command
