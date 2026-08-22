@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 # hermes-moltbot-mac-land-diag.sh — collect Mac land status + post to RAL-800
-# Double-click via HERMES-DIAGNOSE.command, or:
+# Also: Desktop file + clipboard + optional gh comment on hermes-mac-land#1
+# Double-click via HERMES-DIAGNOSE.command / HERMES-DIAGNOSE-THEN-LAND.command, or:
 #   curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/shared-scripts/hermes-moltbot-mac-land-diag.sh | bash
 set -u
 
 JUMP_SSH="${HERMES_JUMP_SSH:-ilike4@100.92.147.61}"
 TICKET="${HERMES_LAND_TICKET:-RAL-800}"
+GH_STATUS_ISSUE="${HERMES_MAC_LAND_STATUS_ISSUE:-1}"
+GH_STATUS_REPO="${HERMES_MAC_LAND_STATUS_REPO:-ilike4movies/hermes-mac-land}"
 HOST="$(hostname 2>/dev/null || echo unknown)"
 USER_NAME="$(whoami 2>/dev/null || echo unknown)"
 WHEN="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 REPORT_FILE="$(mktemp /tmp/hermes-mac-land-diag.XXXXXX.txt)"
+DESKTOP_FILE="${HOME}/Desktop/HERMES-MAC-LAND-DIAG.txt"
 
 _load_hermes_env() {
   local f
@@ -81,11 +85,18 @@ _load_hermes_env || true
   if [[ -n "${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}" ]]; then
     echo "LINEAR_API_KEY/TOKEN: yes (loaded)"
   else
-    echo "LINEAR_API_KEY/TOKEN: NO — beacon/diag cannot post unless ~/.hermes/.env has it"
+    echo "LINEAR_API_KEY/TOKEN: NO — Linear RAL-800 silent unless ~/.hermes/.env has it"
+  fi
+  echo
+  echo "### gh auth?"
+  if command -v gh >/dev/null 2>&1; then
+    gh auth status 2>&1 | head -8 || true
+  else
+    echo "gh binary: missing"
   fi
   echo
   echo "### Next"
-  echo "If SSH OK but LaunchAgent missing: double-click fresh HERMES-UNBLOCK-APPLY.command from https://github.com/ilike4movies/hermes-mac-land"
+  echo "If SSH OK but LaunchAgent missing: double-click fresh HERMES-UNBLOCK-APPLY.command (or HERMES-DIAGNOSE-THEN-LAND.command) from https://github.com/ilike4movies/hermes-mac-land"
   echo "If SSH fail: fix Tailscale + SSH BatchMode to grok-cos-1, then re-land."
   echo "No rockets."
 } > "$REPORT_FILE" 2>&1
@@ -94,15 +105,23 @@ cat "$REPORT_FILE"
 echo
 echo "=== diagnostic written: $REPORT_FILE ==="
 
-KEY="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
-if [[ -z "$KEY" ]]; then
-  echo "WARN: no LINEAR_API_KEY — paste Terminal output to RAL-800 / chat"
-  exit 0
+# Always surface locally (works with no Linear key / no gh).
+mkdir -p "$(dirname "$DESKTOP_FILE")" 2>/dev/null || true
+cp "$REPORT_FILE" "$DESKTOP_FILE" 2>/dev/null || true
+if command -v pbcopy >/dev/null 2>&1; then
+  pbcopy < "$REPORT_FILE" 2>/dev/null && echo "OK diagnostic copied to clipboard" || true
+fi
+if [[ -f "$DESKTOP_FILE" ]]; then
+  echo "OK Desktop copy: $DESKTOP_FILE"
+  open -a TextEdit "$DESKTOP_FILE" 2>/dev/null || true
 fi
 
-BODY="$(cat "$REPORT_FILE")"
-set +e
-python3 - "$KEY" "$TICKET" "$BODY" <<'PY'
+POSTED_ANY=0
+KEY="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
+if [[ -n "$KEY" ]]; then
+  BODY="$(cat "$REPORT_FILE")"
+  set +e
+  python3 - "$KEY" "$TICKET" "$BODY" <<'PY'
 import json, sys, urllib.request
 key, ticket, body = sys.argv[1], sys.argv[2], sys.argv[3]
 if len(body) > 12000:
@@ -133,9 +152,39 @@ req2 = urllib.request.Request(
 urllib.request.urlopen(req2, timeout=12).read()
 print(f"OK diagnostic posted to {ticket}")
 PY
-PY_RC=$?
-set -e
-if [[ "$PY_RC" -ne 0 ]]; then
-  echo "WARN: Linear post failed — paste Terminal output to RAL-800 / chat"
+  if [[ $? -eq 0 ]]; then
+    POSTED_ANY=1
+  else
+    echo "WARN: Linear post failed"
+  fi
+  set -e
+else
+  echo "WARN: no LINEAR_API_KEY — using Desktop/clipboard/gh fallbacks"
+fi
+
+# Public GitHub fallback (no Linear key needed if gh is logged in).
+if command -v gh >/dev/null 2>&1; then
+  set +e
+  BODY_GH="$(cat "$REPORT_FILE")"
+  if [[ ${#BODY_GH} -gt 60000 ]]; then
+    BODY_GH="${BODY_GH:0:60000}
+
+…(truncated)…"
+  fi
+  if gh issue comment "$GH_STATUS_ISSUE" --repo "$GH_STATUS_REPO" --body "$BODY_GH" 2>/tmp/hermes-diag-gh.err; then
+    echo "OK diagnostic posted to https://github.com/${GH_STATUS_REPO}/issues/${GH_STATUS_ISSUE}"
+    POSTED_ANY=1
+  else
+    echo "WARN: gh issue comment failed (need gh auth write to ${GH_STATUS_REPO})"
+    head -5 /tmp/hermes-diag-gh.err 2>/dev/null || true
+  fi
+  set -e
+fi
+
+if [[ "$POSTED_ANY" -eq 0 ]]; then
+  echo "WARN: could not post remotely — paste Desktop/clipboard text to RAL-800 / chat"
+  say "Hermes diagnostic saved to Desktop. Paste into Linear if needed." 2>/dev/null || true
+else
+  say "Hermes diagnostic posted." 2>/dev/null || true
 fi
 exit 0
