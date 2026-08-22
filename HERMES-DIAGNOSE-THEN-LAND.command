@@ -4,7 +4,7 @@
 # floating main / CDN lag). Falls back to per-file raw/CDN fetches.
 set -euo pipefail
 export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:-public-diagnose-then-land-tarball}"
-PIN="${HERMES_MAC_LAND_PIN:-d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b}"
+PIN="${HERMES_MAC_LAND_PIN:-86f8ffd454af3972079f555400d15936631751a1}"
 cd "${TMPDIR:-/tmp}"
 echo "=== Hermes DIAGNOSE → LAND (tarball-first) pin=$PIN ==="
 echo "Host: $(hostname)  user: $(whoami)  $(date -u +%Y-%m-%dT%H:%M:%SZ)"
