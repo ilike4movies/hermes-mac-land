@@ -14,8 +14,8 @@ SCRIPT="/tmp/hermes-mac-land-diag-fetched-$$.sh"
 rm -f "$SCRIPT"
 FETCHED=""
 for url in \
-  "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/shared-scripts/hermes-moltbot-mac-land-diag.sh" \
-  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-moltbot-mac-land-diag.sh"
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-moltbot-mac-land-diag.sh" \
+  "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/shared-scripts/hermes-moltbot-mac-land-diag.sh"
 do
   echo "Trying fetch: $url"
   if curl -fsSL "$url" -o "$SCRIPT"; then
