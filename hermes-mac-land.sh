@@ -2,12 +2,12 @@
 # Public Hermes Mac land — NO private moltbot fetch on Mac.
 # Vendors via-ssh + Linear beacon from this public repo, then SSHes to grok-cos-1
 # (jump clones private tip + installs apply watch). Needs: Tailscale + SSH BatchMode.
-# Prefers pinned tip SHA so a bad main tip cannot break land.
+# Default pin is main; override with HERMES_MAC_LAND_PIN for a frozen SHA.
 set -euo pipefail
 
 SOURCE="${HERMES_MAC_LAND_SOURCE:-public-curl}"
 VENDOR_DIR="${HERMES_MAC_LAND_VENDOR:-/tmp/hermes-mac-land-vendor-$$}"
-PIN="${HERMES_MAC_LAND_PIN:-86f8ffd454af3972079f555400d15936631751a1}"
+PIN="${HERMES_MAC_LAND_PIN:-main}"
 
 _notify() {
   local title="$1" msg="$2"
@@ -52,6 +52,11 @@ _fetch_vendor() {
     for f in "${files[@]}"; do
       echo "Fetching $base/$f"
       if ! curl -fsSL "$base/$f" -o "$VENDOR_DIR/$f"; then
+        ok=0
+        break
+      fi
+      if head -1 "$VENDOR_DIR/$f" | grep -q '^IyE'; then
+        echo "WARN: base64 stub at $base/$f"
         ok=0
         break
       fi
