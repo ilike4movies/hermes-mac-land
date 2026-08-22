@@ -1,1 +1,1 @@
-$LOAD_FROM=/tmp/push-DTL.command
+PLACEHOLDER_WILL_REPLACE
