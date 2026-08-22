@@ -1,9 +1,11 @@
 # Hermes Mac land (public bootstrap)
 
+Pinned tip: `f7c28866c188fdd0edea56f1a3c0ea3411870006` (restore after accidental PLACEHOLDER tip; diag probes jump + direct `.11`; fetch prefers raw over CDN).
+
 ## Fastest — one double-click (diagnose + land)
 
 1. Open: https://github.com/ilike4movies/hermes-mac-land
-2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command`
+2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command` (tip `f7c28866…`)
 3. Double-click on **Mac Hermes** (Tailscale up)
 
 Runs diagnostic first (Desktop + clipboard + Linear/GitHub), then via-ssh land.
@@ -30,7 +32,13 @@ Surfaces status even **without** `LINEAR_API_KEY`:
 - Linear comment if `~/.hermes/.env` has the key
 - GitHub [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) if `gh` is logged in
 
-## Terminal land (jsDelivr — copy from Linear/Notion, not Gmail)
+## Terminal land (prefer raw; copy from Linear/Notion, not Gmail)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/f7c28866c188fdd0edea56f1a3c0ea3411870006/hermes-mac-land.sh | bash
+```
+
+jsDelivr fallback (can lag):
 
 ```bash
 curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh | bash
@@ -39,7 +47,7 @@ curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-
 ## Terminal diagnose
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/shared-scripts/hermes-moltbot-mac-land-diag.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/f7c28866c188fdd0edea56f1a3c0ea3411870006/shared-scripts/hermes-moltbot-mac-land-diag.sh | bash
 ```
 
 ## Needs on Mac
