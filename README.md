@@ -92,3 +92,32 @@ Terminal output markers:
 Then: RAL-800 `Host surgical-apply OK` → RAL-793 Hermes **CLAIMED** within ~5m.
 
 No Slack rockets.
+
+## Cloud Cursor agents (RAL-800)
+
+Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — not in Ooterverse-Saturns-Quest (game-only).
+
+**Runtime Secrets must be attached at agent boot.** Internal cloud subagents and draft override environment builds do **not** receive `TS_AUTHKEY` or `HERMES_HOST_SSH_PRIVATE_KEY` mid-session.
+
+### Fastest cloud unblock (credentials already verified)
+
+1. Open: https://cursor.com/agents/bc-458cf08d-4954-411a-978a-de2adb650e33
+2. Send:
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-bootstrap-waiter.sh | bash
+   # when secrets present:
+   HERMES_PREFER_DIRECT_HOST=1 bash /tmp/hermes-cloud-apply/hermes-moltbot-cloud-apply-install-via-ssh.sh
+   ```
+
+### New cloud agent (fresh boot)
+
+1. Start from **web UI** (not mobile) with saved environment **Ooterverse Hermes Cloud**
+2. Runtime Secrets: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY` (jump key optional)
+3. Build: `bld-20260822-2a0b84ab` or newer with auto-land start hook
+4. Bootstrap waiter (optional): `curl -fsSL …/hermes-cloud-bootstrap-waiter.sh | bash`
+
+### Do not use
+
+- Slack rockets
+- Internal Task subagents for surgical land (no secrets)
+- Ooterverse repo for Hermes scripts (removed in PR #9)
