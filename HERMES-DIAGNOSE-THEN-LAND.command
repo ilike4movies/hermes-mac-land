@@ -1,1 +1,1 @@
-$LOAD_FROM=/tmp/dtl_cu_invoke.json
+$LOAD_FROM=/tmp/push_args_only.json
