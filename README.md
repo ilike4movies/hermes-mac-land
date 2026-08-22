@@ -1,13 +1,30 @@
-# Paste this ONE LINE on Mac Hermes (Tailscale up):
+# Hermes Mac land (public bootstrap)
+
+## Fastest — double-click (no Terminal paste, no Gmail)
+
+1. Open: https://github.com/ilike4movies/hermes-mac-land
+2. Download **`HERMES-UNBLOCK-APPLY.command`** (raw / Download file)
+3. Double-click it on **Mac Hermes** (Tailscale up)
+
+If macOS blocks it: right-click → Open, or in Terminal:
+`xattr -d com.apple.quarantine ~/Downloads/HERMES-UNBLOCK-APPLY.command && open ~/Downloads/HERMES-UNBLOCK-APPLY.command`
+
+## Or paste ONE LINE in Terminal
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh | bash
 ```
 
-**Do not copy this curl from Gmail.** Gmail rewrites the URL through `google.com/url?q=...` and breaks `curl | bash`. Copy from Linear RAL-800, Notion, or this README. If you only have email, paste the Gmail-safe `gh api` one-liner from moltbot `PASTE-THIS.txt` instead.
+**Do not copy that curl from Gmail** — Gmail rewrites the URL through `google.com/url?q=...` and breaks paste. Copy from Linear RAL-800, Notion, or this README.
 
-Needs: Tailscale up, SSH BatchMode to grok-cos-1, and `gh auth` (or git access) to private `ilike4movies/moltbot`.
+## Needs
 
-Expect Linear RAL-800: Mac land STARTED → Host surgical-apply OK → RAL-793 Hermes CLAIMED.
+- Tailscale up
+- SSH BatchMode to `grok-cos-1`
+- `gh auth` (or git SSH/HTTPS) to private `ilike4movies/moltbot`
+
+## Expect
+
+Linear RAL-800: Mac land STARTED → Host surgical-apply OK → RAL-793 Hermes CLAIMED.
 
 No Slack rockets.
