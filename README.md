@@ -101,7 +101,9 @@ No Slack rockets.
 
 Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — not in Ooterverse-Saturns-Quest (game-only).
 
-**Runtime Secrets must be attached at agent boot.** Internal cloud subagents and draft override environment builds do **not** receive `TS_AUTHKEY` or `HERMES_HOST_SSH_PRIVATE_KEY` mid-session.
+**Runtime Secrets must be attached at agent boot.** Internal cloud subagents, mobile-started agents, and draft override environment builds do **not** receive `TS_AUTHKEY` or `HERMES_HOST_SSH_PRIVATE_KEY` mid-session.
+
+**Cursor routing (2026-08-22):** Hermes / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`**, never the Ooterverse game environment. The secret-bearing saved environment is renamed **LEGACY Hermes .11 — do not use for Ooterverse**.
 
 ### Fastest cloud unblock (credentials already verified)
 
@@ -115,13 +117,13 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 
 ### New cloud agent (fresh boot)
 
-1. Start from **web UI** (not mobile) with saved environment **Ooterverse Hermes Cloud**
+1. Start from **web UI** (not mobile) on **`ilike4movies/hermes-mac-land`** with saved environment **LEGACY Hermes .11 — do not use for Ooterverse**
 2. Runtime Secrets: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY` (jump key optional)
-3. Build: `bld-20260822-2a0b84ab` or newer with auto-land start hook
+3. Build: `bld-20260822-2a0b84ab` or newer
 4. Bootstrap waiter (optional): `curl -fsSL …/hermes-cloud-bootstrap-waiter.sh | bash`
 
 ### Do not use
 
 - Slack rockets
 - Internal Task subagents for surgical land (no secrets)
-- Ooterverse repo for Hermes scripts (removed in PR #9)
+- Ooterverse-Saturns-Quest repo or game-only environment for Hermes work (removed in PR #9)
