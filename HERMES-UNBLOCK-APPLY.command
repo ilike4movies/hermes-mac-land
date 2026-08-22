@@ -5,7 +5,7 @@
 # Fetches pinned tip SHA first (survives a bad main tip / CDN lag).
 set -euo pipefail
 export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:-public-command}"
-PIN="${HERMES_MAC_LAND_PIN:-2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29}"
+PIN="${HERMES_MAC_LAND_PIN:-d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b}"
 cd "${TMPDIR:-/tmp}"
 echo "=== Hermes Mac land (public via-ssh bootstrap) pin=$PIN ==="
 echo "Host: $(hostname)  user: $(whoami)  $(date -u +%Y-%m-%dT%H:%M:%SZ)"

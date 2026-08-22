@@ -1,11 +1,11 @@
 # Hermes Mac land (public bootstrap)
 
-Pinned tip: `2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29` (raw-first + PLACEHOLDER reject; diag probes jump + direct `.11`; double-click fetch prefers pinned SHA over floating `main`).
+Pinned tip: `d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b` (Mail draft + GH token fallback when Linear/gh silent; raw-first + PLACEHOLDER reject; diag probes jump + direct `.11`).
 
 ## Fastest — one double-click (diagnose + land)
 
 1. Open: https://github.com/ilike4movies/hermes-mac-land
-2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command` (tip `2d4e8d30…` / harden Mail+token fallback)
+2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command` (tip `d274105a…` — Mail draft + GH token fallback)
 3. Double-click on **Mac Hermes** (Tailscale up)
 
 Runs diagnostic first (Desktop + clipboard + Linear/GitHub), then via-ssh land.
@@ -27,27 +27,28 @@ Gatekeeper:
 2. Double-click on Mac Hermes
 
 Surfaces status even **without** `LINEAR_API_KEY`:
-- `~/Desktop/HERMES-MAC-LAND-DIAG.txt` (+ clipboard)
+- `~/Desktop/HERMES-MAC-LAND-DIAG.txt` (+ clipboard + TextEdit)
 - Opens Linear **RAL-800** + GitHub issue #1 for paste
 - Linear comment if `~/.hermes/.env` has the key
-- GitHub [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) if `gh` is logged in
+- GitHub [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) if `gh` logged in **or** `GH_TOKEN` / `HERMES_STATUS_GITHUB_TOKEN` in `~/.hermes/.env`
+- If still silent: opens a **Mail draft** to `ilike4@gmail.com` with the DIAG attached (click Send once)
 
 ## Terminal land (prefer raw pin; copy from Linear/Notion, not Gmail)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29/hermes-mac-land.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b/hermes-mac-land.sh | bash
 ```
 
 jsDelivr fallback (can lag):
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29/hermes-mac-land.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b/hermes-mac-land.sh | bash
 ```
 
 ## Terminal diagnose
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29/shared-scripts/hermes-moltbot-mac-land-diag.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b/shared-scripts/hermes-moltbot-mac-land-diag.sh | bash
 ```
 
 ## Needs on Mac

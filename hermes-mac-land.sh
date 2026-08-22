@@ -7,7 +7,7 @@ set -euo pipefail
 
 SOURCE="${HERMES_MAC_LAND_SOURCE:-public-curl}"
 VENDOR_DIR="${HERMES_MAC_LAND_VENDOR:-/tmp/hermes-mac-land-vendor-$$}"
-PIN="${HERMES_MAC_LAND_PIN:-2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29}"
+PIN="${HERMES_MAC_LAND_PIN:-d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b}"
 
 _notify() {
   local title="$1" msg="$2"

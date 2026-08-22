@@ -4,7 +4,7 @@
 # Always writes ~/Desktop/HERMES-MAC-LAND-DIAG.txt + clipboard; gh → issue #1 fallback.
 # Fetches pinned tip SHA first (survives a bad main tip / CDN lag).
 set -euo pipefail
-PIN="${HERMES_MAC_LAND_PIN:-2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29}"
+PIN="${HERMES_MAC_LAND_PIN:-d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b}"
 cd "${TMPDIR:-/tmp}"
 echo "=== Hermes Mac land DIAGNOSTIC pin=$PIN ==="
 echo "Host: $(hostname)  user: $(whoami)  $(date -u +%Y-%m-%dT%H:%M:%SZ)"
