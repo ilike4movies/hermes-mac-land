@@ -28,7 +28,7 @@ _load_hermes_env() {
     while IFS= read -r line || [[ -n "$line" ]]; do
       case "$line" in
         ''|\#*) continue ;;
-        LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|GH_TOKEN=*|GITHUB_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*)
+        LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|GH_TOKEN=*|GITHUB_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*|HERMES_HOST_SSH_PRIVATE_KEY=*|HERMES_JUMP_SSH_PRIVATE_KEY=*)
           key="${line%%=*}"
           val="${line#*=}"
           val="${val%\"}"; val="${val#\"}"
@@ -83,15 +83,36 @@ _load_hermes_env || true
   echo
   HOST_SSH="${HERMES_MOLTBOT_SSH:-ilike4@100.105.194.96}"
   HOST_SSH_LAN="${HERMES_MOLTBOT_SSH_LAN:-ilike4@192.168.1.11}"
+  HOST_ID_ARGS=()
+  if [[ -n "${HERMES_HOST_SSH_PRIVATE_KEY:-}" ]]; then
+    _hk="$(mktemp /tmp/hermes-diag-host.XXXXXX)"
+    printf '%s\n' "$HERMES_HOST_SSH_PRIVATE_KEY" > "$_hk"
+    chmod 600 "$_hk"
+    HOST_ID_ARGS=(-i "$_hk" -o IdentitiesOnly=yes)
+    echo "### Host SSH identity: loaded from env (~/.hermes/.env)"
+  else
+    echo "### Host SSH identity: default ssh-agent/config (no HERMES_HOST_SSH_PRIVATE_KEY)"
+  fi
   echo "### SSH BatchMode → host Tailscale $HOST_SSH (direct .11 fallback)"
-  ssh -o BatchMode=yes -o ConnectTimeout=12 -o StrictHostKeyChecking=accept-new \
-    "$HOST_SSH" 'echo OK_HOST_TS; hostname; whoami; date -u +%Y-%m-%dT%H:%M:%SZ' 2>&1 | head -40
+  if [[ ${#HOST_ID_ARGS[@]} -gt 0 ]]; then
+    ssh -o BatchMode=yes -o ConnectTimeout=12 -o StrictHostKeyChecking=accept-new \
+      "${HOST_ID_ARGS[@]}" "$HOST_SSH" 'echo OK_HOST_TS; hostname; whoami; date -u +%Y-%m-%dT%H:%M:%SZ' 2>&1 | head -40
+  else
+    ssh -o BatchMode=yes -o ConnectTimeout=12 -o StrictHostKeyChecking=accept-new \
+      "$HOST_SSH" 'echo OK_HOST_TS; hostname; whoami; date -u +%Y-%m-%dT%H:%M:%SZ' 2>&1 | head -40
+  fi
   echo "ssh_host_ts_exit=${PIPESTATUS[0]:-?}"
   echo
   echo "### SSH BatchMode → host LAN $HOST_SSH_LAN (direct .11 fallback)"
-  ssh -o BatchMode=yes -o ConnectTimeout=12 -o StrictHostKeyChecking=accept-new \
-    "$HOST_SSH_LAN" 'echo OK_HOST_LAN; hostname; whoami; date -u +%Y-%m-%dT%H:%M:%SZ' 2>&1 | head -40
+  if [[ ${#HOST_ID_ARGS[@]} -gt 0 ]]; then
+    ssh -o BatchMode=yes -o ConnectTimeout=12 -o StrictHostKeyChecking=accept-new \
+      "${HOST_ID_ARGS[@]}" "$HOST_SSH_LAN" 'echo OK_HOST_LAN; hostname; whoami; date -u +%Y-%m-%dT%H:%M:%SZ' 2>&1 | head -40
+  else
+    ssh -o BatchMode=yes -o ConnectTimeout=12 -o StrictHostKeyChecking=accept-new \
+      "$HOST_SSH_LAN" 'echo OK_HOST_LAN; hostname; whoami; date -u +%Y-%m-%dT%H:%M:%SZ' 2>&1 | head -40
+  fi
   echo "ssh_host_lan_exit=${PIPESTATUS[0]:-?}"
+  [[ -n "${_hk:-}" && -f "${_hk:-}" ]] && rm -f "$_hk"
   echo
   echo "### LINEAR key present?"
   if [[ -n "${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}" ]]; then
