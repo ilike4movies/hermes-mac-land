@@ -1,1 +1,1 @@
-$LOAD_FROM=/tmp/mcp_push_invoke.json:files[1].content
+$LOAD_FROM=/tmp/final_push_args.json:files[1].content
