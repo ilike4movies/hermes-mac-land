@@ -1,17 +1,24 @@
 #!/bin/bash
 # HERMES-UNBLOCK-APPLY.command — double-click on Mac Hermes
 # Public: https://github.com/ilike4movies/hermes-mac-land
-# No private moltbot auth on Mac — via-ssh to grok-cos-1 does the tip clone.
-# Fetches pinned tip SHA first (survives a bad main tip / CDN lag).
+# Direct .11 land + gh tarball upload (no private git clone on host).
 set -euo pipefail
 export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:-public-command}"
-PIN="${HERMES_MAC_LAND_PIN:-d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b}"
+export HERMES_PREFER_DIRECT_HOST="${HERMES_PREFER_DIRECT_HOST:-1}"
+export HERMES_UPLOAD_TIP_FROM_CALLER="${HERMES_UPLOAD_TIP_FROM_CALLER:-1}"
+PIN="${HERMES_MAC_LAND_PIN:-main}"
 cd "${TMPDIR:-/tmp}"
-echo "=== Hermes Mac land (public via-ssh bootstrap) pin=$PIN ==="
+echo "=== Hermes Mac land (direct .11 + gh tarball) pin=$PIN ==="
 echo "Host: $(hostname)  user: $(whoami)  $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 osascript -e 'display notification "Landing tip interrupt/apply on .11…" with title "Hermes UNBLOCK" sound name "Glass"' 2>/dev/null || true
 xattr -d com.apple.quarantine "$0" 2>/dev/null || true
 chmod +x "$0" 2>/dev/null || true
+
+if ! command -v gh >/dev/null 2>&1; then
+  echo "WARN: gh not installed — land may fall back to host git clone on .11"
+elif ! gh auth status >/dev/null 2>&1; then
+  echo "WARN: gh not logged in — run: gh auth login"
+fi
 
 SCRIPT="/tmp/hermes-mac-land-fetched-$$.sh"
 rm -f "$SCRIPT"
@@ -24,12 +31,12 @@ for url in \
 do
   echo "Trying fetch: $url"
   if curl -fsSL "$url" -o "$SCRIPT"; then
-    if grep -q 'PLACEHOLDER' "$SCRIPT" 2>/dev/null && ! grep -qE 'via-ssh only|no private moltbot' "$SCRIPT" 2>/dev/null; then
+    if grep -q 'PLACEHOLDER' "$SCRIPT" 2>/dev/null && ! grep -qE 'tarball upload|HERMES_PREFER_DIRECT_HOST' "$SCRIPT" 2>/dev/null; then
       echo "WARN: PLACEHOLDER body; trying next mirror"
       rm -f "$SCRIPT"
       continue
     fi
-    if grep -q 'no private moltbot' "$SCRIPT" 2>/dev/null || grep -q 'via-ssh only' "$SCRIPT" 2>/dev/null; then
+    if grep -qE 'tarball upload|HERMES_PREFER_DIRECT_HOST|HERMES_UPLOAD_TIP_FROM_CALLER' "$SCRIPT" 2>/dev/null; then
       FETCHED="$url"
       break
     fi
