@@ -9,6 +9,8 @@
 Runs diagnostic first (Desktop + clipboard + Linear/GitHub), then via-ssh land.
 Diag also opens **RAL-800** + [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) in the browser so you can paste Desktop diag if remote post fails.
 
+Land path: jump `grok-cos-1` first; if jump is down, tries `.11` directly (Tailscale `100.105.194.96` or LAN `192.168.1.11`).
+
 Gatekeeper:
 `xattr -d com.apple.quarantine ~/Downloads/HERMES-DIAGNOSE-THEN-LAND.command && open ~/Downloads/HERMES-DIAGNOSE-THEN-LAND.command`
 
@@ -42,9 +44,10 @@ curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/shared-
 
 ## Needs on Mac
 
-- Tailscale up
+- Tailscale up (or home LAN to `.11`)
 - SSH BatchMode to `grok-cos-1` (`ilike4@100.92.147.61`)
-- **No** private `moltbot` `gh` auth on Mac — jump host clones tip
+- Fallback: if jump is down, land tries `.11` directly (`100.105.194.96` or LAN `192.168.1.11`)
+- **No** private `moltbot` `gh` auth on Mac — jump/host clones tip
 
 Optional: `LINEAR_API_KEY` in `~/.hermes/.env` for STARTED/FAILED/DIAGNOSTIC on RAL-800.
 
