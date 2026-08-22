@@ -1,1 +1,30 @@
-IyEvdXNyL2Jpbi9lbnYgYmFzaAojIEtlZXAgd2FpdC1sb2dpbiBhbGl2ZSB1bnRpbCBUYWlsc2NhbGUgUnVubmluZywgdGhlbiBhdXRvLWxhbmQuCnNldCAtZXVvIHBpcGVmYWlsCkRJUj0iJHtIRVJNRVNfQ0xPVURfQVBQTFlfRElSOi0vdG1wL2hlcm1lcy1jbG91ZC1hcHBseX0iClNPQ0s9IiR7SEVSTUVTX1RBSUxTQ0FMRV9TT0NLRVQ6LS92YXIvcnVuL3RhaWxzY2FsZS90YWlsc2NhbGVkLnNvY2t9IgpjZCAiJERJUiIKCmJhY2tlbmRfc3RhdGUoKSB7CiAgc3VkbyB0YWlsc2NhbGUgLS1zb2NrZXQ9IiRTT0NLIiBzdGF0dXMgLS1qc29uIDI+L2Rldi9udWxsIHwgcHl0aG9uMyAtYyAnaW1wb3J0IGpzb24sc3lzCnRyeToKICBkPWpzb24ubG9hZChzeXMuc3RkaW4pCiAgcHJpbnQoZC5nZXQoIkJhY2tlbmRTdGF0ZSIpIG9yICIiKQpleGNlcHQgRXhjZXB0aW9uOgogIHByaW50KCIiKScgMj4vZGV2L251bGwgfHwgdHJ1ZQp9Cgp3aGlsZSB0cnVlOyBkbwogIHN0PSIkKGJhY2tlbmRfc3RhdGUpIgogIGlmIFtbICIkc3QiID09ICJSdW5uaW5nIiBdXTsgdGhlbgogICAgZWNobyAiJChkYXRlIC11ICslRlQlVFopIE9LIFJ1bm5pbmcg4oCUIGxhbmRpbmcgdGlwIgogICAgYmFzaCAiJERJUi9oZXJtZXMtbW9sdGJvdC1jbG91ZC10YWlsc2NhbGUtam9pbi1hbmQtYXBwbHkuc2giIC0tYWxyZWFkeS11cCA+PiIkRElSL3dhaXQtbG9naW4ubG9nIiAyPiYxIHx8IHRydWUKICAgIGVjaG8gIiQoZGF0ZSAtdSArJUZUJVRaKSBsYW5kIGF0dGVtcHQgZmluaXNoZWQgcmM9JD8iCiAgICBleGl0IDAKICBmaQogIGlmICEgcGdyZXAgLWYgJ2hlcm1lcy1tb2x0Ym90LWNsb3VkLXRhaWxzY2FsZS1qb2luLWFuZC1hcHBseS5zaCAtLXdhaXQtbG9naW4nID4vZGV2L251bGwgMj4mMTsgdGhlbgogICAgZWNobyAiJChkYXRlIC11ICslRlQlVFopIHN0YXJ0aW5nIHdhaXQtbG9naW4gKEJhY2tlbmRTdGF0ZT0ke3N0Oi11bmtub3dufSkiCiAgICBiYXNoICIkRElSL2hlcm1lcy1tb2x0Ym90LWNsb3VkLXRhaWxzY2FsZS1qb2luLWFuZC1hcHBseS5zaCIgLS13YWl0LWxvZ2luID4+IiRESVIvd2FpdC1sb2dpbi5sb2ciIDI+JjEgJgogIGZpCiAgc2xlZXAgNjAKZG9uZQo=
+#!/usr/bin/env bash
+# Keep wait-login alive until Tailscale Running, then auto-land.
+set -euo pipefail
+DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
+SOCK="${HERMES_TAILSCALE_SOCKET:-/var/run/tailscale/tailscaled.sock}"
+cd "$DIR"
+
+backend_state() {
+  sudo tailscale --socket="$SOCK" status --json 2>/dev/null | python3 -c 'import json,sys
+try:
+  d=json.load(sys.stdin)
+  print(d.get("BackendState") or "")
+except Exception:
+  print("")' 2>/dev/null || true
+}
+
+while true; do
+  st="$(backend_state)"
+  if [[ "$st" == "Running" ]]; then
+    echo "$(date -u +%FT%TZ) OK Running — landing tip"
+    bash "$DIR/hermes-moltbot-cloud-tailscale-join-and-apply.sh" --already-up >>"$DIR/wait-login.log" 2>&1 || true
+    echo "$(date -u +%FT%TZ) land attempt finished rc=$?"
+    exit 0
+  fi
+  if ! pgrep -f 'hermes-moltbot-cloud-tailscale-join-and-apply.sh --wait-login' >/dev/null 2>&1; then
+    echo "$(date -u +%FT%TZ) starting wait-login (BackendState=${st:-unknown})"
+    bash "$DIR/hermes-moltbot-cloud-tailscale-join-and-apply.sh" --wait-login >>"$DIR/wait-login.log" 2>&1 &
+  fi
+  sleep 60
+done
