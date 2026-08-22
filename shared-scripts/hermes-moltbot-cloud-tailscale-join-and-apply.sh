@@ -29,6 +29,8 @@ SECRETS_ENV="${HERMES_CLOUD_SECRETS_ENV:-/tmp/hermes-cloud-apply/secrets.env}"
 TS_KEY_FILE="${HERMES_TS_AUTHKEY_FILE:-/tmp/hermes-cloud-apply/ts-authkey}"
 JUMP_KEY_FILE="${HERMES_JUMP_SSH_KEY_FILE:-/tmp/hermes-cloud-apply/jump-ssh-key}"
 HOST_KEY_FILE="${HERMES_HOST_SSH_KEY_FILE:-/tmp/hermes-cloud-apply/host-ssh-key}"
+TS_UP_PIDFILE="${SCRIPT_DIR}/tailscale-up-wait.pid"
+TS_UP_LOCK="${SCRIPT_DIR}/tailscale-up-wait.lock"
 DRY_RUN=0
 ALREADY_UP=0
 WAIT_LOGIN=0
@@ -92,6 +94,61 @@ except Exception:
 ' 2>/dev/null || true
 }
 
+_tailscale_up_wait_running() {
+  local pid p
+  if [[ -f "$TS_UP_PIDFILE" ]]; then
+    pid="$(tr -d ' \r\n' < "$TS_UP_PIDFILE" 2>/dev/null || true)"
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      return 0
+    fi
+  fi
+  while IFS= read -r p; do
+    [[ -n "$p" ]] && kill -0 "$p" 2>/dev/null && return 0
+  done < <(pgrep -f 'tailscale.* up ' 2>/dev/null || true)
+  return 1
+}
+
+_refresh_authurl_file() {
+  local url authfile="${SCRIPT_DIR}/CURRENT_AUTHURL.txt"
+  url="$(ts status 2>&1 | grep -oE 'https://login\.tailscale\.com/a/[a-z0-9]+' | head -1 || true)"
+  [[ -n "$url" ]] || return 0
+  if [[ ! -f "$authfile" ]] || ! grep -qF "$url" "$authfile" 2>/dev/null; then
+    {
+      printf '%s\n' "$url"
+      printf 'ACTIVE — approve now (%s).\n' "$(date -u +%FT%TZ)"
+      echo 'Cloud waiters armed; TS_AUTHKEY preferred.'
+    } >"$authfile"
+    echo "APPROVE_THIS_URL=$url"
+  fi
+}
+
+_ensure_single_tailscale_up_wait() {
+  local login_wait_secs="${1:-$LOGIN_WAIT_SECS}"
+  if _tailscale_up_wait_running; then
+    echo "OK tailscale up wait already running (pidfile=$(cat "$TS_UP_PIDFILE" 2>/dev/null || echo none))"
+    _refresh_authurl_file
+    return 0
+  fi
+  exec 9>"$TS_UP_LOCK"
+  if ! flock -n 9; then
+    echo "OK another process holds tailscale-up lock"
+    _refresh_authurl_file
+    return 0
+  fi
+  if _tailscale_up_wait_running; then
+    _refresh_authurl_file
+    return 0
+  fi
+  echo "== starting single tailscale up wait (${login_wait_secs}s) =="
+  nohup sudo tailscale --socket="$SOCK" up --timeout="${login_wait_secs}s" \
+    --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true \
+    >/tmp/tailscale-up-wait.log 2>&1 &
+  echo $! >"$TS_UP_PIDFILE"
+  echo "OK started tailscale up wait pid=$(cat "$TS_UP_PIDFILE")"
+  sleep 2
+  _refresh_authurl_file
+}
+
 install_tailscale() {
   if command -v tailscale >/dev/null 2>&1; then
     echo "OK tailscale already installed: $(command -v tailscale)"
@@ -136,12 +193,13 @@ wait_for_running() {
     if [[ "$st" == "Running" ]]; then
       return 0
     fi
-    # Mid-wait: if authkey appears, join immediately (secrets injected after start).
     if [[ -n "${TS_AUTHKEY:-}" && "$st" != "Running" ]]; then
       echo "  mid-wait TS_AUTHKEY present — joining"
       join_tailscale_authkey || true
     fi
     if [[ "$st" == "NeedsLogin" || "$st" == "NoState" || -z "$st" ]]; then
+      _ensure_single_tailscale_up_wait "$max" || true
+      _refresh_authurl_file || true
       ts status 2>&1 | sed -n '1,8p' || true
     fi
     sleep 5
@@ -180,22 +238,9 @@ elif [[ -n "${TS_AUTHKEY:-}" ]]; then
   join_tailscale_authkey
   wait_for_running "$WAIT_SECS" || true
 elif [[ "$WAIT_LOGIN" -eq 1 ]]; then
-  echo "== interactive login path: starting tailscale up (approve AuthURL) =="
-  timeout 8 sudo tailscale --socket="$SOCK" up --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true 2>&1 || true
+  echo "== interactive login path (approve AuthURL; single tailscale up) =="
+  _ensure_single_tailscale_up_wait "$LOGIN_WAIT_SECS"
   ts status 2>&1 | sed -n '1,12p' || true
-  AUTH_URL="$(ts status 2>&1 | grep -oE 'https://login\.tailscale\.com/a/[a-z0-9]+' | head -1 || true)"
-  if [[ -n "$AUTH_URL" ]]; then
-    echo "APPROVE_THIS_URL=$AUTH_URL"
-    printf '%s\n' "$AUTH_URL" >"${SCRIPT_DIR}/CURRENT_AUTHURL.txt"
-  fi
-  TS_UP_PIDFILE="${SCRIPT_DIR}/tailscale-up-wait.pid"
-  if [[ -f "$TS_UP_PIDFILE" ]] && kill -0 "$(cat "$TS_UP_PIDFILE")" 2>/dev/null; then
-    echo "OK tailscale up wait already running pid=$(cat "$TS_UP_PIDFILE")"
-  else
-    nohup sudo tailscale --socket="$SOCK" up --timeout="${LOGIN_WAIT_SECS}s" --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true >/tmp/tailscale-up-wait.log 2>&1 &
-    echo $! >"$TS_UP_PIDFILE"
-    echo "OK started tailscale up wait pid=$(cat "$TS_UP_PIDFILE")"
-  fi
   wait_for_running "$LOGIN_WAIT_SECS"
 else
   echo "ERROR: TS_AUTHKEY unset and not Running. Re-run with TS_AUTHKEY=... or --wait-login / --already-up" >&2
