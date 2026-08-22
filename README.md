@@ -1,15 +1,15 @@
 # Hermes Mac land (public bootstrap)
 
-`HERMES-DIAGNOSE-THEN-LAND.command` prefers a **single GitHub archive tarball** (co-located diag + via-ssh), then falls back to per-file raw/CDN. Tarball/land pin `86f8ffd4…`.
+`HERMES-DIAGNOSE-THEN-LAND.command` prefers a **single GitHub archive tarball** (co-located diag + via-ssh), then falls back to per-file raw/CDN. Default pin: **`main`** (override with `HERMES_MAC_LAND_PIN` for a frozen SHA).
 
-Pinned tarball/land: `86f8ffd454af3972079f555400d15936631751a1` (via-ssh clone-dir fix; raw-first + PLACEHOLDER reject; diag probes jump + direct `.11`).
+Frozen SHA example (via-ssh clone-dir fix): `86f8ffd454af3972079f555400d15936631751a1`.
 
 Diag-only pin: `d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b` (Mail draft + GH token fallback when Linear/gh silent).
 
 ## Fastest — one double-click (diagnose + land)
 
 1. Open: https://github.com/ilike4movies/hermes-mac-land
-2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command` (tarball pin `86f8ffd4…`)
+2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command` (default pin `main`)
 3. Double-click on **Mac Hermes** (Tailscale up)
 
 Runs diagnostic first (Desktop + clipboard + Linear/GitHub), then via-ssh land.
@@ -37,16 +37,16 @@ Surfaces status even **without** `LINEAR_API_KEY`:
 - GitHub [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) if `gh` logged in **or** `GH_TOKEN` / `HERMES_STATUS_GITHUB_TOKEN` in `~/.hermes/.env`
 - If still silent: opens a **Mail draft** to `ilike4@gmail.com` with the DIAG attached (click Send once)
 
-## Terminal land (prefer raw pin; copy from Linear/Notion, not Gmail)
+## Terminal land (default main; copy from Linear/Notion, not Gmail)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/86f8ffd454af3972079f555400d15936631751a1/hermes-mac-land.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh | bash
 ```
 
 jsDelivr fallback (can lag):
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@86f8ffd454af3972079f555400d15936631751a1/hermes-mac-land.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh | bash
 ```
 
 ## Terminal diagnose
