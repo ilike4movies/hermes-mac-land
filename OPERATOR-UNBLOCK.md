@@ -14,13 +14,16 @@
 
 ### A — New cloud agent (preferred after 2026-08-22 scope separation)
 
-1. **Web UI** (not mobile) → repo **`ilike4movies/hermes-mac-land`**
+1. **Web UI only** (not mobile) → repo **`ilike4movies/hermes-mac-land`**
 2. Environment: **LEGACY Hermes .11 — do not use for Ooterverse**
-3. Runtime Secrets at boot: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`
+3. **Runtime Secrets at agent boot** (not mid-session): `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`
 4. `.cursor/environment.json` on `main` auto-runs surgical land when secrets present
+
+**Pitfalls:** Mobile cloud agents and Ooterverse override envs do **not** get Hermes secrets at boot. Internal subagents cannot receive Runtime Secrets mid-session — start a **new** web agent on `hermes-mac-land` with the LEGACY env.
 
 ### B — Resume verified agent
 
+Open in browser (other agents cannot see this run):
 https://cursor.com/agents/bc-458cf08d-4954-411a-978a-de2adb650e33
 
 ```bash
@@ -28,7 +31,11 @@ curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/s
 HERMES_PREFER_DIRECT_HOST=1 bash /tmp/hermes-cloud-apply/hermes-moltbot-cloud-apply-install-via-ssh.sh
 ```
 
+Credentials were verified 2026-08-22 17:36Z (Tailscale Running, SSH to `four-openclaw:ilike4`). Surgical land was **not** run in that session.
+
 ### C — Mac Hermes (home LAN / Tailscale)
+
+Last machine attempt **FAILED at 16:26Z** (pre host-key install at 17:22Z). **Re-run required:**
 
 ```bash
 gh auth login
@@ -49,9 +56,10 @@ Optional in `~/.hermes/.env`: `HERMES_HOST_SSH_PRIVATE_KEY` (PEM for BatchMode S
 ## Do not use
 
 - Slack rockets
-- Ooterverse-Saturns-Quest repo for Hermes deploy (game-only since PR #9)
+- Ooterverse-Saturns-Quest repo/env for Hermes deploy (game-only since PR #9)
 - Internal cloud subagents without secrets at boot
 - `git reset --hard` on `/opt/moltbot`
+- `git pull --ff-only` on dirty/no-origin `/opt/moltbot` (use surgical-apply)
 
 ## Repos
 
