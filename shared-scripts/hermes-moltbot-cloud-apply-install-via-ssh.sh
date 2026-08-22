@@ -179,8 +179,7 @@ if ! _clone_with_timeout "$REMOTE_URL" "$CLONE"; then
     exit 1
   fi
 fi
-bash "$CLONE/shared-scripts/hermes-moltbot-surgical-apply.sh" \
-  --clone-dir /tmp/moltbot-main-tip-src-fresh
+bash "$CLONE/shared-scripts/hermes-moltbot-surgical-apply.sh"
 REMOTE
 }
 
