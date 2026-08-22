@@ -176,7 +176,7 @@ while true; do
 
   if [[ "$mesh_ok" -eq 1 ]]; then
     if _reachable 100.92.147.61 || _reachable 100.105.194.96 || _reachable 192.168.1.11; then
-      echo "OK mesh/host reachable — running tip via-ssh (jump then direct .11)"
+      echo "OK mesh/host reachable — running tip via-ssh (direct .11; HERMES_PREFER_DIRECT_HOST=1)"
       break
     fi
     echo "joined but jump/host not reachable yet"
@@ -206,5 +206,7 @@ if [[ ! -f "$VIA" ]]; then
   echo "ERROR: missing $VIA" >&2
   exit 1
 fi
+export HERMES_PREFER_DIRECT_HOST="${HERMES_PREFER_DIRECT_HOST:-1}"
+export HERMES_UPLOAD_TIP_FROM_CALLER="${HERMES_UPLOAD_TIP_FROM_CALLER:-1}"
 bash "$VIA"
 echo "OK apply attempted rc=$?"
