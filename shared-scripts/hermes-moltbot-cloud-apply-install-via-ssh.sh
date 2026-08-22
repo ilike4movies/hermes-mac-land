@@ -338,20 +338,52 @@ REMOTE
   fi
 }
 
+# macOS /bin/bash 3.2 + set -u: "${arr[@]}" on an empty array is an unbound-variable error.
 set +e
-if _ssh_ok "$JUMP_SSH" "${JUMP_SSH_IDENTITY_ARGS[@]}"; then
+_jump_reachable=0
+if (( ${#JUMP_SSH_IDENTITY_ARGS[@]} > 0 )); then
+  _ssh_ok "$JUMP_SSH" "${JUMP_SSH_IDENTITY_ARGS[@]}" && _jump_reachable=1
+else
+  _ssh_ok "$JUMP_SSH" && _jump_reachable=1
+fi
+
+if (( _jump_reachable )); then
   echo "OK jump reachable: $JUMP_SSH"
-  _run_on_jump "${JUMP_SSH_IDENTITY_ARGS[@]}"
+  if (( ${#JUMP_SSH_IDENTITY_ARGS[@]} > 0 )); then
+    _run_on_jump "${JUMP_SSH_IDENTITY_ARGS[@]}"
+  else
+    _run_on_jump
+  fi
   RC=$?
 else
   echo "WARN: jump unreachable ($JUMP_SSH); trying direct host fallback"
   RC=91
   if [[ "$ALLOW_DIRECT_HOST" == "1" ]]; then
-    if _ssh_ok "$HOST_SSH" "${HOST_SSH_IDENTITY_ARGS[@]}"; then
-      _run_on_host "$HOST_SSH" "${HOST_SSH_IDENTITY_ARGS[@]}"
-      RC=$?
-    elif _ssh_ok "$HOST_SSH_LAN" "${HOST_SSH_IDENTITY_ARGS[@]}"; then
-      _run_on_host "$HOST_SSH_LAN" "${HOST_SSH_IDENTITY_ARGS[@]}"
+    _host_reachable=0
+    _host_target=""
+    if (( ${#HOST_SSH_IDENTITY_ARGS[@]} > 0 )); then
+      if _ssh_ok "$HOST_SSH" "${HOST_SSH_IDENTITY_ARGS[@]}"; then
+        _host_reachable=1
+        _host_target="$HOST_SSH"
+      elif _ssh_ok "$HOST_SSH_LAN" "${HOST_SSH_IDENTITY_ARGS[@]}"; then
+        _host_reachable=1
+        _host_target="$HOST_SSH_LAN"
+      fi
+    else
+      if _ssh_ok "$HOST_SSH"; then
+        _host_reachable=1
+        _host_target="$HOST_SSH"
+      elif _ssh_ok "$HOST_SSH_LAN"; then
+        _host_reachable=1
+        _host_target="$HOST_SSH_LAN"
+      fi
+    fi
+    if (( _host_reachable )); then
+      if (( ${#HOST_SSH_IDENTITY_ARGS[@]} > 0 )); then
+        _run_on_host "$_host_target" "${HOST_SSH_IDENTITY_ARGS[@]}"
+      else
+        _run_on_host "$_host_target"
+      fi
       RC=$?
     else
       echo "ERROR: jump and direct host (.11 Tailscale + LAN) all unreachable" >&2
