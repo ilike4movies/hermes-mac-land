@@ -1,6 +1,7 @@
 #!/bin/bash
 # HERMES-DIAGNOSE.command — double-click on Mac Hermes
-# Posts LaunchAgent / Tailscale / SSH status to Linear RAL-800 (no Terminal paste).
+# Posts LaunchAgent / Tailscale / SSH status to Linear RAL-800 when possible.
+# Always writes ~/Desktop/HERMES-MAC-LAND-DIAG.txt + clipboard; gh → issue #1 fallback.
 set -euo pipefail
 cd "${TMPDIR:-/tmp}"
 echo "=== Hermes Mac land DIAGNOSTIC ==="
@@ -41,10 +42,9 @@ bash "$SCRIPT"
 RC=$?
 set -e
 if [[ "$RC" -eq 0 ]]; then
-  osascript -e 'display notification "Diagnostic done. Check Linear RAL-800." with title "Hermes DIAGNOSE OK" sound name "Hero"' 2>/dev/null || true
-  say "Hermes diagnostic posted." 2>/dev/null || true
+  osascript -e 'display notification "Diagnostic done. Check Linear RAL-800, Desktop file, or GitHub #1." with title "Hermes DIAGNOSE OK" sound name "Hero"' 2>/dev/null || true
 else
-  osascript -e 'display notification "Diagnostic finished with errors — see Terminal." with title "Hermes DIAGNOSE" sound name "Basso"' 2>/dev/null || true
+  osascript -e 'display notification "Diagnostic finished with errors — see Terminal / Desktop." with title "Hermes DIAGNOSE" sound name "Basso"' 2>/dev/null || true
 fi
 read -r -p "Press Enter to close…" _
 exit "$RC"
