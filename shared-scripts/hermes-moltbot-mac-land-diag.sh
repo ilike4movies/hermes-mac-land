@@ -113,8 +113,11 @@ if command -v pbcopy >/dev/null 2>&1; then
 fi
 if [[ -f "$DESKTOP_FILE" ]]; then
   echo "OK Desktop copy: $DESKTOP_FILE"
-  open -a TextEdit "$DESKTOP_FILE" 2>/dev/null || true
+  open -a TextEdit "$DESKTOP_FILE" 2>/dev/null || open "$DESKTOP_FILE" 2>/dev/null || true
 fi
+# Open paste targets so Ralph can forward Desktop diag if Linear/gh post fails.
+open "https://linear.app/ilike4/issue/RAL-800" 2>/dev/null || true
+open "https://github.com/ilike4movies/hermes-mac-land/issues/1" 2>/dev/null || true
 
 POSTED_ANY=0
 KEY="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
