@@ -1,1 +1,1 @@
-@/tmp/push-DTL.command
+LOAD_ARGS_FROM=/tmp/CALLMCP_PUSH_NOW.json
