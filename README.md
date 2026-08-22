@@ -5,7 +5,7 @@ Pinned tip: `2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29` (raw-first + PLACEHOLDER 
 ## Fastest — one double-click (diagnose + land)
 
 1. Open: https://github.com/ilike4movies/hermes-mac-land
-2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command` (tip `5dcba429…`)
+2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command` (tip `2d4e8d30…` / harden Mail+token fallback)
 3. Double-click on **Mac Hermes** (Tailscale up)
 
 Runs diagnostic first (Desktop + clipboard + Linear/GitHub), then via-ssh land.

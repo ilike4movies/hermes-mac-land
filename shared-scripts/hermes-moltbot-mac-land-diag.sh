@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # hermes-moltbot-mac-land-diag.sh — collect Mac land status + post to RAL-800
-# Also: Desktop file + clipboard + optional gh comment on hermes-mac-land#1
+# Also: Desktop/clipboard + gh/token comment on hermes-mac-land#1 + Mail draft fallback
 # Double-click via HERMES-DIAGNOSE.command / HERMES-DIAGNOSE-THEN-LAND.command, or:
 #   curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/shared-scripts/hermes-moltbot-mac-land-diag.sh | bash
 set -u
@@ -28,7 +28,7 @@ _load_hermes_env() {
     while IFS= read -r line || [[ -n "$line" ]]; do
       case "$line" in
         ''|\#*) continue ;;
-        LINEAR_API_KEY=*|LINEAR_API_TOKEN=*)
+        LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|GH_TOKEN=*|GITHUB_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*)
           key="${line%%=*}"
           val="${line#*=}"
           val="${val%\"}"; val="${val#\"}"
@@ -196,9 +196,61 @@ if command -v gh >/dev/null 2>&1; then
   set -e
 fi
 
+# Token-based GitHub issue comment (no `gh` CLI required).
 if [[ "$POSTED_ANY" -eq 0 ]]; then
-  echo "WARN: could not post remotely — paste Desktop/clipboard text to RAL-800 / chat"
-  say "Hermes diagnostic saved to Desktop. Paste into Linear if needed." 2>/dev/null || true
+  GHK="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+  if [[ -n "$GHK" ]]; then
+    set +e
+    python3 - "$GHK" "$GH_STATUS_REPO" "$GH_STATUS_ISSUE" "$REPORT_FILE" <<'PY'
+import json, sys, urllib.request
+token, repo, issue, path = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+body = open(path, encoding="utf-8", errors="replace").read()
+if len(body) > 60000:
+    body = body[:60000] + "\n\n…(truncated)…"
+req = urllib.request.Request(
+    f"https://api.github.com/repos/{repo}/issues/{issue}/comments",
+    data=json.dumps({"body": body}).encode(),
+    headers={
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
+        "User-Agent": "hermes-mac-land-diag",
+    },
+    method="POST",
+)
+with urllib.request.urlopen(req, timeout=20) as r:
+    r.read()
+print(f"OK diagnostic posted via token to https://github.com/{repo}/issues/{issue}")
+PY
+    if [[ $? -eq 0 ]]; then
+      POSTED_ANY=1
+    else
+      echo "WARN: GitHub token comment failed"
+    fi
+    set -e
+  fi
+fi
+
+if [[ "$POSTED_ANY" -eq 0 ]]; then
+  echo "WARN: could not post remotely — opening Mail draft + Cursor paste targets"
+  MAIL_TO="${HERMES_DIAG_MAIL_TO:-ilike4@gmail.com}"
+  SUBJECT="HERMES-MAC-LAND-DIAG ${WHEN}"
+  osascript <<OSA 2>/tmp/hermes-diag-mail.err || true
+set deskPath to POSIX file "$DESKTOP_FILE"
+tell application "Mail"
+  set newMessage to make new outgoing message with properties {subject:"$SUBJECT", content:"Hermes Mac land diagnostic attached (also on Desktop). Cloud Cursor is waiting on this evidence.\n\n", visible:true}
+  tell newMessage
+    make new to recipient at end of to recipients with properties {address:"$MAIL_TO"}
+  end tell
+  try
+    tell newMessage to make new attachment with properties {file name:deskPath} at after the last paragraph
+  end try
+  activate
+end tell
+OSA
+  open "https://cursor.com/agents" 2>/dev/null || true
+  say "Hermes diagnostic saved to Desktop. Send the Mail draft or paste into Cursor." 2>/dev/null || true
 else
   say "Hermes diagnostic posted." 2>/dev/null || true
 fi
