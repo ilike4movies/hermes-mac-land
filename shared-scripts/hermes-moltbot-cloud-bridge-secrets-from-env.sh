@@ -3,6 +3,7 @@
 set -euo pipefail
 DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 ENV_OUT="$DIR/secrets.env"
+SECRET_DIRS=( /tmp/cursor-secrets "$HOME/.cursor/secrets" /opt/cursor/secrets )
 mkdir -p "$DIR"
 changed=0
 : > "$ENV_OUT.tmp"
@@ -20,7 +21,7 @@ if [[ -n "${HERMES_HOST_SSH_PRIVATE_KEY:-}" ]]; then
   chmod 600 "$DIR/host-ssh-key"
   changed=1
 fi
-for f in "$DIR/ts-authkey" /tmp/cursor-secrets/TS_AUTHKEY "$HOME/.cursor/secrets/TS_AUTHKEY"; do
+for f in "$DIR/ts-authkey" "${SECRET_DIRS[@]/%//TS_AUTHKEY}"; do
   if [[ -z "${TS_AUTHKEY:-}" && -f "$f" ]]; then
     TS_AUTHKEY="$(tr -d '\r\n' < "$f")"
     export TS_AUTHKEY
@@ -28,14 +29,14 @@ for f in "$DIR/ts-authkey" /tmp/cursor-secrets/TS_AUTHKEY "$HOME/.cursor/secrets
     changed=1
   fi
 done
-for f in "$DIR/jump-ssh-key" /tmp/cursor-secrets/HERMES_JUMP_SSH_PRIVATE_KEY "$HOME/.cursor/secrets/HERMES_JUMP_SSH_PRIVATE_KEY"; do
+for f in "$DIR/jump-ssh-key" "${SECRET_DIRS[@]/%//HERMES_JUMP_SSH_PRIVATE_KEY}"; do
   if [[ ! -s "$DIR/jump-ssh-key" && -f "$f" && "$f" != "$DIR/jump-ssh-key" ]]; then
     cp "$f" "$DIR/jump-ssh-key"
     chmod 600 "$DIR/jump-ssh-key"
     changed=1
   fi
 done
-for f in "$DIR/host-ssh-key" /tmp/cursor-secrets/HERMES_HOST_SSH_PRIVATE_KEY "$HOME/.cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY"; do
+for f in "$DIR/host-ssh-key" "${SECRET_DIRS[@]/%//HERMES_HOST_SSH_PRIVATE_KEY}"; do
   if [[ ! -s "$DIR/host-ssh-key" && -f "$f" && "$f" != "$DIR/host-ssh-key" ]]; then
     cp "$f" "$DIR/host-ssh-key"
     chmod 600 "$DIR/host-ssh-key"
