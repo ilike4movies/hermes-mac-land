@@ -1,5 +1,7 @@
 # Hermes Mac land (public bootstrap)
 
+**Operator unblock (RAL-800 / live `.11` land):** [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md) — pick cloud agent, verified agent, or Mac path.
+
 ## macOS Gatekeeper (read this first)
 
 Double-clicking a downloaded `.command` file may show **"could not verify … is free of malware"** before the script runs. That is normal for GitHub downloads.
@@ -104,6 +106,8 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 **Runtime Secrets must be attached at agent boot.** Internal cloud subagents, mobile-started agents, and draft override environment builds do **not** receive `TS_AUTHKEY` or `HERMES_HOST_SSH_PRIVATE_KEY` mid-session.
 
 **Cursor routing (2026-08-22):** Hermes / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`**, never the Ooterverse game environment. The secret-bearing saved environment is renamed **LEGACY Hermes .11 — do not use for Ooterverse**.
+
+See **[OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md)** for the full checklist and pitfalls.
 
 ### Fastest cloud unblock (credentials already verified)
 
