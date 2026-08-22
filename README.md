@@ -1,5 +1,24 @@
 # Hermes Mac land (public bootstrap)
 
+## macOS Gatekeeper (read this first)
+
+Double-clicking a downloaded `.command` file may show **"could not verify … is free of malware"** before the script runs. That is normal for GitHub downloads.
+
+**Do not click Move to Trash.** Pick one:
+
+1. **Terminal (recommended):**
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh | bash
+   ```
+2. **Right-click → Open** on `HERMES-DIAGNOSE-THEN-LAND.command`, then confirm **Open** again.
+3. **Unquarantine then open:**
+   ```bash
+   xattr -d com.apple.quarantine ~/Downloads/HERMES-DIAGNOSE-THEN-LAND.command
+   open ~/Downloads/HERMES-DIAGNOSE-THEN-LAND.command
+   ```
+
+---
+
 `HERMES-DIAGNOSE-THEN-LAND.command` prefers a **single GitHub archive tarball** (co-located diag + via-ssh), then falls back to per-file raw/CDN. Default pin: **`main`** (override with `HERMES_MAC_LAND_PIN` for a frozen SHA).
 
 Frozen SHA example (via-ssh clone-dir fix): `86f8ffd454af3972079f555400d15936631751a1`.
@@ -10,25 +29,22 @@ Diag-only pin: `d274105a05034e7c6f6d69fe8d13d3ebaa7aed9b` (Mail draft + GH token
 
 1. Open: https://github.com/ilike4movies/hermes-mac-land
 2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command` (default pin `main`)
-3. Double-click on **Mac Hermes** (Tailscale up)
+3. **Right-click → Open** on Mac Hermes (Tailscale up) — or use Terminal land below
 
 Runs diagnostic first (Desktop + clipboard + Linear/GitHub), then via-ssh land.
 Diag also opens **RAL-800** + [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) in the browser so you can paste Desktop diag if remote post fails.
 
 Land path: jump `grok-cos-1` first; if jump is down, tries `.11` directly (Tailscale `100.105.194.96` or LAN `192.168.1.11`).
 
-Gatekeeper:
-`xattr -d com.apple.quarantine ~/Downloads/HERMES-DIAGNOSE-THEN-LAND.command && open ~/Downloads/HERMES-DIAGNOSE-THEN-LAND.command`
-
 ## Or land only
 
 1. Download a **fresh** `HERMES-UNBLOCK-APPLY.command`
-2. Double-click on **Mac Hermes** (Tailscale up)
+2. **Right-click → Open** on **Mac Hermes** (Tailscale up)
 
 ## If land hung / silent — diagnose only
 
 1. Download **fresh** `HERMES-DIAGNOSE.command`
-2. Double-click on Mac Hermes
+2. **Right-click → Open** on Mac Hermes
 
 Surfaces status even **without** `LINEAR_API_KEY`:
 - `~/Desktop/HERMES-MAC-LAND-DIAG.txt` (+ clipboard + TextEdit)
