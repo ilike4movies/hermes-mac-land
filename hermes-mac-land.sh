@@ -80,6 +80,41 @@ _fetch_vendor() {
   return 1
 }
 
+_preflight_ssh() {
+  local target ok=0
+  for target in ilike4@192.168.1.11 ilike4@100.105.194.96; do
+    if ssh -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=accept-new \
+        "$target" 'hostname' >/dev/null 2>&1; then
+      echo "OK preflight SSH $target"
+      ok=1
+      break
+    fi
+  done
+  if [[ "$ok" -eq 0 ]]; then
+    echo "ERROR: preflight SSH failed — BatchMode to .11 (LAN 192.168.1.11 or TS 100.105.194.96)" >&2
+    echo "Post 2026-08-22 host-key install: re-run even if an earlier attempt failed pre-key." >&2
+    return 91
+  fi
+  return 0
+}
+
+_preflight_gh() {
+  if [[ "${HERMES_UPLOAD_TIP_FROM_CALLER:-1}" != "1" ]]; then
+    return 0
+  fi
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "ERROR: gh not installed — needed to upload private moltbot tip tarball" >&2
+    echo "Install: brew install gh && gh auth login" >&2
+    return 92
+  fi
+  if ! gh auth status >/dev/null 2>&1; then
+    echo "ERROR: gh not authenticated — run: gh auth login" >&2
+    return 93
+  fi
+  echo "OK preflight gh auth"
+  return 0
+}
+
 _notify "Hermes UNBLOCK" "Public land (direct .11 + gh tarball upload)…"
 
 if ! _fetch_vendor; then
@@ -98,6 +133,17 @@ fi
 if [[ ! -f "$VIA" ]]; then
   [[ -f "$BEACON" ]] && bash "$BEACON" failed --source "$SOURCE" --detail "missing via-ssh script" || true
   exit 1
+fi
+
+if ! _preflight_ssh; then
+  RC=$?
+  [[ -f "$BEACON" ]] && bash "$BEACON" failed --source "$SOURCE" --detail "preflight SSH failed rc=$RC" || true
+  exit "$RC"
+fi
+if ! _preflight_gh; then
+  RC=$?
+  [[ -f "$BEACON" ]] && bash "$BEACON" failed --source "$SOURCE" --detail "preflight gh failed rc=$RC" || true
+  exit "$RC"
 fi
 
 if [[ "${HERMES_PREFER_DIRECT_HOST}" == "1" ]]; then
