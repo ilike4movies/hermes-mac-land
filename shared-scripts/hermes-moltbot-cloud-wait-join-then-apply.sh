@@ -31,7 +31,6 @@ _is_valid_script() {
   [[ -s "$f" ]] || return 1
   head -1 "$f" | grep -q '^#!/' || return 1
   grep -q '^PLACEHOLDER$' "$f" 2>/dev/null && return 1
-  # reject accidental base64-stub pushes (literal IyEvdXNy... not shebang)
   head -1 "$f" | grep -q '^IyE' && return 1
   return 0
 }
@@ -68,7 +67,6 @@ _refresh_public_vendor() {
         bn="$(basename "$f")"
         install -m 0755 "$tmpdir/$bn" "$SCRIPT_DIR/$bn"
       done
-      # legacy dest names used by bootstrap
       install -m 0755 "$tmpdir/hermes-moltbot-cloud-bridge-secrets-from-env.sh" "$SCRIPT_DIR/bridge-secrets-from-env.sh" 2>/dev/null || true
       rm -rf "$tmpdir"
       echo "$(date -u +%H:%M:%S) OK refreshed vendor (${#VENDOR_FILES[@]} scripts) from $base"
@@ -82,14 +80,12 @@ _refresh_public_vendor() {
 
 reload_secrets() {
   if [[ -x "$SCRIPT_DIR/bridge-secrets-from-env.sh" ]]; then
-    # shellcheck disable=SC1091
     bash "$SCRIPT_DIR/bridge-secrets-from-env.sh" >/dev/null 2>&1 || true
   elif [[ -x "$SCRIPT_DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" ]]; then
     bash "$SCRIPT_DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" >/dev/null 2>&1 || true
   fi
   if [[ -f "$SECRETS_ENV" ]]; then
-    set -a; # shellcheck disable=SC1090
-    source "$SECRETS_ENV"; set +a
+    set -a; source "$SECRETS_ENV"; set +a
   fi
   if [[ -z "${TS_AUTHKEY:-}" && -f "$TS_KEY_FILE" ]]; then
     TS_AUTHKEY="$(tr -d '\r\n' < "$TS_KEY_FILE")"
@@ -127,7 +123,7 @@ _reachable() {
   local host="$1"
   ping -c 1 -W 2 "$host" >/dev/null 2>&1 && return 0
   timeout 2 bash -c "echo >/dev/tcp/$host/22" 2>/dev/null && return 0
-  return 0
+  return 1
 }
 
 _ensure_supervisor() {
