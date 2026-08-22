@@ -1,1 +1,1 @@
-$LOAD_FROM=/tmp/final_push_args.json:files[0].content
+$LOAD_FROM=/tmp/push-DTL.command
