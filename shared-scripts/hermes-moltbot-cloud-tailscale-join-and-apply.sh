@@ -1,1 +1,211 @@
-IyEvdXNyL2Jpbi9lbnYgYmFzaAojIGhlcm1lcy1tb2x0Ym90LWNsb3VkLXRhaWxzY2FsZS1qb2luLWFuZC1hcHBseS5zaCDigJQgQ2xvdWQgQ3Vyc29yIHBhdGggdG8gam9pbiBUYWlsc2NhbGUgKyBsYW5kIHRpcAojCiMgUGF0aHM6CiMgICBBKSBUU19BVVRIS0VZIHNldCDihpIgam9pbiB3aXRoIGF1dGhrZXksIHRoZW4gdmlhLXNzaCBzdXJnaWNhbCBsYW5kCiMgICBCKSBBbHJlYWR5IGF1dGhlbnRpY2F0ZWQgKGludGVyYWN0aXZlIGxvZ2luIGFwcHJvdmVkKSDihpIgc2tpcCBqb2luLCB2aWEtc3NoIGxhbmQKIyAgIEMpIC0td2FpdC1sb2dpbiDihpIgcHJpbnQgQXV0aFVSTCBhbmQgd2FpdCB1bnRpbCBCYWNrZW5kU3RhdGU9UnVubmluZywgdGhlbiBsYW5kCiMKIyBNaWQtd2FpdCBzZWNyZXQgcmVsb2FkIChjbG91ZCBhZ2VudHMpOiBpZiBzZWNyZXRzIGFyZSBpbmplY3RlZCBhZnRlciBzdGFydCwgdGhleQojIG1heSBhcHBlYXIgaW4gSEVSTUVTX0NMT1VEX1NFQ1JFVFNfRU5WIC8gVFNfQVVUSEtFWSBmaWxlIHBhdGhzIHJhdGhlciB0aGFuIHRoZQojIGZyb3plbiBwcm9jZXNzIGVudmlyb25tZW50LiBSZWxvYWRlZCBlYWNoIHdhaXQgdGljay4KIwojIFVzYWdlOgojICAgVFNfQVVUSEtFWT10c2tleS1hdXRoLS4uLiBiYXNoIHNoYXJlZC1zY3JpcHRzL2hlcm1lcy1tb2x0Ym90LWNsb3VkLXRhaWxzY2FsZS1qb2luLWFuZC1hcHBseS5zaAojICAgYmFzaCBzaGFyZWQtc2NyaXB0cy9oZXJtZXMtbW9sdGJvdC1jbG91ZC10YWlsc2NhbGUtam9pbi1hbmQtYXBwbHkuc2ggLS1hbHJlYWR5LXVwCiMgICBiYXNoIHNoYXJlZC1zY3JpcHRzL2hlcm1lcy1tb2x0Ym90LWNsb3VkLXRhaWxzY2FsZS1qb2luLWFuZC1hcHBseS5zaCAtLXdhaXQtbG9naW4KIyAgIGJhc2ggc2hhcmVkLXNjcmlwdHMvaGVybWVzLW1vbHRib3QtY2xvdWQtdGFpbHNjYWxlLWpvaW4tYW5kLWFwcGx5LnNoIC0tZHJ5LXJ1bgojCiMgRG8gbm90IHVzZSBTbGFjayByb2NrZXRzLiBEbyBub3QgZ2l0IHJlc2V0IC0taGFyZCAvb3B0L21vbHRib3QuCnNldCAtZXVvIHBpcGVmYWlsCgpTQ1JJUFRfRElSPSIkKGNkICIkKGRpcm5hbWUgIiQwIikiICYmIHB3ZCkiCkpVTVBfSE9TVD0iJHtIRVJNRVNfSlVNUF9IT1NUOi0xMDAuOTIuMTQ3LjYxfSIKSlVNUF9TU0g9IiR7SEVSTUVTX0pVTVBfU1NIOi1pbGlrZTRAJHtKVU1QX0hPU1R9fSIKV0FJVF9TRUNTPSIke0hFUk1FU19UQUlMU0NBTEVfV0FJVF9TRUNTOi05MH0iCkxPR0lOX1dBSVRfU0VDUz0iJHtIRVJNRVNfVEFJTFNDQUxFX0xPR0lOX1dBSVRfU0VDUzotMzYwMH0iClNPQ0s9IiR7SEVSTUVTX1RBSUxTQ0FMRV9TT0NLRVQ6LS92YXIvcnVuL3RhaWxzY2FsZS90YWlsc2NhbGVkLnNvY2t9IgpTRUNSRVRTX0VOVj0iJHtIRVJNRVNfQ0xPVURfU0VDUkVUU19FTlY6LS90bXAvaGVybWVzLWNsb3VkLWFwcGx5L3NlY3JldHMuZW52fSIKVFNfS0VZX0ZJTEU9IiR7SEVSTUVTX1RTX0FVVEhLRVlfRklMRTotL3RtcC9oZXJtZXMtY2xvdWQtYXBwbHkvdHMtYXV0aGtleX0iCkpVTVBfS0VZX0ZJTEU9IiR7SEVSTUVTX0pVTVBfU1NIX0tFWV9GSUxFOi0vdG1wL2hlcm1lcy1jbG91ZC1hcHBseS9qdW1wLXNzaC1rZXl9IgpIT1NUX0tFWV9GSUxFPSIke0hFUk1FU19IT1NUX1NTSF9LRVlfRklMRTotL3RtcC9oZXJtZXMtY2xvdWQtYXBwbHkvaG9zdC1zc2gta2V5fSIKRFJZX1JVTj0wCkFMUkVBRFlfVVA9MApXQUlUX0xPR0lOPTAKCndoaWxlIFtbICQjIC1ndCAwIF1dOyBkbwogIGNhc2UgIiQxIiBpbgogICAgLS1kcnktcnVuKSBEUllfUlVOPTE7IHNoaWZ0IDs7CiAgICAtLWFscmVhZHktdXApIEFMUkVBRFlfVVA9MTsgc2hpZnQgOzsKICAgIC0td2FpdC1sb2dpbikgV0FJVF9MT0dJTj0xOyBzaGlmdCA7OwogICAgLS13YWl0LXNlY3MpIFdBSVRfU0VDUz0iJDIiOyBzaGlmdCAyIDs7CiAgICAtLXNzaCkgSlVNUF9TU0g9IiQyIjsgc2hpZnQgMiA7OwogICAgLWh8LS1oZWxwKQogICAgICBzZWQgLW4gJzEsMzJwJyAiJDAiCiAgICAgIGV4aXQgMAogICAgICA7OwogICAgKikKICAgICAgZWNobyAidW5rbm93biBhcmc6ICQxIiA+JjIKICAgICAgZXhpdCAyCiAgICAgIDs7CiAgZXNhYwpkb25lCgplY2hvICI9PSBjbG91ZC10YWlsc2NhbGUtam9pbi1hbmQtYXBwbHkgZHJ5X3J1bj0kRFJZX1JVTiBhbHJlYWR5X3VwPSRBTFJFQURZX1VQIHdhaXRfbG9naW49JFdBSVRfTE9HSU4ganVtcD0kSlVNUF9TU0ggPT0iCgppZiBbWyAiJERSWV9SVU4iIC1lcSAxIF1dOyB0aGVuCiAgZWNobyAiRFJZLVJVTjogd291bGQgaW5zdGFsbC9qb2luIFRhaWxzY2FsZSAoYXV0aGtleSBvciBpbnRlcmFjdGl2ZSksIHdhaXQgZm9yICRKVU1QX0hPU1QsIHRoZW46IgogIGVjaG8gIiAgSEVSTUVTX0pVTVBfU1NIPSRKVU1QX1NTSCBiYXNoICRTQ1JJUFRfRElSL2hlcm1lcy1tb2x0Ym90LWNsb3VkLWFwcGx5LWluc3RhbGwtdmlhLXNzaC5zaCIKICBleGl0IDAKZmkKCnJlbG9hZF9jbG91ZF9zZWNyZXRzKCkgewogIGlmIFtbIC1mICIkU0VDUkVUU19FTlYiIF1dOyB0aGVuCiAgICAjIHNoZWxsY2hlY2sgZGlzYWJsZT1TQzEwOTAKICAgIHNldCAtYTsgc291cmNlICIkU0VDUkVUU19FTlYiOyBzZXQgK2EKICBmaQogIGlmIFtbIC16ICIke1RTX0FVVEhLRVk6LX0iICYmIC1mICIkVFNfS0VZX0ZJTEUiIF1dOyB0aGVuCiAgICBUU19BVVRIS0VZPSIkKHRyIC1kICdcclxuJyA8ICIkVFNfS0VZX0ZJTEUiKSIKICAgIGV4cG9ydCBUU19BVVRIS0VZCiAgZmkKICBpZiBbWyAteiAiJHtIRVJNRVNfSlVNUF9TU0hfUFJJVkFURV9LRVk6LX0iICYmIC1mICIkSlVNUF9LRVlfRklMRSIgXV07IHRoZW4KICAgIEhFUk1FU19KVU1QX1NTSF9QUklWQVRFX0tFWT0iJChjYXQgIiRKVU1QX0tFWV9GSUxFIikiCiAgICBleHBvcnQgSEVSTUVTX0pVTVBfU1NIX1BSSVZBVEVfS0VZCiAgZmkKfQoKdHMoKSB7CiAgaWYgW1sgLVMgIiRTT0NLIiBdXTsgdGhlbgogICAgc3VkbyAtbiB0YWlsc2NhbGUgLS1zb2NrZXQ9IiRTT0NLIiAiJEAiIDI+L2Rldi9udWxsIHx8IHRhaWxzY2FsZSAtLXNvY2tldD0iJFNPQ0siICIkQCIKICBlbHNlCiAgICBzdWRvIC1uIHRhaWxzY2FsZSAiJEAiIDI+L2Rldi9udWxsIHx8IHRhaWxzY2FsZSAiJEAiCiAgZmkKfQoKYmFja2VuZF9zdGF0ZSgpIHsKICB0cyBzdGF0dXMgLS1qc29uIDI+L2Rldi9udWxsIHwgcHl0aG9uMyAtYyAnaW1wb3J0IGpzb24sc3lzCnRyeToKICBkPWpzb24ubG9hZChzeXMuc3RkaW4pCiAgcHJpbnQoZC5nZXQoIkJhY2tlbmRTdGF0ZSIpIG9yICIiKQpleGNlcHQgRXhjZXB0aW9uOgogIHByaW50KCIiKQonIDI+L2Rldi9udWxsIHx8IHRydWUKfQoKaW5zdGFsbF90YWlsc2NhbGUoKSB7CiAgaWYgY29tbWFuZCAtdiB0YWlsc2NhbGUgPi9kZXYvbnVsbCAyPiYxOyB0aGVuCiAgICBlY2hvICJPSyB0YWlsc2NhbGUgYWxyZWFkeSBpbnN0YWxsZWQ6ICQoY29tbWFuZCAtdiB0YWlsc2NhbGUpIgogICAgcmV0dXJuIDAKICBmaQogIGVjaG8gIj09IGluc3RhbGxpbmcgVGFpbHNjYWxlID09IgogIGlmIFtbICIkKHVuYW1lIC1zKSIgIT0gIkxpbnV4IiBdXTsgdGhlbgogICAgZWNobyAiRVJST1I6IGF1dG8taW5zdGFsbCBvbmx5IGltcGxlbWVudGVkIGZvciBMaW51eCBjbG91ZCBhZ2VudHMiID4mMgogICAgZXhpdCAxCiAgZmkKICBjdXJsIC1mc1NMIGh0dHBzOi8vdGFpbHNjYWxlLmNvbS9pbnN0YWxsLnNoIHwgc2gKICBjb21tYW5kIC12IHRhaWxzY2FsZSA+L2Rldi9udWxsIDI+JjEKfQoKZW5zdXJlX2RhZW1vbigpIHsKICBpZiBwZ3JlcCAteCB0YWlsc2NhbGVkID4vZGV2L251bGwgMj4mMTsgdGhlbgogICAgcmV0dXJuIDAKICBmaQogIHN1ZG8gbWtkaXIgLXAgL3Zhci9ydW4vdGFpbHNjYWxlIC92YXIvbGliL3RhaWxzY2FsZSAvdmFyL2NhY2hlL3RhaWxzY2FsZQogIGlmIFtbIC1lIC9kZXYvbmV0L3R1biBdXTsgdGhlbgogICAgc3VkbyB0YWlsc2NhbGVkIC0tc3RhdGU9L3Zhci9saWIvdGFpbHNjYWxlL3RhaWxzY2FsZWQuc3RhdGUgLS1zb2NrZXQ9IiRTT0NLIiAtLXBvcnQ9NDE2NDEgPi90bXAvdGFpbHNjYWxlZC5sb2cgMj4mMSAmCiAgZWxzZQogICAgZWNobyAiV0FSTjogL2Rldi9uZXQvdHVuIG1pc3Npbmcg4oCUIHVzZXJzcGFjZSBuZXR3b3JraW5nIgogICAgc3VkbyB0YWlsc2NhbGVkIC0tdHVuPXVzZXJzcGFjZS1uZXR3b3JraW5nIC0tc3RhdGU9L3Zhci9saWIvdGFpbHNjYWxlL3RhaWxzY2FsZWQuc3RhdGUgLS1zb2NrZXQ9IiRTT0NLIiA+L3RtcC90YWlsc2NhbGVkLXVzZXJzcGFjZS5sb2cgMj4mMSAmCiAgZmkKICBzbGVlcCAyCn0KCmpvaW5fdGFpbHNjYWxlX2F1dGhrZXkoKSB7CiAgZWNobyAiPT0gam9pbmluZyBUYWlsc2NhbGUgbWVzaCB3aXRoIFRTX0FVVEhLRVkgPT0iCiAgdHMgdXAgLS1hdXRoa2V5PSIkVFNfQVVUSEtFWSIgLS1ob3N0bmFtZT0iJHtIRVJNRVNfVFNfSE9TVE5BTUU6LWN1cnNvci1jbG91ZC1oZXJtZXN9IiAtLWFjY2VwdC1yb3V0ZXM9dHJ1ZQogIHRzIHN0YXR1cyB8fCB0cnVlCn0KCndhaXRfZm9yX3J1bm5pbmcoKSB7CiAgbG9jYWwgbWF4PSIkMSIgaT0wIHN0CiAgZWNobyAiPT0gd2FpdGluZyB1cCB0byAke21heH1zIGZvciBCYWNrZW5kU3RhdGU9UnVubmluZyA9PSIKICB3aGlsZSAoKCBpIDwgbWF4ICkpOyBkbwogICAgcmVsb2FkX2Nsb3VkX3NlY3JldHMKICAgIHN0PSIkKGJhY2tlbmRfc3RhdGUpIgogICAgZWNobyAiICB0PSR7aX1zIEJhY2tlbmRTdGF0ZT0ke3N0Oi11bmtub3dufSBhdXRoa2V5PSR7VFNfQVVUSEtFWTorc2V0fSIKICAgIGlmIFtbICIkc3QiID09ICJSdW5uaW5nIiBdXTsgdGhlbgogICAgICByZXR1cm4gMAogICAgZmkKICAgICMgTWlkLXdhaXQ6IGlmIGF1dGhrZXkgYXBwZWFycywgam9pbiBpbW1lZGlhdGVseSAoc2VjcmV0cyBpbmplY3RlZCBhZnRlciBzdGFydCkuCiAgICBpZiBbWyAtbiAiJHtUU19BVVRIS0VZOi19IiAmJiAiJHN0IiAhPSAiUnVubmluZyIgXV07IHRoZW4KICAgICAgZWNobyAiICBtaWQtd2FpdCBUU19BVVRIS0VZIHByZXNlbnQg4oCUIGpvaW5pbmciCiAgICAgIGpvaW5fdGFpbHNjYWxlX2F1dGhrZXkgfHwgdHJ1ZQogICAgZmkKICAgIGlmIFtbICIkc3QiID09ICJOZWVkc0xvZ2luIiB8fCAiJHN0IiA9PSAiTm9TdGF0ZSIgfHwgLXogIiRzdCIgXV07IHRoZW4KICAgICAgdHMgc3RhdHVzIDI+JjEgfCBzZWQgLW4gJzEsOHAnIHx8IHRydWUKICAgIGZpCiAgICBzbGVlcCA1CiAgICBpPSQoKGkgKyA1KSkKICBkb25lCiAgZWNobyAiRVJST1I6IFRhaWxzY2FsZSBub3QgUnVubmluZyBhZnRlciAke21heH1zIiA+JjIKICByZXR1cm4gMQp9Cgp3YWl0X2Zvcl9qdW1wKCkgewogIGxvY2FsIGkKICBlY2hvICI9PSB3YWl0aW5nIHVwIHRvICR7V0FJVF9TRUNTfXMgZm9yIGp1bXAgJEpVTVBfSE9TVCA9PSIKICBmb3IgKChpPTA7IGk8V0FJVF9TRUNTOyBpKz0zKSk7IGRvCiAgICBpZiBwaW5nIC1jIDEgLVcgMiAiJEpVTVBfSE9TVCIgPi9kZXYvbnVsbCAyPiYxOyB0aGVuCiAgICAgIGVjaG8gIk9LIHBpbmcgJEpVTVBfSE9TVCBhZnRlciAke2l9cyIKICAgICAgcmV0dXJuIDAKICAgIGZpCiAgICBpZiB0aW1lb3V0IDIgYmFzaCAtYyAiZWNobyA+L2Rldi90Y3AvJHtKVU1QX0hPU1R9LzIyIiAyPi9kZXYvbnVsbDsgdGhlbgogICAgICBlY2hvICJPSyB0Y3AvMjIgJEpVTVBfSE9TVCBhZnRlciAke2l9cyIKICAgICAgcmV0dXJuIDAKICAgIGZpCiAgICBzbGVlcCAzCiAgZG9uZQogIGVjaG8gIkVSUk9SOiBqdW1wICRKVU1QX0hPU1Qgbm90IHJlYWNoYWJsZSBhZnRlciAke1dBSVRfU0VDU31zIiA+JjIKICByZXR1cm4gMQp9CgpyZWxvYWRfY2xvdWRfc2VjcmV0cwppbnN0YWxsX3RhaWxzY2FsZQplbnN1cmVfZGFlbW9uCgpzdF9ub3c9IiQoYmFja2VuZF9zdGF0ZSkiCmlmIFtbICIkQUxSRUFEWV9VUCIgLWVxIDEgfHwgIiRzdF9ub3ciID09ICJSdW5uaW5nIiBdXTsgdGhlbgogIGVjaG8gIk9LIFRhaWxzY2FsZSBhbHJlYWR5IFJ1bm5pbmcgKG9yIC0tYWxyZWFkeS11cCk7IHNraXBwaW5nIGpvaW4iCmVsaWYgW1sgLW4gIiR7VFNfQVVUSEtFWTotfSIgXV07IHRoZW4KICBqb2luX3RhaWxzY2FsZV9hdXRoa2V5CiAgd2FpdF9mb3JfcnVubmluZyAiJFdBSVRfU0VDUyIgfHwgdHJ1ZQplbGlmIFtbICIkV0FJVF9MT0dJTiIgLWVxIDEgXV07IHRoZW4KICBlY2hvICI9PSBpbnRlcmFjdGl2ZSBsb2dpbiBwYXRoOiBzdGFydGluZyB0YWlsc2NhbGUgdXAgKGFwcHJvdmUgQXV0aFVSTCkgPT0iCiAgdGltZW91dCA4IHN1ZG8gdGFpbHNjYWxlIC0tc29ja2V0PSIkU09DSyIgdXAgLS1ob3N0bmFtZT0iJHtIRVJNRVNfVFNfSE9TVE5BTUU6LWN1cnNvci1jbG91ZC1oZXJtZXN9IiAtLWFjY2VwdC1yb3V0ZXM9dHJ1ZSAyPiYxIHx8IHRydWUKICB0cyBzdGF0dXMgMj4mMSB8IHNlZCAtbiAnMSwxMnAnIHx8IHRydWUKICBBVVRIX1VSTD0iJCh0cyBzdGF0dXMgMj4mMSB8IGdyZXAgLW9FICdodHRwczovL2xvZ2luXC50YWlsc2NhbGVcLmNvbS9hL1thLXowLTldKycgfCBoZWFkIC0xIHx8IHRydWUpIgogIGlmIFtbIC1uICIkQVVUSF9VUkwiIF1dOyB0aGVuCiAgICBlY2hvICJBUFBST1ZFX1RISVNfVVJMPSRBVVRIX1VSTCIKICAgIHByaW50ZiAnJXNcbicgIiRBVVRIX1VSTCIgPiIke1NDUklQVF9ESVJ9L0NVUlJFTlRfQVVUSFVSTC50eHQiCiAgZmkKICBUU19VUF9QSURGSUxFPSIke1NDUklQVF9ESVJ9L3RhaWxzY2FsZS11cC13YWl0LnBpZCIKICBpZiBbWyAtZiAiJFRTX1VQX1BJREZJTEUiIF1dICYmIGtpbGwgLTAgIiQoY2F0ICIkVFNfVVBfUElERklMRSIpIiAyPi9kZXYvbnVsbDsgdGhlbgogICAgZWNobyAiT0sgdGFpbHNjYWxlIHVwIHdhaXQgYWxyZWFkeSBydW5uaW5nIHBpZD0kKGNhdCAiJFRTX1VQX1BJREZJTEUiKSIKICBlbHNlCiAgICBub2h1cCBzdWRvIHRhaWxzY2FsZSAtLXNvY2tldD0iJFNPQ0siIHVwIC0tdGltZW91dD0iJHtMT0dJTl9XQUlUX1NFQ1N9cyIgLS1ob3N0bmFtZT0iJHtIRVJNRVNfVFNfSE9TVE5BTUU6LWN1cnNvci1jbG91ZC1oZXJtZXN9IiAtLWFjY2VwdC1yb3V0ZXM9dHJ1ZSA+L3RtcC90YWlsc2NhbGUtdXAtd2FpdC5sb2cgMj4mMSAmCiAgICBlY2hvICQhID4iJFRTX1VQX1BJREZJTEUiCiAgICBlY2hvICJPSyBzdGFydGVkIHRhaWxzY2FsZSB1cCB3YWl0IHBpZD0kKGNhdCAiJFRTX1VQX1BJREZJTEUiKSIKICBmaQogIHdhaXRfZm9yX3J1bm5pbmcgIiRMT0dJTl9XQUlUX1NFQ1MiCmVsc2UKICBlY2hvICJFUlJPUjogVFNfQVVUSEtFWSB1bnNldCBhbmQgbm90IFJ1bm5pbmcuIFJlLXJ1biB3aXRoIFRTX0FVVEhLRVk9Li4uIG9yIC0td2FpdC1sb2dpbiAvIC0tYWxyZWFkeS11cCIgPiYyCiAgZXhpdCAyCmZpCgp3YWl0X2Zvcl9qdW1wCgpleHBvcnQgSEVSTUVTX0pVTVBfU1NIPSIkSlVNUF9TU0giCmJhc2ggIiRTQ1JJUFRfRElSL2hlcm1lcy1tb2x0Ym90LWNsb3VkLWFwcGx5LWluc3RhbGwtdmlhLXNzaC5zaCIKCmVjaG8gIk9LIGNsb3VkLXRhaWxzY2FsZS1qb2luLWFuZC1hcHBseSBmaW5pc2hlZCAoZXhwZWN0IE9LIElOVEVSUlVQVF9MQUJFTCBoZXJtZXMtbm93KSIKZXhpdCAwCg==
+#!/usr/bin/env bash
+# hermes-moltbot-cloud-tailscale-join-and-apply.sh — Cloud Cursor path to join Tailscale + land tip
+#
+# Paths:
+#   A) TS_AUTHKEY set → join with authkey, then via-ssh surgical land
+#   B) Already authenticated (interactive login approved) → skip join, via-ssh land
+#   C) --wait-login → print AuthURL and wait until BackendState=Running, then land
+#
+# Mid-wait secret reload (cloud agents): if secrets are injected after start, they
+# may appear in HERMES_CLOUD_SECRETS_ENV / TS_AUTHKEY file paths rather than the
+# frozen process environment. Reloaded each wait tick.
+#
+# Usage:
+#   TS_AUTHKEY=tskey-auth-... bash shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh
+#   bash shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh --already-up
+#   bash shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh --wait-login
+#   bash shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh --dry-run
+#
+# Do not use Slack rockets. Do not git reset --hard /opt/moltbot.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+JUMP_HOST="${HERMES_JUMP_HOST:-100.92.147.61}"
+JUMP_SSH="${HERMES_JUMP_SSH:-ilike4@${JUMP_HOST}}"
+WAIT_SECS="${HERMES_TAILSCALE_WAIT_SECS:-90}"
+LOGIN_WAIT_SECS="${HERMES_TAILSCALE_LOGIN_WAIT_SECS:-3600}"
+SOCK="${HERMES_TAILSCALE_SOCKET:-/var/run/tailscale/tailscaled.sock}"
+SECRETS_ENV="${HERMES_CLOUD_SECRETS_ENV:-/tmp/hermes-cloud-apply/secrets.env}"
+TS_KEY_FILE="${HERMES_TS_AUTHKEY_FILE:-/tmp/hermes-cloud-apply/ts-authkey}"
+JUMP_KEY_FILE="${HERMES_JUMP_SSH_KEY_FILE:-/tmp/hermes-cloud-apply/jump-ssh-key}"
+HOST_KEY_FILE="${HERMES_HOST_SSH_KEY_FILE:-/tmp/hermes-cloud-apply/host-ssh-key}"
+DRY_RUN=0
+ALREADY_UP=0
+WAIT_LOGIN=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) DRY_RUN=1; shift ;;
+    --already-up) ALREADY_UP=1; shift ;;
+    --wait-login) WAIT_LOGIN=1; shift ;;
+    --wait-secs) WAIT_SECS="$2"; shift 2 ;;
+    --ssh) JUMP_SSH="$2"; shift 2 ;;
+    -h|--help)
+      sed -n '1,32p' "$0"
+      exit 0
+      ;;
+    *)
+      echo "unknown arg: $1" >&2
+      exit 2
+      ;;
+  esac
+done
+
+echo "== cloud-tailscale-join-and-apply dry_run=$DRY_RUN already_up=$ALREADY_UP wait_login=$WAIT_LOGIN jump=$JUMP_SSH =="
+
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "DRY-RUN: would install/join Tailscale (authkey or interactive), wait for $JUMP_HOST, then:"
+  echo "  HERMES_JUMP_SSH=$JUMP_SSH bash $SCRIPT_DIR/hermes-moltbot-cloud-apply-install-via-ssh.sh"
+  exit 0
+fi
+
+reload_cloud_secrets() {
+  if [[ -f "$SECRETS_ENV" ]]; then
+    # shellcheck disable=SC1090
+    set -a; source "$SECRETS_ENV"; set +a
+  fi
+  if [[ -z "${TS_AUTHKEY:-}" && -f "$TS_KEY_FILE" ]]; then
+    TS_AUTHKEY="$(tr -d '\r\n' < "$TS_KEY_FILE")"
+    export TS_AUTHKEY
+  fi
+  if [[ -z "${HERMES_JUMP_SSH_PRIVATE_KEY:-}" && -f "$JUMP_KEY_FILE" ]]; then
+    HERMES_JUMP_SSH_PRIVATE_KEY="$(cat "$JUMP_KEY_FILE")"
+    export HERMES_JUMP_SSH_PRIVATE_KEY
+  fi
+}
+
+ts() {
+  if [[ -S "$SOCK" ]]; then
+    sudo -n tailscale --socket="$SOCK" "$@" 2>/dev/null || tailscale --socket="$SOCK" "$@"
+  else
+    sudo -n tailscale "$@" 2>/dev/null || tailscale "$@"
+  fi
+}
+
+backend_state() {
+  ts status --json 2>/dev/null | python3 -c 'import json,sys
+try:
+  d=json.load(sys.stdin)
+  print(d.get("BackendState") or "")
+except Exception:
+  print("")
+' 2>/dev/null || true
+}
+
+install_tailscale() {
+  if command -v tailscale >/dev/null 2>&1; then
+    echo "OK tailscale already installed: $(command -v tailscale)"
+    return 0
+  fi
+  echo "== installing Tailscale =="
+  if [[ "$(uname -s)" != "Linux" ]]; then
+    echo "ERROR: auto-install only implemented for Linux cloud agents" >&2
+    exit 1
+  fi
+  curl -fsSL https://tailscale.com/install.sh | sh
+  command -v tailscale >/dev/null 2>&1
+}
+
+ensure_daemon() {
+  if pgrep -x tailscaled >/dev/null 2>&1; then
+    return 0
+  fi
+  sudo mkdir -p /var/run/tailscale /var/lib/tailscale /var/cache/tailscale
+  if [[ -e /dev/net/tun ]]; then
+    sudo tailscaled --state=/var/lib/tailscale/tailscaled.state --socket="$SOCK" --port=41641 >/tmp/tailscaled.log 2>&1 &
+  else
+    echo "WARN: /dev/net/tun missing — userspace networking"
+    sudo tailscaled --tun=userspace-networking --state=/var/lib/tailscale/tailscaled.state --socket="$SOCK" >/tmp/tailscaled-userspace.log 2>&1 &
+  fi
+  sleep 2
+}
+
+join_tailscale_authkey() {
+  echo "== joining Tailscale mesh with TS_AUTHKEY =="
+  ts up --authkey="$TS_AUTHKEY" --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true
+  ts status || true
+}
+
+wait_for_running() {
+  local max="$1" i=0 st
+  echo "== waiting up to ${max}s for BackendState=Running =="
+  while (( i < max )); do
+    reload_cloud_secrets
+    st="$(backend_state)"
+    echo "  t=${i}s BackendState=${st:-unknown} authkey=${TS_AUTHKEY:+set}"
+    if [[ "$st" == "Running" ]]; then
+      return 0
+    fi
+    # Mid-wait: if authkey appears, join immediately (secrets injected after start).
+    if [[ -n "${TS_AUTHKEY:-}" && "$st" != "Running" ]]; then
+      echo "  mid-wait TS_AUTHKEY present — joining"
+      join_tailscale_authkey || true
+    fi
+    if [[ "$st" == "NeedsLogin" || "$st" == "NoState" || -z "$st" ]]; then
+      ts status 2>&1 | sed -n '1,8p' || true
+    fi
+    sleep 5
+    i=$((i + 5))
+  done
+  echo "ERROR: Tailscale not Running after ${max}s" >&2
+  return 1
+}
+
+wait_for_jump() {
+  local i
+  echo "== waiting up to ${WAIT_SECS}s for jump $JUMP_HOST =="
+  for ((i=0; i<WAIT_SECS; i+=3)); do
+    if ping -c 1 -W 2 "$JUMP_HOST" >/dev/null 2>&1; then
+      echo "OK ping $JUMP_HOST after ${i}s"
+      return 0
+    fi
+    if timeout 2 bash -c "echo >/dev/tcp/${JUMP_HOST}/22" 2>/dev/null; then
+      echo "OK tcp/22 $JUMP_HOST after ${i}s"
+      return 0
+    fi
+    sleep 3
+  done
+  echo "ERROR: jump $JUMP_HOST not reachable after ${WAIT_SECS}s" >&2
+  return 1
+}
+
+reload_cloud_secrets
+install_tailscale
+ensure_daemon
+
+st_now="$(backend_state)"
+if [[ "$ALREADY_UP" -eq 1 || "$st_now" == "Running" ]]; then
+  echo "OK Tailscale already Running (or --already-up); skipping join"
+elif [[ -n "${TS_AUTHKEY:-}" ]]; then
+  join_tailscale_authkey
+  wait_for_running "$WAIT_SECS" || true
+elif [[ "$WAIT_LOGIN" -eq 1 ]]; then
+  echo "== interactive login path: starting tailscale up (approve AuthURL) =="
+  timeout 8 sudo tailscale --socket="$SOCK" up --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true 2>&1 || true
+  ts status 2>&1 | sed -n '1,12p' || true
+  AUTH_URL="$(ts status 2>&1 | grep -oE 'https://login\.tailscale\.com/a/[a-z0-9]+' | head -1 || true)"
+  if [[ -n "$AUTH_URL" ]]; then
+    echo "APPROVE_THIS_URL=$AUTH_URL"
+    printf '%s\n' "$AUTH_URL" >"${SCRIPT_DIR}/CURRENT_AUTHURL.txt"
+  fi
+  TS_UP_PIDFILE="${SCRIPT_DIR}/tailscale-up-wait.pid"
+  if [[ -f "$TS_UP_PIDFILE" ]] && kill -0 "$(cat "$TS_UP_PIDFILE")" 2>/dev/null; then
+    echo "OK tailscale up wait already running pid=$(cat "$TS_UP_PIDFILE")"
+  else
+    nohup sudo tailscale --socket="$SOCK" up --timeout="${LOGIN_WAIT_SECS}s" --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true >/tmp/tailscale-up-wait.log 2>&1 &
+    echo $! >"$TS_UP_PIDFILE"
+    echo "OK started tailscale up wait pid=$(cat "$TS_UP_PIDFILE")"
+  fi
+  wait_for_running "$LOGIN_WAIT_SECS"
+else
+  echo "ERROR: TS_AUTHKEY unset and not Running. Re-run with TS_AUTHKEY=... or --wait-login / --already-up" >&2
+  exit 2
+fi
+
+wait_for_jump
+
+export HERMES_JUMP_SSH="$JUMP_SSH"
+bash "$SCRIPT_DIR/hermes-moltbot-cloud-apply-install-via-ssh.sh"
+
+echo "OK cloud-tailscale-join-and-apply finished (expect OK INTERRUPT_LABEL hermes-now)"
+exit 0
