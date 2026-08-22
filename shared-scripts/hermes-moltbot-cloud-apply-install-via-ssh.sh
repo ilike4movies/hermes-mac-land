@@ -5,6 +5,9 @@
 # Fallback: if jump BatchMode fails, SSH → .11 directly and run surgical-apply
 # (Mac Hermes on home LAN / Tailscale can reach .11 even when jump is down).
 #
+# Direct path prefers Mac-side `gh api` tarball upload so .11 never needs private
+# git clone credentials. Set HERMES_UPLOAD_TIP_FROM_CALLER=0 to force host clone.
+#
 # Optional: HERMES_JUMP_SSH_PRIVATE_KEY / HERMES_HOST_SSH_PRIVATE_KEY (PEM) for BatchMode.
 # Uses separate identity files when both keys are provided (jump vs direct .11).
 #
@@ -28,6 +31,9 @@ TMP_HOST_KEY=""
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BEACON="$SCRIPT_DIR/hermes-moltbot-land-beacon.sh"
 ALLOW_DIRECT_HOST="${HERMES_ALLOW_DIRECT_HOST:-1}"
+UPLOAD_TIP_FROM_CALLER="${HERMES_UPLOAD_TIP_FROM_CALLER:-1}"
+MOLTBOT_OWNER_REPO="${HERMES_MOLTBOT_OWNER_REPO:-ilike4movies/moltbot}"
+TIP_LOCAL_STAGING="${HERMES_TIP_LOCAL_STAGING:-/tmp/moltbot-main-tip-src-caller}"
 KEY_DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 JUMP_KEY_FILE="${HERMES_JUMP_SSH_KEY_FILE:-$KEY_DIR/jump-ssh-key}"
 HOST_KEY_FILE="${HERMES_HOST_SSH_KEY_FILE:-$KEY_DIR/host-ssh-key}"
@@ -127,6 +133,74 @@ _ssh_ok() {
       -o StrictHostKeyChecking=accept-new \
       "$target" 'echo OK_SSH; hostname' >/dev/null 2>&1
   fi
+}
+
+_tip_staged_ok() {
+  local dir="${1:-/tmp/moltbot-main-tip-src}"
+  [[ -f "$dir/shared-scripts/cos-linear-dispatcher.py" ]] \
+    && [[ -f "$dir/shared-scripts/hermes-moltbot-surgical-apply.sh" ]]
+}
+
+_fetch_moltbot_tip_local() {
+  local dest="$1"
+  local extract="/tmp/moltbot-tarball-extract-$$"
+  rm -rf "$dest" "$extract"
+  mkdir -p "$extract"
+
+  if command -v gh >/dev/null 2>&1; then
+    echo "== fetching moltbot tip via gh tarball (caller) =="
+    if gh api "repos/${MOLTBOT_OWNER_REPO}/tarball/main" | tar -xz -C "$extract"; then
+      local inner
+      inner="$(find "$extract" -mindepth 1 -maxdepth 1 -type d | head -1)"
+      if [[ -n "$inner" ]] && _tip_staged_ok "$inner"; then
+        mv "$inner" "$dest"
+        rm -rf "$extract"
+        echo "OK tip fetched locally via gh → $dest"
+        return 0
+      fi
+      echo "WARN: gh tarball missing expected stack files" >&2
+    else
+      echo "WARN: gh api tarball failed (need: gh auth login?)" >&2
+    fi
+  else
+    echo "WARN: gh not installed on caller; cannot tarball-upload tip" >&2
+  fi
+
+  rm -rf "$extract" "$dest"
+  return 1
+}
+
+_upload_tip_to_host() {
+  local target="$1"
+  local tip_dir="$2"
+  shift 2
+  local -a idargs=("$@")
+  local remote_clone="/tmp/moltbot-main-tip-src"
+
+  if ! _tip_staged_ok "$tip_dir"; then
+    echo "ERROR: local tip dir invalid: $tip_dir" >&2
+    return 1
+  fi
+
+  echo "== uploading tip tarball to $target:$remote_clone =="
+  local remote_unpack="rm -rf '$remote_clone' && mkdir -p '$remote_clone' && tar -xzf - -C '$remote_clone'"
+  if [[ ${#idargs[@]} -gt 0 ]]; then
+    if tar -C "$tip_dir" -czf - . | ssh -o BatchMode=yes -o ConnectTimeout=60 \
+        -o ServerAliveInterval=15 -o ServerAliveCountMax=8 \
+        "${idargs[@]}" "$target" "$remote_unpack"; then
+      echo "OK tip uploaded to $target:$remote_clone"
+      return 0
+    fi
+  else
+    if tar -C "$tip_dir" -czf - . | ssh -o BatchMode=yes -o ConnectTimeout=60 \
+        -o ServerAliveInterval=15 -o ServerAliveCountMax=8 \
+        "$target" "$remote_unpack"; then
+      echo "OK tip uploaded to $target:$remote_clone"
+      return 0
+    fi
+  fi
+  echo "WARN: tip tarball upload failed" >&2
+  return 1
 }
 
 _run_on_jump() {
@@ -243,13 +317,14 @@ _run_on_host() {
     ssh -o BatchMode=yes -o ConnectTimeout=20 \
       -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
       "${idargs[@]}" "$target" \
-      env HERMES_MOLTBOT_REMOTE="$REMOTE_URL" HERMES_MOLTBOT_CLONE_TIMEOUT_SEC="$CLONE_TIMEOUT_SEC" bash -s <<'REMOTE'
+      env HERMES_SKIP_TIP_CLONE="${HERMES_SKIP_TIP_CLONE:-0}" HERMES_MOLTBOT_REMOTE="$REMOTE_URL" HERMES_MOLTBOT_CLONE_TIMEOUT_SEC="$CLONE_TIMEOUT_SEC" bash -s <<'REMOTE'
 set -euo pipefail
 REPO="${HERMES_MOLTBOT_REPO:-/opt/moltbot}"
 REMOTE_URL="${HERMES_MOLTBOT_REMOTE:-git@github.com:ilike4movies/moltbot.git}"
 HTTPS_URL="https://github.com/ilike4movies/moltbot.git"
 CLONE="/tmp/moltbot-main-tip-src"
 CLONE_TIMEOUT_SEC="${HERMES_MOLTBOT_CLONE_TIMEOUT_SEC:-180}"
+SKIP_CLONE="${HERMES_SKIP_TIP_CLONE:-0}"
 export GIT_TERMINAL_PROMPT=0
 cd "$REPO" || { echo "ERROR: missing $REPO" >&2; exit 1; }
 
@@ -277,27 +352,32 @@ _clone_with_timeout() {
   fi
 }
 
-rm -rf "$CLONE"
-if ! _clone_with_timeout "$REMOTE_URL" "$CLONE"; then
-  echo "WARN: SSH clone failed/timed out; trying HTTPS"
-  if ! _clone_with_timeout "$HTTPS_URL" "$CLONE"; then
-    echo "ERROR: tip clone failed on host" >&2
-    exit 1
+if [[ "$SKIP_CLONE" == "1" ]] && [[ -f "$CLONE/shared-scripts/cos-linear-dispatcher.py" ]]; then
+  echo "OK using pre-uploaded tip at $CLONE (HERMES_SKIP_TIP_CLONE=1)"
+else
+  rm -rf "$CLONE"
+  if ! _clone_with_timeout "$REMOTE_URL" "$CLONE"; then
+    echo "WARN: SSH clone failed/timed out; trying HTTPS"
+    if ! _clone_with_timeout "$HTTPS_URL" "$CLONE"; then
+      echo "ERROR: tip clone failed on host" >&2
+      exit 1
+    fi
   fi
 fi
-bash "$CLONE/shared-scripts/hermes-moltbot-surgical-apply.sh"
+HERMES_SKIP_TIP_CLONE=1 bash "$CLONE/shared-scripts/hermes-moltbot-surgical-apply.sh"
 REMOTE
   else
     ssh -o BatchMode=yes -o ConnectTimeout=20 \
       -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
       "$target" \
-      env HERMES_MOLTBOT_REMOTE="$REMOTE_URL" HERMES_MOLTBOT_CLONE_TIMEOUT_SEC="$CLONE_TIMEOUT_SEC" bash -s <<'REMOTE'
+      env HERMES_SKIP_TIP_CLONE="${HERMES_SKIP_TIP_CLONE:-0}" HERMES_MOLTBOT_REMOTE="$REMOTE_URL" HERMES_MOLTBOT_CLONE_TIMEOUT_SEC="$CLONE_TIMEOUT_SEC" bash -s <<'REMOTE'
 set -euo pipefail
 REPO="${HERMES_MOLTBOT_REPO:-/opt/moltbot}"
 REMOTE_URL="${HERMES_MOLTBOT_REMOTE:-git@github.com:ilike4movies/moltbot.git}"
 HTTPS_URL="https://github.com/ilike4movies/moltbot.git"
 CLONE="/tmp/moltbot-main-tip-src"
 CLONE_TIMEOUT_SEC="${HERMES_MOLTBOT_CLONE_TIMEOUT_SEC:-180}"
+SKIP_CLONE="${HERMES_SKIP_TIP_CLONE:-0}"
 export GIT_TERMINAL_PROMPT=0
 cd "$REPO" || { echo "ERROR: missing $REPO" >&2; exit 1; }
 
@@ -325,15 +405,19 @@ _clone_with_timeout() {
   fi
 }
 
-rm -rf "$CLONE"
-if ! _clone_with_timeout "$REMOTE_URL" "$CLONE"; then
-  echo "WARN: SSH clone failed/timed out; trying HTTPS"
-  if ! _clone_with_timeout "$HTTPS_URL" "$CLONE"; then
-    echo "ERROR: tip clone failed on host" >&2
-    exit 1
+if [[ "$SKIP_CLONE" == "1" ]] && [[ -f "$CLONE/shared-scripts/cos-linear-dispatcher.py" ]]; then
+  echo "OK using pre-uploaded tip at $CLONE (HERMES_SKIP_TIP_CLONE=1)"
+else
+  rm -rf "$CLONE"
+  if ! _clone_with_timeout "$REMOTE_URL" "$CLONE"; then
+    echo "WARN: SSH clone failed/timed out; trying HTTPS"
+    if ! _clone_with_timeout "$HTTPS_URL" "$CLONE"; then
+      echo "ERROR: tip clone failed on host" >&2
+      exit 1
+    fi
   fi
 fi
-bash "$CLONE/shared-scripts/hermes-moltbot-surgical-apply.sh"
+HERMES_SKIP_TIP_CLONE=1 bash "$CLONE/shared-scripts/hermes-moltbot-surgical-apply.sh"
 REMOTE
   fi
 }
@@ -359,6 +443,24 @@ _try_direct_host() {
     fi
   fi
   if (( _host_reachable )); then
+    local skip_clone=0
+    if [[ "$UPLOAD_TIP_FROM_CALLER" == "1" ]]; then
+      if _fetch_moltbot_tip_local "$TIP_LOCAL_STAGING"; then
+        if (( ${#HOST_SSH_IDENTITY_ARGS[@]} > 0 )); then
+          _upload_tip_to_host "$_host_target" "$TIP_LOCAL_STAGING" "${HOST_SSH_IDENTITY_ARGS[@]}" && skip_clone=1
+        else
+          _upload_tip_to_host "$_host_target" "$TIP_LOCAL_STAGING" && skip_clone=1
+        fi
+        rm -rf "$TIP_LOCAL_STAGING"
+        if (( skip_clone )); then
+          export HERMES_SKIP_TIP_CLONE=1
+        else
+          echo "WARN: tarball upload failed; host will try git clone fallback"
+        fi
+      else
+        echo "WARN: caller tip fetch failed (gh auth?); host will try git clone fallback"
+      fi
+    fi
     if (( ${#HOST_SSH_IDENTITY_ARGS[@]} > 0 )); then
       _run_on_host "$_host_target" "${HOST_SSH_IDENTITY_ARGS[@]}"
     else
