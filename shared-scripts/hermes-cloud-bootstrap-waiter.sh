@@ -1,1 +1,44 @@
-IyEvdXNyL2Jpbi9lbnYgYmFzaAojIE9uZS1zaG90IGNsb3VkIGJvb3RzdHJhcDogZmV0Y2ggcHVibGljIHdhaXRlciArIHZlbmRvciBzY3JpcHRzLCBzdGFydCBiYWNrZ3JvdW5kIHdhaXRlcnMuCiMgVXNhZ2U6IGN1cmwgLWZzU0wgaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2lsaWtlNG1vdmllcy9oZXJtZXMtbWFjLWxhbmQvUElOL3NoYXJlZC1zY3JpcHRzL2hlcm1lcy1jbG91ZC1ib290c3RyYXAtd2FpdGVyLnNoIHwgYmFzaApzZXQgLWV1byBwaXBlZmFpbApQSU49IiR7SEVSTUVTX01BQ19MQU5EX1BJTjotODZmOGZmZDQ1NGFmMzk3MjA3OWY1NTU0MDBkMTU5MzY2MzE3NTFhMX0iCkRJUj0iJHtIRVJNRVNfQ0xPVURfQVBQTFlfRElSOi0vdG1wL2hlcm1lcy1jbG91ZC1hcHBseX0iCm1rZGlyIC1wICIkRElSIgpjZCAiJERJUiIKX2ZldGNoKCkgewogIGxvY2FsIHBhdGg9IiQxIiBkZXN0PSIkMiIKICBmb3IgYmFzZSBpbiBcCiAgICAiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2lsaWtlNG1vdmllcy9oZXJtZXMtbWFjLWxhbmQvJHtQSU59IiBcCiAgICAiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2lsaWtlNG1vdmllcy9oZXJtZXMtbWFjLWxhbmQvbWFpbiIKICBkbwogICAgaWYgY3VybCAtZnNTTCAiJGJhc2UvJHBhdGgiIC1vICIkZGVzdCI7IHRoZW4KICAgICAgY2htb2QgK3ggIiRkZXN0IiAyPi9kZXYvbnVsbCB8fCB0cnVlCiAgICAgIGVjaG8gIk9LIGZldGNoZWQgJHBhdGggZnJvbSAkYmFzZSIKICAgICAgcmV0dXJuIDAKICAgIGZpCiAgZG9uZQogIHJldHVybiAxCn0KX2ZldGNoIHNoYXJlZC1zY3JpcHRzL2hlcm1lcy1tb2x0Ym90LWNsb3VkLWJyaWRnZS1zZWNyZXRzLWZyb20tZW52LnNoIGJyaWRnZS1zZWNyZXRzLWZyb20tZW52LnNoCl9mZXRjaCBzaGFyZWQtc2NyaXB0cy9oZXJtZXMtbW9sdGJvdC1jbG91ZC13YWl0LWpvaW4tdGhlbi1hcHBseS5zaCB3YWl0LWpvaW4tdGhlbi1hcHBseS5zaApfZmV0Y2ggc2hhcmVkLXNjcmlwdHMvaGVybWVzLW1vbHRib3QtY2xvdWQtYXBwbHktaW5zdGFsbC12aWEtc3NoLnNoIGhlcm1lcy1tb2x0Ym90LWNsb3VkLWFwcGx5LWluc3RhbGwtdmlhLXNzaC5zaApfZmV0Y2ggc2hhcmVkLXNjcmlwdHMvaGVybWVzLW1vbHRib3QtbGFuZC1iZWFjb24uc2ggaGVybWVzLW1vbHRib3QtbGFuZC1iZWFjb24uc2gKX2ZldGNoIHNoYXJlZC1zY3JpcHRzL2hlcm1lcy1tb2x0Ym90LWNsb3VkLXRhaWxzY2FsZS1qb2luLWFuZC1hcHBseS5zaCBoZXJtZXMtbW9sdGJvdC1jbG91ZC10YWlsc2NhbGUtam9pbi1hbmQtYXBwbHkuc2gKX2ZldGNoIHNoYXJlZC1zY3JpcHRzL2hlcm1lcy1jbG91ZC13YWl0LWxvZ2luLXN1cGVydmlzb3Iuc2ggaGVybWVzLWNsb3VkLXdhaXQtbG9naW4tc3VwZXJ2aXNvci5zaAppZiAhIHBncmVwIC1mICd3YWl0LWpvaW4tdGhlbi1hcHBseS5zaCcgPi9kZXYvbnVsbCAyPiYxOyB0aGVuCiAgbm9odXAgYmFzaCAiJERJUi93YWl0LWpvaW4tdGhlbi1hcHBseS5zaCIgPj4iJERJUi93YWl0LWpvaW4ubG9nIiAyPiYxICYKICBlY2hvICQhID4iJERJUi93YWl0ZXIucGlkIgogIGVjaG8gIk9LIHN0YXJ0ZWQgd2FpdC1qb2luIHBpZD0kKGNhdCAiJERJUi93YWl0ZXIucGlkIikgbG9nPSRESVIvd2FpdC1qb2luLmxvZyIKZWxzZQogIGVjaG8gIk9LIHdhaXQtam9pbiBhbHJlYWR5IHJ1bm5pbmciCmZpCmlmICEgcGdyZXAgLWYgJ2hlcm1lcy1jbG91ZC13YWl0LWxvZ2luLXN1cGVydmlzb3Iuc2gnID4vZGV2L251bGwgMj4mMTsgdGhlbgogIG5vaHVwIGJhc2ggIiRESVIvaGVybWVzLWNsb3VkLXdhaXQsbG9naW4tc3VwZXJ2aXNvci5zaCIgPj4iJERJUi9zdXBlcnZpc29yLmxvZyIgMj4mMSAmCiAgZWNobyAkISA+IiRESVIvc3VwZXJ2aXNvci5waWQiCiAgZWNobyAiT0sgc3RhcnRlZCB3YWl0LWxvZ2luIHN1cGVydmlzb3IgcGlkPSQoY2F0ICIkRElSL3N1cGVydmlzb3IucGlkIikgbG9nPSRESVIvc3VwZXJ2aXNvci5sb2ciCmVsc2UKICBlY2hvICJPSyB3YWl0LWxvZ2luIHN1cGVydmlzb3IgYWxyZWFkeSBydW5uaW5nIgpmaQplY2hvICJJbmplY3QgVFNfQVVUSEtFWSAvIFNTSCBrZXlzIHZpYSBDdXJzb3IgZW52IHNlY3JldHM7IHdhaXRlcnMgcmVsb2FkIGV2ZXJ5IDE1cy4iCmVjaG8gIklmIE5lZWRzTG9naW46IGFwcHJvdmUgVVJMIGZyb20gJERJUi9DVVJSRU5UX0FVVEhVUkwudHh0IG9yIHRhaWxzY2FsZSBzdGF0dXMiCg==
+#!/usr/bin/env bash
+# One-shot cloud bootstrap: fetch public waiter + vendor scripts, start background waiters.
+# Usage: curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/PIN/shared-scripts/hermes-cloud-bootstrap-waiter.sh | bash
+set -euo pipefail
+PIN="${HERMES_MAC_LAND_PIN:-86f8ffd454af3972079f555400d15936631751a1}"
+DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
+mkdir -p "$DIR"
+cd "$DIR"
+_fetch() {
+  local path="$1" dest="$2"
+  for base in \
+    "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}" \
+    "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main"
+  do
+    if curl -fsSL "$base/$path" -o "$dest"; then
+      chmod +x "$dest" 2>/dev/null || true
+      echo "OK fetched $path from $base"
+      return 0
+    fi
+  done
+  return 1
+}
+_fetch shared-scripts/hermes-moltbot-cloud-bridge-secrets-from-env.sh bridge-secrets-from-env.sh
+_fetch shared-scripts/hermes-moltbot-cloud-wait-join-then-apply.sh wait-join-then-apply.sh
+_fetch shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh hermes-moltbot-cloud-apply-install-via-ssh.sh
+_fetch shared-scripts/hermes-moltbot-land-beacon.sh hermes-moltbot-land-beacon.sh
+_fetch shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh hermes-moltbot-cloud-tailscale-join-and-apply.sh
+_fetch shared-scripts/hermes-cloud-wait-login-supervisor.sh hermes-cloud-wait-login-supervisor.sh
+if ! pgrep -f 'wait-join-then-apply.sh' >/dev/null 2>&1; then
+  nohup bash "$DIR/wait-join-then-apply.sh" >>"$DIR/wait-join.log" 2>&1 &
+  echo $! >"$DIR/waiter.pid"
+  echo "OK started wait-join pid=$(cat "$DIR/waiter.pid") log=$DIR/wait-join.log"
+else
+  echo "OK wait-join already running"
+fi
+if ! pgrep -f 'hermes-cloud-wait-login-supervisor.sh' >/dev/null 2>&1; then
+  nohup bash "$DIR/hermes-cloud-wait-login-supervisor.sh" >>"$DIR/supervisor.log" 2>&1 &
+  echo $! >"$DIR/supervisor.pid"
+  echo "OK started wait-login supervisor pid=$(cat "$DIR/supervisor.pid") log=$DIR/supervisor.log"
+else
+  echo "OK wait-login supervisor already running"
+fi
+echo "Inject TS_AUTHKEY / SSH keys via Cursor env secrets; waiters reload every 15s."
+echo "If NeedsLogin: approve URL from $DIR/CURRENT_AUTHURL.txt or tailscale status"
