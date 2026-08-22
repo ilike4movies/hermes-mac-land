@@ -1,0 +1,8 @@
+{
+  "name": "Hermes Cloud Land (.11)",
+  "repositoryDependencies": [
+    "ilike4movies/moltbot"
+  ],
+  "install": "command -v curl >/dev/null && command -v gh >/dev/null && command -v tailscale >/dev/null || (sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y curl gh tailscale 2>/dev/null || true)",
+  "start": "bash shared-scripts/hermes-cloud-agent-start.sh"
+}

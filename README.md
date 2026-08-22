@@ -119,7 +119,7 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 
 1. Start from **web UI** (not mobile) on **`ilike4movies/hermes-mac-land`** with saved environment **LEGACY Hermes .11 — do not use for Ooterverse**
 2. Runtime Secrets: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY` (jump key optional)
-3. Build: `bld-20260822-2a0b84ab` or newer
+3. Build: `bld-20260822-2a0b84ab` or newer, or use committed `.cursor/environment.json` on this repo (auto-start + land when secrets present)
 4. Bootstrap waiter (optional): `curl -fsSL …/hermes-cloud-bootstrap-waiter.sh | bash`
 
 ### Do not use
