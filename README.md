@@ -1,20 +1,30 @@
 # Hermes Mac land (public bootstrap)
 
-## Fastest — double-click land
+## Fastest — one double-click (diagnose + land)
 
 1. Open: https://github.com/ilike4movies/hermes-mac-land
-2. Download a **fresh** `HERMES-UNBLOCK-APPLY.command`
+2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command`
 3. Double-click on **Mac Hermes** (Tailscale up)
 
+Runs diagnostic first (Desktop + clipboard + Linear/GitHub), then via-ssh land.
+
 Gatekeeper:
-`xattr -d com.apple.quarantine ~/Downloads/HERMES-UNBLOCK-APPLY.command && open ~/Downloads/HERMES-UNBLOCK-APPLY.command`
+`xattr -d com.apple.quarantine ~/Downloads/HERMES-DIAGNOSE-THEN-LAND.command && open ~/Downloads/HERMES-DIAGNOSE-THEN-LAND.command`
 
-## If land hung / silent — double-click diagnose
+## Or land only
 
-1. Download **fresh** `HERMES-DIAGNOSE.command` from this repo
+1. Download a **fresh** `HERMES-UNBLOCK-APPLY.command`
+2. Double-click on **Mac Hermes** (Tailscale up)
+
+## If land hung / silent — diagnose only
+
+1. Download **fresh** `HERMES-DIAGNOSE.command`
 2. Double-click on Mac Hermes
 
-Posts LaunchAgent / Tailscale / SSH BatchMode status to Linear **RAL-800** (needs `LINEAR_API_KEY` in `~/.hermes/.env`). No Terminal paste.
+Surfaces status even **without** `LINEAR_API_KEY`:
+- `~/Desktop/HERMES-MAC-LAND-DIAG.txt` (+ clipboard)
+- Linear **RAL-800** if `~/.hermes/.env` has the key
+- GitHub [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) if `gh` is logged in
 
 ## Terminal land (jsDelivr — copy from Linear/Notion, not Gmail)
 
@@ -38,6 +48,6 @@ Optional: `LINEAR_API_KEY` in `~/.hermes/.env` for STARTED/FAILED/DIAGNOSTIC on 
 
 ## Expect
 
-RAL-800: Mac land STARTED → Host surgical-apply OK → RAL-793 Hermes CLAIMED.
+RAL-800 (or issue #1): Mac land DIAGNOSTIC/STARTED → Host surgical-apply OK → RAL-793 Hermes CLAIMED.
 
 No Slack rockets.
