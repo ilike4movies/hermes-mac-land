@@ -3,7 +3,8 @@
 # Vendors via-ssh + Linear beacon from this public repo, then SSHes to .11 directly
 # by default (HERMES_PREFER_DIRECT_HOST=1). Jump grok-cos-1 is optional fallback.
 # Needs: Tailscale and/or home LAN + SSH BatchMode to .11.
-# Default pin is main; override with HERMES_MAC_LAND_PIN for a frozen SHA.
+# Tip upload: `gh auth login` on Mac lets via-ssh tarball-upload moltbot tip to .11
+# (no private git clone on host). Default pin is main; override with HERMES_MAC_LAND_PIN.
 set -euo pipefail
 
 SOURCE="${HERMES_MAC_LAND_SOURCE:-public-curl}"
@@ -11,6 +12,7 @@ VENDOR_DIR="${HERMES_MAC_LAND_VENDOR:-/tmp/hermes-mac-land-vendor-$$}"
 PIN="${HERMES_MAC_LAND_PIN:-main}"
 # Mac Hermes at home reaches .11 directly; jump install often fails (private clone on grok-cos-1).
 export HERMES_PREFER_DIRECT_HOST="${HERMES_PREFER_DIRECT_HOST:-1}"
+export HERMES_UPLOAD_TIP_FROM_CALLER="${HERMES_UPLOAD_TIP_FROM_CALLER:-1}"
 
 _notify() {
   local title="$1" msg="$2"
@@ -78,7 +80,7 @@ _fetch_vendor() {
   return 1
 }
 
-_notify "Hermes UNBLOCK" "Public land (direct .11 default; via-ssh vendor)…"
+_notify "Hermes UNBLOCK" "Public land (direct .11 + gh tarball upload)…"
 
 if ! _fetch_vendor; then
   _notify "Hermes UNBLOCK FAILED" "Could not fetch public via-ssh vendor scripts"
@@ -99,7 +101,7 @@ if [[ ! -f "$VIA" ]]; then
 fi
 
 if [[ "${HERMES_PREFER_DIRECT_HOST}" == "1" ]]; then
-  _notify "Hermes UNBLOCK" "SSH → .11 direct surgical land…"
+  _notify "Hermes UNBLOCK" "SSH → .11 direct surgical land (gh tarball tip)…"
 else
   _notify "Hermes UNBLOCK" "SSH → grok-cos-1 surgical land (jump first)…"
 fi
@@ -109,9 +111,10 @@ RC=$?
 set -e
 if [[ "$RC" -ne 0 ]]; then
   [[ -f "$BEACON" ]] && bash "$BEACON" failed --source "$SOURCE" --detail "land exited $RC prefer_direct=${HERMES_PREFER_DIRECT_HOST}" || true
-  _notify "Hermes UNBLOCK FAILED" "land exited $RC — SSH BatchMode to .11 (192.168.1.11 or 100.105.194.96)?"
+  _notify "Hermes UNBLOCK FAILED" "land exited $RC — SSH BatchMode to .11 + gh auth login?"
   echo "Retry: curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh | bash" >&2
   echo "Probe: ssh -o BatchMode=yes -o ConnectTimeout=8 ilike4@192.168.1.11 hostname" >&2
+  echo "Tip upload needs: gh auth login (private moltbot read)" >&2
   exit "$RC"
 fi
 
