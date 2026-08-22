@@ -2,10 +2,12 @@
 # HERMES-DIAGNOSE-THEN-LAND.command — one double-click on Mac Hermes
 # 1) Posts/saves Mac land DIAGNOSTIC (Linear + Desktop/clipboard + gh#1 fallback)
 # 2) Immediately runs public via-ssh land (no second download)
+# Fetches pinned tip SHA first (survives a bad main tip / CDN lag).
 set -euo pipefail
 export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:-public-diagnose-then-land}"
+PIN="${HERMES_MAC_LAND_PIN:-5dcba4293024c9afbd0ee87c56beae2aa4ceb75b}"
 cd "${TMPDIR:-/tmp}"
-echo "=== Hermes DIAGNOSE → LAND (one double-click) ==="
+echo "=== Hermes DIAGNOSE → LAND (one double-click) pin=$PIN ==="
 echo "Host: $(hostname)  user: $(whoami)  $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 osascript -e 'display notification "Diagnose then land tip on .11…" with title "Hermes DIAGNOSE→LAND" sound name "Glass"' 2>/dev/null || true
 xattr -d com.apple.quarantine "$0" 2>/dev/null || true
@@ -19,6 +21,11 @@ _fetch() {
   for url in "$@"; do
     echo "Trying fetch: $url"
     if curl -fsSL "$url" -o "$out"; then
+      if grep -q 'PLACEHOLDER' "$out" 2>/dev/null && ! grep -q "$needle" "$out" 2>/dev/null; then
+        echo "WARN: PLACEHOLDER body; trying next mirror"
+        rm -f "$out"
+        continue
+      fi
       if grep -q "$needle" "$out" 2>/dev/null; then
         echo "OK fetched: $url"
         chmod +x "$out"
@@ -35,7 +42,9 @@ DIAG="/tmp/hermes-mac-land-diag-fetched-$$.sh"
 LAND="/tmp/hermes-mac-land-fetched-$$.sh"
 
 if ! _fetch "$DIAG" 'Mac land DIAGNOSTIC' \
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/shared-scripts/hermes-moltbot-mac-land-diag.sh" \
   "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-moltbot-mac-land-diag.sh" \
+  "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@${PIN}/shared-scripts/hermes-moltbot-mac-land-diag.sh" \
   "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/shared-scripts/hermes-moltbot-mac-land-diag.sh"
 then
   echo "FAILED: could not download diag script"
@@ -52,12 +61,16 @@ set -e
 echo "diag_exit=$DIAG_RC"
 
 if ! _fetch "$LAND" 'via-ssh only' \
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/hermes-mac-land.sh" \
   "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh" \
+  "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@${PIN}/hermes-mac-land.sh" \
   "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh"
 then
   # older tip used different marker
   if ! _fetch "$LAND" 'no private moltbot' \
+    "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/hermes-mac-land.sh" \
     "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh" \
+    "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@${PIN}/hermes-mac-land.sh" \
     "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/hermes-mac-land.sh"
   then
     echo "FAILED: could not download land script"

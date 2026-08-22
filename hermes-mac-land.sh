@@ -2,10 +2,12 @@
 # Public Hermes Mac land — NO private moltbot fetch on Mac.
 # Vendors via-ssh + Linear beacon from this public repo, then SSHes to grok-cos-1
 # (jump clones private tip + installs apply watch). Needs: Tailscale + SSH BatchMode.
+# Prefers pinned tip SHA so a bad main tip cannot break land.
 set -euo pipefail
 
 SOURCE="${HERMES_MAC_LAND_SOURCE:-public-curl}"
 VENDOR_DIR="${HERMES_MAC_LAND_VENDOR:-/tmp/hermes-mac-land-vendor-$$}"
+PIN="${HERMES_MAC_LAND_PIN:-5dcba4293024c9afbd0ee87c56beae2aa4ceb75b}"
 
 _notify() {
   local title="$1" msg="$2"
@@ -39,7 +41,9 @@ _fetch_vendor() {
     shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh
   )
   local bases=(
+    "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}"
     "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main"
+    "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@${PIN}"
     "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main"
   )
   local base f ok
@@ -48,6 +52,11 @@ _fetch_vendor() {
     for f in "${files[@]}"; do
       echo "Fetching $base/$f"
       if ! curl -fsSL "$base/$f" -o "$VENDOR_DIR/$f"; then
+        ok=0
+        break
+      fi
+      if grep -q '^PLACEHOLDER$' "$VENDOR_DIR/$f" 2>/dev/null; then
+        echo "WARN: PLACEHOLDER at $base/$f"
         ok=0
         break
       fi

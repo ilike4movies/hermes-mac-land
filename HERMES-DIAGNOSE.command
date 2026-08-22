@@ -2,9 +2,11 @@
 # HERMES-DIAGNOSE.command — double-click on Mac Hermes
 # Posts LaunchAgent / Tailscale / SSH status to Linear RAL-800 when possible.
 # Always writes ~/Desktop/HERMES-MAC-LAND-DIAG.txt + clipboard; gh → issue #1 fallback.
+# Fetches pinned tip SHA first (survives a bad main tip / CDN lag).
 set -euo pipefail
+PIN="${HERMES_MAC_LAND_PIN:-5dcba4293024c9afbd0ee87c56beae2aa4ceb75b}"
 cd "${TMPDIR:-/tmp}"
-echo "=== Hermes Mac land DIAGNOSTIC ==="
+echo "=== Hermes Mac land DIAGNOSTIC pin=$PIN ==="
 echo "Host: $(hostname)  user: $(whoami)  $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 osascript -e 'display notification "Collecting Mac land diagnostic…" with title "Hermes DIAGNOSE" sound name "Glass"' 2>/dev/null || true
 xattr -d com.apple.quarantine "$0" 2>/dev/null || true
@@ -14,11 +16,18 @@ SCRIPT="/tmp/hermes-mac-land-diag-fetched-$$.sh"
 rm -f "$SCRIPT"
 FETCHED=""
 for url in \
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/shared-scripts/hermes-moltbot-mac-land-diag.sh" \
   "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-moltbot-mac-land-diag.sh" \
+  "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@${PIN}/shared-scripts/hermes-moltbot-mac-land-diag.sh" \
   "https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@main/shared-scripts/hermes-moltbot-mac-land-diag.sh"
 do
   echo "Trying fetch: $url"
   if curl -fsSL "$url" -o "$SCRIPT"; then
+    if grep -q 'PLACEHOLDER' "$SCRIPT" 2>/dev/null && ! grep -q 'Mac land DIAGNOSTIC' "$SCRIPT" 2>/dev/null; then
+      echo "WARN: PLACEHOLDER body; trying next mirror"
+      rm -f "$SCRIPT"
+      continue
+    fi
     if grep -q 'Mac land DIAGNOSTIC' "$SCRIPT" 2>/dev/null; then
       FETCHED="$url"
       break
