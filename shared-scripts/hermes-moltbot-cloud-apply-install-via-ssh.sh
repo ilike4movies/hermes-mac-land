@@ -30,6 +30,34 @@ TMP_JUMP_KEY=""
 TMP_HOST_KEY=""
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BEACON="$SCRIPT_DIR/hermes-moltbot-land-beacon.sh"
+
+# Mac Hermes: load SSH keys from ~/.hermes/.env when not already exported (post 17:22 host-key install).
+_load_hermes_ssh_env() {
+  local f key val
+  for f in \
+    "${HOME}/.hermes/.env" \
+    "/opt/moltbot/config/secrets.env" \
+    "${HOME}/.openclaw/.env"
+  do
+    [[ -f "$f" ]] || continue
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      case "$line" in
+        ''|\#*) continue ;;
+        HERMES_HOST_SSH_PRIVATE_KEY=*|HERMES_JUMP_SSH_PRIVATE_KEY=*)
+          key="${line%%=*}"
+          val="${line#*=}"
+          val="${val%\"}"; val="${val#\"}"
+          val="${val%\'}"; val="${val#\'}"
+          if [[ -z "${!key:-}" ]]; then
+            export "$key=$val"
+          fi
+          ;;
+      esac
+    done < "$f"
+  done
+}
+_load_hermes_ssh_env || true
+
 ALLOW_DIRECT_HOST="${HERMES_ALLOW_DIRECT_HOST:-1}"
 UPLOAD_TIP_FROM_CALLER="${HERMES_UPLOAD_TIP_FROM_CALLER:-1}"
 MOLTBOT_OWNER_REPO="${HERMES_MOLTBOT_OWNER_REPO:-ilike4movies/moltbot}"
