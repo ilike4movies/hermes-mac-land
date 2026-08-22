@@ -95,7 +95,7 @@ reload_secrets() {
     TS_AUTHKEY="$(tr -d '\r\n' < "$TS_KEY_FILE")"
     export TS_AUTHKEY
   fi
-  for _f in "$SCRIPT_DIR/ts-authkey" /tmp/cursor-secrets/TS_AUTHKEY "$HOME/.cursor/secrets/TS_AUTHKEY"; do
+  for _f in "$SCRIPT_DIR/ts-authkey" /tmp/cursor-secrets/TS_AUTHKEY "$HOME/.cursor/secrets/TS_AUTHKEY" /opt/cursor/secrets/TS_AUTHKEY; do
     if [[ -z "${TS_AUTHKEY:-}" && -f "$_f" ]]; then
       TS_AUTHKEY="$(tr -d '\r\n' < "$_f")"
       export TS_AUTHKEY
@@ -105,7 +105,7 @@ reload_secrets() {
     HERMES_JUMP_SSH_PRIVATE_KEY="$(cat "$JUMP_KEY_FILE")"
     export HERMES_JUMP_SSH_PRIVATE_KEY
   fi
-  for _f in /tmp/cursor-secrets/HERMES_JUMP_SSH_PRIVATE_KEY "$HOME/.cursor/secrets/HERMES_JUMP_SSH_PRIVATE_KEY"; do
+  for _f in /tmp/cursor-secrets/HERMES_JUMP_SSH_PRIVATE_KEY "$HOME/.cursor/secrets/HERMES_JUMP_SSH_PRIVATE_KEY" /opt/cursor/secrets/HERMES_JUMP_SSH_PRIVATE_KEY; do
     if [[ -z "${HERMES_JUMP_SSH_PRIVATE_KEY:-}" && -f "$_f" ]]; then
       HERMES_JUMP_SSH_PRIVATE_KEY="$(cat "$_f")"
       export HERMES_JUMP_SSH_PRIVATE_KEY
@@ -115,7 +115,7 @@ reload_secrets() {
     HERMES_HOST_SSH_PRIVATE_KEY="$(cat "$HOST_KEY_FILE")"
     export HERMES_HOST_SSH_PRIVATE_KEY
   fi
-  for _f in /tmp/cursor-secrets/HERMES_HOST_SSH_PRIVATE_KEY "$HOME/.cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY"; do
+  for _f in /tmp/cursor-secrets/HERMES_HOST_SSH_PRIVATE_KEY "$HOME/.cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY" /opt/cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY; do
     if [[ -z "${HERMES_HOST_SSH_PRIVATE_KEY:-}" && -f "$_f" ]]; then
       HERMES_HOST_SSH_PRIVATE_KEY="$(cat "$_f")"
       export HERMES_HOST_SSH_PRIVATE_KEY
@@ -140,6 +140,20 @@ _ensure_supervisor() {
   fi
 }
 
+_refresh_authurl() {
+  local url authfile="$SCRIPT_DIR/CURRENT_AUTHURL.txt"
+  url="$(sudo tailscale --socket="$SOCK" status 2>&1 | grep -oE 'https://login\.tailscale\.com/a/[a-z0-9]+' | head -1 || true)"
+  [[ -n "$url" ]] || return 0
+  if [[ ! -f "$authfile" ]] || ! grep -qF "$url" "$authfile" 2>/dev/null; then
+    {
+      printf '%s\n' "$url"
+      printf 'ACTIVE — approve now (%s).\n' "$(date -u +%FT%TZ)"
+      echo 'Cloud waiters armed; TS_AUTHKEY preferred.'
+    } >"$authfile"
+    echo "$(date -u +%H:%M:%S) OK refreshed AuthURL $url"
+  fi
+}
+
 mkdir -p "$SCRIPT_DIR"
 _refresh_public_vendor || true
 exec >>"$LOG" 2>&1
@@ -151,6 +165,9 @@ while true; do
   reload_secrets
   st=$(sudo tailscale --socket="$SOCK" status --json 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("BackendState") or d.get("Self",{}).get("Online"))' 2>/dev/null || echo unknown)
   echo "$(date -u +%H:%M:%S) BackendState/online=$st authkey=${TS_AUTHKEY:+set} jumpkey=${HERMES_JUMP_SSH_PRIVATE_KEY:+set} hostkey=${HERMES_HOST_SSH_PRIVATE_KEY:+set}"
+  if echo "$st" | grep -qi NeedsLogin; then
+    _refresh_authurl || true
+  fi
 
   mesh_ok=0
   if echo "$st" | grep -qiE 'Running|True|true'; then
