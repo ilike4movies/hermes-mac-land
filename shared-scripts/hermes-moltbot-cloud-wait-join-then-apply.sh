@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Poll until Tailscale is Running (or jump/host already reachable), then land tip.
 # Reloads secrets each loop from secrets.env / key files so mid-session inject works.
-# Refreshes via-ssh vendor from public hermes-mac-land pin periodically.
+# Refreshes cloud vendor scripts from public hermes-mac-land (main preferred).
 set -euo pipefail
 SOCK=/var/run/tailscale/tailscaled.sock
 JUMP="${HERMES_JUMP_SSH:-ilike4@100.92.147.61}"
@@ -14,48 +14,67 @@ TS_KEY_FILE="${HERMES_TS_AUTHKEY_FILE:-$SCRIPT_DIR/ts-authkey}"
 JUMP_KEY_FILE="${HERMES_JUMP_SSH_KEY_FILE:-$SCRIPT_DIR/jump-ssh-key}"
 HOST_KEY_FILE="${HERMES_HOST_SSH_KEY_FILE:-$SCRIPT_DIR/host-ssh-key}"
 LOG="$SCRIPT_DIR/wait-join.log"
-VIA="$SCRIPT_DIR/hermes-moltbot-cloud-apply-install-via-ssh.sh"
-BEACON="$SCRIPT_DIR/hermes-moltbot-land-beacon.sh"
-VENDOR_PIN="${HERMES_MAC_LAND_PIN:-86f8ffd454af3972079f555400d15936631751a1}"
+VENDOR_PIN="${HERMES_MAC_LAND_PIN:-main}"
 VENDOR_REFRESH_SEC="${HERMES_VENDOR_REFRESH_SEC:-300}"
 LAST_VENDOR_REFRESH=0
 
+VENDOR_FILES=(
+  shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh
+  shared-scripts/hermes-moltbot-land-beacon.sh
+  shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh
+  shared-scripts/hermes-cloud-wait-login-supervisor.sh
+  shared-scripts/hermes-moltbot-cloud-bridge-secrets-from-env.sh
+)
+
+_is_valid_script() {
+  local f="$1"
+  [[ -s "$f" ]] || return 1
+  head -1 "$f" | grep -q '^#!/' || return 1
+  grep -q '^PLACEHOLDER$' "$f" 2>/dev/null && return 1
+  # reject accidental base64-stub pushes (literal IyEvdXNy... not shebang)
+  head -1 "$f" | grep -q '^IyE' && return 1
+  return 0
+}
+
 _refresh_public_vendor() {
-  local now pin="$VENDOR_PIN" base f
+  local now pin="$VENDOR_PIN" base f bn dest
   now=$(date +%s)
   if (( now - LAST_VENDOR_REFRESH < VENDOR_REFRESH_SEC )); then
     return 0
   fi
   LAST_VENDOR_REFRESH=$now
   mkdir -p "$SCRIPT_DIR/shared-scripts"
-  for base in \
-    "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${pin}" \
-    "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main"
-  do
-    local ok=1
-    for f in \
-      shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh \
-      shared-scripts/hermes-moltbot-land-beacon.sh
-    do
-      local bn dest
+  local bases=( "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main" )
+  if [[ "$pin" != "main" ]]; then
+    bases+=( "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${pin}" )
+  fi
+  for base in "${bases[@]}"; do
+    local ok=1 tmpdir
+    tmpdir="$(mktemp -d)"
+    for f in "${VENDOR_FILES[@]}"; do
       bn="$(basename "$f")"
-      dest="$SCRIPT_DIR/$bn"
-      if ! curl -fsSL "$base/$f" -o "${dest}.tmp"; then
+      dest="$tmpdir/$bn"
+      if ! curl -fsSL "$base/$f" -o "$dest"; then
         ok=0
         break
       fi
-      if grep -q '^PLACEHOLDER$' "${dest}.tmp" 2>/dev/null; then
+      if ! _is_valid_script "$dest"; then
         ok=0
         break
       fi
     done
     if [[ "$ok" -eq 1 ]]; then
-      mv "$SCRIPT_DIR/hermes-moltbot-cloud-apply-install-via-ssh.sh.tmp" "$VIA"
-      mv "$SCRIPT_DIR/hermes-moltbot-land-beacon.sh.tmp" "$BEACON"
-      chmod +x "$VIA" "$BEACON" 2>/dev/null || true
-      echo "$(date -u +%H:%M:%S) OK refreshed vendor from $base"
+      for f in "${VENDOR_FILES[@]}"; do
+        bn="$(basename "$f")"
+        install -m 0755 "$tmpdir/$bn" "$SCRIPT_DIR/$bn"
+      done
+      # legacy dest names used by bootstrap
+      install -m 0755 "$tmpdir/hermes-moltbot-cloud-bridge-secrets-from-env.sh" "$SCRIPT_DIR/bridge-secrets-from-env.sh" 2>/dev/null || true
+      rm -rf "$tmpdir"
+      echo "$(date -u +%H:%M:%S) OK refreshed vendor (${#VENDOR_FILES[@]} scripts) from $base"
       return 0
     fi
+    rm -rf "$tmpdir"
   done
   echo "$(date -u +%H:%M:%S) WARN vendor refresh failed (using existing scripts)"
   return 0
@@ -111,6 +130,16 @@ _reachable() {
   return 1
 }
 
+_ensure_supervisor() {
+  if pgrep -f 'hermes-cloud-wait-login-supervisor.sh' >/dev/null 2>&1; then
+    return 0
+  fi
+  if [[ -x "$SCRIPT_DIR/hermes-cloud-wait-login-supervisor.sh" ]]; then
+    nohup bash "$SCRIPT_DIR/hermes-cloud-wait-login-supervisor.sh" >>"$SCRIPT_DIR/supervisor.log" 2>&1 &
+    echo "$(date -u +%H:%M:%S) OK started wait-login supervisor pid=$!"
+  fi
+}
+
 mkdir -p "$SCRIPT_DIR"
 _refresh_public_vendor || true
 exec >>"$LOG" 2>&1
@@ -118,6 +147,7 @@ echo "== wait-join-then-apply max=${MAX_WAIT}s jump=$JUMP host_ts=$HOST_TS host_
 start=$(date +%s)
 while true; do
   _refresh_public_vendor || true
+  _ensure_supervisor || true
   reload_secrets
   st=$(sudo tailscale --socket="$SOCK" status --json 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("BackendState") or d.get("Self",{}).get("Online"))' 2>/dev/null || echo unknown)
   echo "$(date -u +%H:%M:%S) BackendState/online=$st authkey=${TS_AUTHKEY:+set} jumpkey=${HERMES_JUMP_SSH_PRIVATE_KEY:+set} hostkey=${HERMES_HOST_SSH_PRIVATE_KEY:+set}"
@@ -150,6 +180,7 @@ while true; do
   sleep 15
 done
 
+VIA="$SCRIPT_DIR/hermes-moltbot-cloud-apply-install-via-ssh.sh"
 if [[ ! -f "$VIA" ]]; then
   echo "ERROR: missing $VIA" >&2
   exit 1
