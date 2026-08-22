@@ -1,6 +1,6 @@
 # Hermes Mac land (public bootstrap)
 
-Pinned tip: `5dcba4293024c9afbd0ee87c56beae2aa4ceb75b` (raw-first + PLACEHOLDER reject; diag probes jump + direct `.11`; double-click fetch prefers pinned SHA over floating `main`).
+Pinned tip: `2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29` (raw-first + PLACEHOLDER reject; diag probes jump + direct `.11`; double-click fetch prefers pinned SHA over floating `main`).
 
 ## Fastest — one double-click (diagnose + land)
 
@@ -35,19 +35,19 @@ Surfaces status even **without** `LINEAR_API_KEY`:
 ## Terminal land (prefer raw pin; copy from Linear/Notion, not Gmail)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/5dcba4293024c9afbd0ee87c56beae2aa4ceb75b/hermes-mac-land.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29/hermes-mac-land.sh | bash
 ```
 
 jsDelivr fallback (can lag):
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@5dcba4293024c9afbd0ee87c56beae2aa4ceb75b/hermes-mac-land.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/ilike4movies/hermes-mac-land@2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29/hermes-mac-land.sh | bash
 ```
 
 ## Terminal diagnose
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/5dcba4293024c9afbd0ee87c56beae2aa4ceb75b/shared-scripts/hermes-moltbot-mac-land-diag.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/2d4e8d3015902c9fa8b5a0766f50dcf080ae3b29/shared-scripts/hermes-moltbot-mac-land-diag.sh | bash
 ```
 
 ## Needs on Mac
