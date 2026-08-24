@@ -105,7 +105,7 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 
 **Runtime Secrets must be attached at agent boot.** Internal cloud subagents, mobile-started agents, and draft override environment builds do **not** receive `TS_AUTHKEY` or `HERMES_HOST_SSH_PRIVATE_KEY` mid-session.
 
-**Cursor routing (2026-08-22):** Hermes / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`**, never the Ooterverse game environment. The secret-bearing saved environment is renamed **LEGACY Hermes .11 — do not use for Ooterverse**.
+**Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **Hermes Mac Landing**, never the Ooterverse game environment. The old Ooterverse-bound Hermes environment is quarantined as **LEGACY Hermes .11 — do not use for Ooterverse** and must not be selected.
 
 See **[OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md)** for the full checklist and pitfalls.
 
@@ -121,7 +121,7 @@ See **[OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md)** for the full checklist and pi
 
 ### New cloud agent (fresh boot)
 
-1. Start from **web UI** (not mobile) on **`ilike4movies/hermes-mac-land`** with saved environment **LEGACY Hermes .11 — do not use for Ooterverse**
+1. Start from **web UI** (not mobile) on **`ilike4movies/hermes-mac-land`** with saved environment **Hermes Mac Landing**
 2. Runtime Secrets: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY` (jump key optional)
 3. Build: `bld-20260822-2a0b84ab` or newer, or use committed `.cursor/environment.json` on this repo (auto-start + land when secrets present)
 4. Bootstrap waiter (optional): `curl -fsSL …/hermes-cloud-bootstrap-waiter.sh | bash`
