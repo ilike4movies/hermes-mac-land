@@ -71,8 +71,19 @@ echo "OK secrets at boot + Tailscale Running — attempting direct .11 surgical 
 export HERMES_PREFER_DIRECT_HOST=1
 export HERMES_UPLOAD_TIP_FROM_CALLER=1
 export HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}"
-bash "$ROOT/shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh" \
-  >>"$LOG" 2>&1 || {
+if bash "$ROOT/shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh" >>"$LOG" 2>&1; then
+  echo "OK surgical land — see $LOG"
+  if [[ "${HERMES_AUTO_STAGE_A_PREFLIGHT:-1}" == "1" ]]; then
+    PREFLIGHT="$DIR/hermes-stage-a-preflight.sh"
+    [[ -x "$PREFLIGHT" ]] || PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-preflight.sh"
+    if [[ -x "$PREFLIGHT" ]]; then
+      echo "OK running read-only Stage A preflight (cos-local@5bcb257e)"
+      bash "$PREFLIGHT" >>"$LOG" 2>&1 || echo "WARN: Stage A preflight blocked — see $LOG" >&2
+    else
+      echo "WARN: hermes-stage-a-preflight.sh missing — run bootstrap waiter first" >&2
+    fi
+  fi
+else
   echo "WARN: auto-land failed — see $LOG" >&2
-}
+fi
 exit 0

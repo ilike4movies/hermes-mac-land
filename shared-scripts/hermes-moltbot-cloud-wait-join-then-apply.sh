@@ -24,6 +24,7 @@ VENDOR_FILES=(
   shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh
   shared-scripts/hermes-cloud-wait-login-supervisor.sh
   shared-scripts/hermes-moltbot-cloud-bridge-secrets-from-env.sh
+  shared-scripts/hermes-stage-a-preflight.sh
 )
 
 _is_valid_script() {
@@ -208,5 +209,17 @@ if [[ ! -f "$VIA" ]]; then
 fi
 export HERMES_PREFER_DIRECT_HOST="${HERMES_PREFER_DIRECT_HOST:-1}"
 export HERMES_UPLOAD_TIP_FROM_CALLER="${HERMES_UPLOAD_TIP_FROM_CALLER:-1}"
-bash "$VIA"
-echo "OK apply attempted rc=$?"
+export HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}"
+if bash "$VIA"; then
+  echo "OK surgical land"
+  if [[ "${HERMES_AUTO_STAGE_A_PREFLIGHT:-1}" == "1" ]]; then
+    PREFLIGHT="$SCRIPT_DIR/hermes-stage-a-preflight.sh"
+    if [[ -x "$PREFLIGHT" ]]; then
+      echo "OK running read-only Stage A preflight (cos-local@5bcb257e)"
+      bash "$PREFLIGHT" || echo "WARN: Stage A preflight blocked rc=$?"
+    fi
+  fi
+else
+  echo "WARN: apply failed rc=$?"
+  exit 1
+fi
