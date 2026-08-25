@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-**Updated:** 2026-08-25T21:45Z
+**Updated:** 2026-08-25T21:47Z
 
 ## ⚠️ moltbot PR #76 — do not merge yet
 
@@ -15,7 +15,7 @@ Land scripts on `hermes-mac-land` `main` already export `HERMES_POST_APPLY_CANAR
 | Step | Ticket | What it does | Repo | Auto on cloud boot? |
 |------|--------|--------------|------|-------------------|
 | **1 — Surgical land** | RAL-800 | Lands `moltbot` tip on `/opt/moltbot` (interrupt label, WIP park, apply watch, drift) | `moltbot` via this repo | **Yes** — `hermes-cloud-agent-start.sh` |
-| **2 — Stage A canary** | RAL-798 / RAL-820 | Installs `hermes-agent-cos` control-loop adapter + runs bounded RAL-820 canary (`subject.txt` → `executed`) | `hermes-agent-cos` `cos-local` @ **`5bcb257e`** (PR #86) | **No** — separate bounded activation on `.11` |
+| **2 — Stage A canary** | RAL-798 / RAL-820 | Installs `hermes-agent-cos` control-loop adapter + runs bounded RAL-820 canary (`subject.txt` → `executed`) | `hermes-agent-cos` `cos-local` @ **`5bcb257e`** (PR #86) | **No** — bounded activation manual; **read-only preflight** auto after land |
 
 Surgical land alone does **not** deploy PR #82+#83 comment-first interrupt discovery. Stage A is required for `DISPATCH-NOW` without `hermes-now` and for the RAL-820 fixture proof.
 
@@ -35,7 +35,7 @@ After Step 1 succeeds, a credentialed agent on `.11` must run Stage A per `herme
 
 **20:47Z live proof (PR #82+#83):** interrupt/discovery/claim **passed**; worker failed `ral733-core-worker-finalizer-missing`; rolled back 20:49Z. Host at healthy preimage `2cb904b8…`; timer active/enabled.
 
-## Current live state (readback 21:39Z)
+## Current live state (readback 21:47Z)
 
 | Check | Status |
 |-------|--------|
@@ -58,7 +58,7 @@ After Step 1 succeeds, a credentialed agent on `.11` must run Stage A per `herme
 1. **Web UI only** (not mobile) → repo **`ilike4movies/hermes-mac-land`**
 2. Environment: **LEGACY Hermes .11 — do not use for Ooterverse**
 3. **Runtime Secrets at agent boot**: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`
-4. Auto-runs **Step 1** surgical land, then **Step 2** Stage A @ `5bcb257e`
+4. Auto-runs **Step 1** surgical land + read-only Stage A preflight (`HERMES_AUTO_STAGE_A_PREFLIGHT=1` default). Bounded Stage A activation remains manual per deployment packet (`APPROVE-RJS-LIVE-BUNDLE-1`).
 
 ### B — Resume verified agent
 
