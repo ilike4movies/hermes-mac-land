@@ -2,7 +2,11 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-**Updated:** 2026-08-25T21:47Z
+**Updated:** 2026-08-25T21:57Z
+
+## ⚠️ Ooterverse / mobile override agents cannot land
+
+Agents on `Ooterverse-Saturns-Quest` (including mobile override) **do not receive** `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` at boot. Tailscale stays `NeedsLogin`; no surgical land or Stage A is possible from those pods. Use path A, B, or C below on `hermes-mac-land` with **LEGACY Hermes .11** secrets.
 
 ## ⚠️ moltbot PR #76 — do not merge yet
 
@@ -33,16 +37,19 @@ After Step 1 succeeds, a credentialed agent on `.11` must run Stage A per `herme
 
 **21:38Z:** PR #86 merged to `cos-local`. **Stage A source gate cleared.** Next: credentialed bounded Stage A retry on `.11` with preserved `DISPATCH-NOW RAL-820` comment.
 
+**21:54Z:** `hermes-mac-land` PR [#8](https://github.com/ilike4movies/hermes-mac-land/pull/8) merged — cloud land auto-chains read-only Stage A preflight after successful surgical apply.
+
 **20:47Z live proof (PR #82+#83):** interrupt/discovery/claim **passed**; worker failed `ral733-core-worker-finalizer-missing`; rolled back 20:49Z. Host at healthy preimage `2cb904b8…`; timer active/enabled.
 
-## Current live state (readback 21:47Z)
+## Current live state (readback 21:57Z)
 
 | Check | Status |
 |-------|--------|
-| RAL-820 successor canary (`subject.txt` → `executed`) | **Open** — source ready @ `5bcb257e`; **live retry needs credentialed `.11` agent** |
-| RAL-798 interrupt → executor | **Partial** — discovery/claim proven 20:47Z; executor unproven until Stage A retry |
-| RAL-800 Host surgical-apply OK | **No** — latest comment Aug 22; signal `20260825T212030Z` produced no receipt |
-| RAL-793 CLAIMED + inventory | **No** — Todo; gated behind RAL-820 + own contract |
+| RAL-820 successor canary (`subject.txt` → `executed`) | **Open** — source ready @ `5bcb257e`; **awaiting credentialed `.11` agent** |
+| RAL-798 interrupt → executor | **Partial** — discovery/claim proven 20:47Z; executor unproven until Stage A retry @ `5bcb257e` |
+| RAL-800 Host surgical-apply OK | **No** — latest comment Aug 22 18:15Z; signal `20260825T212030Z` no receipt |
+| RAL-793 CLAIMED + inventory | **No** — Todo; gated behind RAL-820 |
+| This pod (Ooterverse override) | **Cannot land** — secrets absent; Tailscale NeedsLogin |
 
 ## Blocker order (current)
 
@@ -60,16 +67,18 @@ After Step 1 succeeds, a credentialed agent on `.11` must run Stage A per `herme
 3. **Runtime Secrets at agent boot**: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`
 4. Auto-runs **Step 1** surgical land + read-only Stage A preflight (`HERMES_AUTO_STAGE_A_PREFLIGHT=1` default). Bounded Stage A activation remains manual per deployment packet (`APPROVE-RJS-LIVE-BUNDLE-1`).
 
-### B — Resume verified agent
+### B — Resume verified agent (or re-run land on credentialed pod)
 
 https://cursor.com/agents/bc-458cf08d-4954-411a-978a-de2adb650e33
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-bootstrap-waiter.sh | bash
 HERMES_PREFER_DIRECT_HOST=1 bash /tmp/hermes-cloud-apply/hermes-moltbot-cloud-apply-install-via-ssh.sh
-# read-only Stage A gate (pins cos-local@5bcb257e, checks healthy preimage + subject.txt pending)
+# preflight auto-runs after land on credentialed agents (HERMES_AUTO_STAGE_A_PREFLIGHT=1)
+# or run manually:
 bash /tmp/hermes-cloud-apply/hermes-stage-a-preflight.sh
 # then bounded Stage A activation per deployment-packet.md @ cos-local 5bcb257e
+# approval token: APPROVE-RJS-LIVE-BUNDLE-1
 ```
 
 ### C — Mac Hermes
