@@ -31,6 +31,7 @@ _fetch shared-scripts/hermes-moltbot-land-beacon.sh hermes-moltbot-land-beacon.s
 _fetch shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh hermes-moltbot-cloud-tailscale-join-and-apply.sh
 _fetch shared-scripts/hermes-cloud-wait-login-supervisor.sh hermes-cloud-wait-login-supervisor.sh
 _fetch shared-scripts/hermes-stage-a-preflight.sh hermes-stage-a-preflight.sh
+_fetch shared-scripts/hermes-stage-a-source-preflight.sh hermes-stage-a-source-preflight.sh
 if ! pgrep -f 'wait-join-then-apply.sh' >/dev/null 2>&1; then
   nohup bash "$DIR/wait-join-then-apply.sh" >>"$DIR/wait-join.log" 2>&1 &
   echo $! >"$DIR/waiter.pid"

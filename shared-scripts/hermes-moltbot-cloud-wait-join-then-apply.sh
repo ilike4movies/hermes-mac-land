@@ -25,6 +25,7 @@ VENDOR_FILES=(
   shared-scripts/hermes-cloud-wait-login-supervisor.sh
   shared-scripts/hermes-moltbot-cloud-bridge-secrets-from-env.sh
   shared-scripts/hermes-stage-a-preflight.sh
+  shared-scripts/hermes-stage-a-source-preflight.sh
 )
 
 _is_valid_script() {
@@ -214,8 +215,13 @@ if bash "$VIA"; then
   echo "OK surgical land"
   if [[ "${HERMES_AUTO_STAGE_A_PREFLIGHT:-1}" == "1" ]]; then
     PREFLIGHT="$SCRIPT_DIR/hermes-stage-a-preflight.sh"
+    SRC_PREFLIGHT="$SCRIPT_DIR/hermes-stage-a-source-preflight.sh"
+    if [[ -x "$SRC_PREFLIGHT" ]] && [[ "${HERMES_AUTO_STAGE_A_SOURCE_PREFLIGHT:-1}" == "1" ]]; then
+      echo "OK running read-only Stage A source preflight (cos-local@5bcb257e)"
+      bash "$SRC_PREFLIGHT" || echo "WARN: Stage A source preflight blocked rc=$?"
+    fi
     if [[ -x "$PREFLIGHT" ]]; then
-      echo "OK running read-only Stage A preflight (cos-local@5bcb257e)"
+      echo "OK running read-only Stage A live preflight (cos-local@5bcb257e)"
       bash "$PREFLIGHT" || echo "WARN: Stage A preflight blocked rc=$?"
     fi
   fi
