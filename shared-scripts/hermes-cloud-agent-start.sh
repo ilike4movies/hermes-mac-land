@@ -77,7 +77,13 @@ if bash "$ROOT/shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh" >>"
     PREFLIGHT="$DIR/hermes-stage-a-preflight.sh"
     [[ -x "$PREFLIGHT" ]] || PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-preflight.sh"
     if [[ -x "$PREFLIGHT" ]]; then
-      echo "OK running read-only Stage A preflight (cos-local@5bcb257e)"
+      SRC_PREFLIGHT="$DIR/hermes-stage-a-source-preflight.sh"
+      [[ -x "$SRC_PREFLIGHT" ]] || SRC_PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-source-preflight.sh"
+      if [[ -x "$SRC_PREFLIGHT" ]] && [[ "${HERMES_AUTO_STAGE_A_SOURCE_PREFLIGHT:-1}" == "1" ]]; then
+        echo "OK running read-only Stage A source preflight (cos-local@5bcb257e)"
+        bash "$SRC_PREFLIGHT" >>"$LOG" 2>&1 || echo "WARN: Stage A source preflight blocked — see $LOG" >&2
+      fi
+      echo "OK running read-only Stage A live preflight (cos-local@5bcb257e)"
       bash "$PREFLIGHT" >>"$LOG" 2>&1 || echo "WARN: Stage A preflight blocked — see $LOG" >&2
     else
       echo "WARN: hermes-stage-a-preflight.sh missing — run bootstrap waiter first" >&2

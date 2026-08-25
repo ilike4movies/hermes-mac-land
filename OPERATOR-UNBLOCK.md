@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-**Updated:** 2026-08-25T21:57Z
+**Updated:** 2026-08-25T22:05Z
 
 ## ⚠️ Ooterverse / mobile override agents cannot land
 
@@ -19,7 +19,11 @@ Land scripts on `hermes-mac-land` `main` already export `HERMES_POST_APPLY_CANAR
 | Step | Ticket | What it does | Repo | Auto on cloud boot? |
 |------|--------|--------------|------|-------------------|
 | **1 — Surgical land** | RAL-800 | Lands `moltbot` tip on `/opt/moltbot` (interrupt label, WIP park, apply watch, drift) | `moltbot` via this repo | **Yes** — `hermes-cloud-agent-start.sh` |
-| **2 — Stage A canary** | RAL-798 / RAL-820 | Installs `hermes-agent-cos` control-loop adapter + runs bounded RAL-820 canary (`subject.txt` → `executed`) | `hermes-agent-cos` `cos-local` @ **`5bcb257e`** (PR #86) | **No** — bounded activation manual; **read-only preflight** auto after land |
+| **2 — Stage A canary** | RAL-798 / RAL-820 | Installs `hermes-agent-cos` control-loop adapter + runs bounded RAL-820 canary (`subject.txt` → `executed`) | `hermes-agent-cos` `cos-local` @ **`5bcb257e`** (PR #86) | **No** — bounded activation manual; **read-only source + live preflight** auto after land |
+
+**Preflight chain (read-only, auto after land):**
+1. `hermes-stage-a-source-preflight.sh` — validates `cos-local@5bcb257e` source (no SSH; needs `gh`)
+2. `hermes-stage-a-preflight.sh` — validates live `.11` preimage + canary fixture (needs SSH)
 
 Surgical land alone does **not** deploy PR #82+#83 comment-first interrupt discovery. Stage A is required for `DISPATCH-NOW` without `hermes-now` and for the RAL-820 fixture proof.
 
@@ -65,7 +69,7 @@ After Step 1 succeeds, a credentialed agent on `.11` must run Stage A per `herme
 1. **Web UI only** (not mobile) → repo **`ilike4movies/hermes-mac-land`**
 2. Environment: **LEGACY Hermes .11 — do not use for Ooterverse**
 3. **Runtime Secrets at agent boot**: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`
-4. Auto-runs **Step 1** surgical land + read-only Stage A preflight (`HERMES_AUTO_STAGE_A_PREFLIGHT=1` default). Bounded Stage A activation remains manual per deployment packet (`APPROVE-RJS-LIVE-BUNDLE-1`).
+4. Auto-runs **Step 1** surgical land + read-only Stage A source/live preflight (`HERMES_AUTO_STAGE_A_PREFLIGHT=1` default). Bounded Stage A activation remains manual per deployment packet (`APPROVE-RJS-LIVE-BUNDLE-1` for Stage A only; full engine bundle: `APPROVE-RJS-EXECUTION-ENGINE-LIVE-1`).
 
 ### B — Resume verified agent (or re-run land on credentialed pod)
 
