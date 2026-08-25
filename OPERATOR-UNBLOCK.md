@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-**Updated:** 2026-08-25T21:39Z
+**Updated:** 2026-08-25T21:45Z
 
 ## ⚠️ moltbot PR #76 — do not merge yet
 
@@ -67,7 +67,9 @@ https://cursor.com/agents/bc-458cf08d-4954-411a-978a-de2adb650e33
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-bootstrap-waiter.sh | bash
 HERMES_PREFER_DIRECT_HOST=1 bash /tmp/hermes-cloud-apply/hermes-moltbot-cloud-apply-install-via-ssh.sh
-# then Stage A per deployment packet @ cos-local 5bcb257e
+# read-only Stage A gate (pins cos-local@5bcb257e, checks healthy preimage + subject.txt pending)
+bash /tmp/hermes-cloud-apply/hermes-stage-a-preflight.sh
+# then bounded Stage A activation per deployment-packet.md @ cos-local 5bcb257e
 ```
 
 ### C — Mac Hermes
