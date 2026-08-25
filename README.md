@@ -2,6 +2,8 @@
 
 **Operator unblock (RAL-800 / live `.11` land):** [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md) — pick cloud agent, verified agent, or Mac path.
 
+> **Wrong repo?** Do not run Hermes land from Ooterverse-Saturns-Quest. Use **`ilike4movies/hermes-mac-land`** + env **LEGACY Hermes .11** + Runtime Secrets at boot.
+
 ## macOS Gatekeeper (read this first)
 
 Double-clicking a downloaded `.command` file may show **"could not verify … is free of malware"** before the script runs. That is normal for GitHub downloads.
@@ -94,6 +96,7 @@ Terminal output markers:
 2. `== fetching moltbot tip via gh tarball (caller) ==`
 3. `== uploading tip tarball to ilike4@…`
 4. `OK INTERRUPT_LABEL hermes-now`
+5. `post-apply canary focus: RAL-820` (not media-studio canary)
 
 Then: RAL-800 `Host surgical-apply OK` → RAL-820 canary (`subject.txt` executed) → RAL-793 Hermes **CLAIMED** + inventory (own contract; not before RAL-820).
 
@@ -105,6 +108,6 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 
 **Runtime Secrets must be attached at agent boot.** Internal cloud subagents, mobile-started agents, and draft override environment builds do **not** receive `TS_AUTHKEY` or `HERMES_HOST_SSH_PRIVATE_KEY` mid-session.
 
-**Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **Hermes Mac Landing**, never the Ooterverse game environment. The old Ooterverse-bound Hermes environment is quarantined as **LEGACY Hermes .11 — do not use for Ooterverse** and must not be selected.
+**Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **LEGACY Hermes .11 — do not use for Ooterverse**, never the Ooterverse game environment.
 
 See **[OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md)** for the full checklist and pitfalls.
