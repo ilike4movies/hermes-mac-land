@@ -95,7 +95,7 @@ Terminal output markers:
 3. `== uploading tip tarball to ilike4@…`
 4. `OK INTERRUPT_LABEL hermes-now`
 
-Then: RAL-800 `Host surgical-apply OK` → RAL-793 Hermes **CLAIMED** within ~5m.
+Then: RAL-800 `Host surgical-apply OK` → RAL-820 canary (`subject.txt` executed) → RAL-793 Hermes **CLAIMED** + inventory (own contract; not before RAL-820).
 
 No Slack rockets.
 
@@ -108,26 +108,3 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 **Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **Hermes Mac Landing**, never the Ooterverse game environment. The old Ooterverse-bound Hermes environment is quarantined as **LEGACY Hermes .11 — do not use for Ooterverse** and must not be selected.
 
 See **[OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md)** for the full checklist and pitfalls.
-
-### Fastest cloud unblock (credentials already verified)
-
-1. Open: https://cursor.com/agents/bc-458cf08d-4954-411a-978a-de2adb650e33
-2. Send:
-   ```bash
-   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-bootstrap-waiter.sh | bash
-   # when secrets present:
-   HERMES_PREFER_DIRECT_HOST=1 bash /tmp/hermes-cloud-apply/hermes-moltbot-cloud-apply-install-via-ssh.sh
-   ```
-
-### New cloud agent (fresh boot)
-
-1. Start from **web UI** (not mobile) on **`ilike4movies/hermes-mac-land`** with saved environment **Hermes Mac Landing**
-2. Runtime Secrets: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY` (jump key optional)
-3. Build: `bld-20260822-2a0b84ab` or newer, or use committed `.cursor/environment.json` on this repo (auto-start + land when secrets present)
-4. Bootstrap waiter (optional): `curl -fsSL …/hermes-cloud-bootstrap-waiter.sh | bash`
-
-### Do not use
-
-- Slack rockets
-- Internal Task subagents for surgical land (no secrets)
-- Ooterverse-Saturns-Quest repo or game-only environment for Hermes work (removed in PR #9)
