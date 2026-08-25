@@ -15,6 +15,12 @@ _preflight() {
     echo "Do not use Ooterverse-Saturns-Quest for Hermes deploy. See OPERATOR-UNBLOCK.md on hermes-mac-land main." >&2
     return 1
   fi
+  if [[ "${COMPOSER_REPO_URL:-}" == *ooterverse* ]] || [[ "${COMPOSER_REPO_URL:-}" == *Ooterverse* ]]; then
+    echo "ERROR: wrong cloud agent repo (${COMPOSER_REPO_URL:-unknown})." >&2
+    echo "Start a NEW agent on ilike4movies/hermes-mac-land with env LEGACY Hermes .11." >&2
+    echo "Ooterverse override/mobile agents cannot receive Hermes secrets at boot." >&2
+    return 1
+  fi
   return 0
 }
 
@@ -64,6 +70,7 @@ fi
 echo "OK secrets at boot + Tailscale Running — attempting direct .11 surgical land"
 export HERMES_PREFER_DIRECT_HOST=1
 export HERMES_UPLOAD_TIP_FROM_CALLER=1
+export HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}"
 bash "$ROOT/shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh" \
   >>"$LOG" 2>&1 || {
   echo "WARN: auto-land failed — see $LOG" >&2
