@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-**Updated:** 2026-08-25T21:35Z
+**Updated:** 2026-08-25T21:37Z
 
 ## ⚠️ moltbot PR #76 — do not merge yet
 
@@ -36,7 +36,7 @@ After Step 1 succeeds, a credentialed agent on `.11` must run Stage A per `herme
 
 | PR | Status | Fix |
 |----|--------|-----|
-| [#86](https://github.com/ilike4movies/hermes-agent-cos/pull/86) | **Draft** — reconstructing on `cos-local@054895ab` | Identity-bound WAL finalizer + durable `reportback_verified=true` |
+| [#86](https://github.com/ilike4movies/hermes-agent-cos/pull/86) | **Ready for review** — head `95e39044` on `cos-local@054895ab`; source review PASS 21:34Z; CI pending | Identity-bound WAL finalizer + durable `reportback_verified=true` |
 
 **21:23Z RAL-798 receipt:** Stage A remains blocked on **RAL-733 worker-finalizer acceptance**, not on Ralph. PR #84 does not reconcile identity-bound middleware WAL usage. **No live Stage A retry** until merged PR #86 passes independent review.
 
