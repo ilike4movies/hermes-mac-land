@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-**Updated:** 2026-08-25T21:18Z
+**Updated:** 2026-08-25T21:35Z
 
 ## ⚠️ moltbot PR #76 — do not merge yet
 
@@ -15,44 +15,51 @@ Land scripts on `hermes-mac-land` `main` already export `HERMES_POST_APPLY_CANAR
 | Step | Ticket | What it does | Repo | Auto on cloud boot? |
 |------|--------|--------------|------|-------------------|
 | **1 — Surgical land** | RAL-800 | Lands `moltbot` tip on `/opt/moltbot` (interrupt label, WIP park, apply watch, drift) | `moltbot` via this repo | **Yes** — `hermes-cloud-agent-start.sh` |
-| **2 — Stage A canary** | RAL-798 / RAL-820 | Installs `hermes-agent-cos` control-loop adapter + runs bounded RAL-820 canary (`subject.txt` → `executed`) | `hermes-agent-cos` `cos-local` @ `054895ab` | **No** — separate bounded activation on `.11` |
+| **2 — Stage A canary** | RAL-798 / RAL-820 | Installs `hermes-agent-cos` control-loop adapter + runs bounded RAL-820 canary (`subject.txt` → `executed`) | `hermes-agent-cos` `cos-local` @ merged **PR #86** | **No** — separate bounded activation on `.11` |
 
 Surgical land alone does **not** deploy PR #82+#83 comment-first interrupt discovery. Stage A is required for `DISPATCH-NOW` without `hermes-now` and for the RAL-820 fixture proof.
 
 After Step 1 succeeds, a credentialed agent on `.11` must run Stage A per `hermes-agent-cos` `ops/ral798-control-loop/deployment-packet.md`.
 
-## RAL-798 source bundle (21:14Z)
+## RAL-798 source bundle
 
-Stage A live retry requires merges on `hermes-agent-cos` `cos-local` @ **`054895ab`**:
+### Merged (interrupt + minimal finalizer)
 
 | PR | Merge | Fix |
 |----|-------|-----|
-| [#82](https://github.com/ilike4movies/hermes-agent-cos/pull/82) | `cef81c9` | `DISPATCH-NOW` discoverable without `hermes-now; fresh comment interrupts rank before standing labels |
+| [#82](https://github.com/ilike4movies/hermes-agent-cos/pull/82) | `cef81c9` | `DISPATCH-NOW` discoverable without `hermes-now`; fresh comment interrupts rank before standing labels |
 | [#83](https://github.com/ilike4movies/hermes-agent-cos/pull/83) | `5e77535` | Fresh interrupt with different dedupe may create new request after terminal FAILED |
-| [#84](https://github.com/ilike4movies/hermes-agent-cos/pull/84) | `cbb31dba` | RAL-733 `finalize_worker_session_usage` — fixes `ral733-core-worker-finalizer-missing` |
+| [#84](https://github.com/ilike4movies/hermes-agent-cos/pull/84) | `cbb31dba` | Minimal `finalize_worker_session_usage` — callable but **insufficient** for RAL-733 acceptance |
 | [#85](https://github.com/ilike4movies/hermes-agent-cos/pull/85) | `054895ab` | Bundle manifest guard hash refresh for post-#84 preflight |
 
-**20:47Z live proof:** interrupt/discovery/claim **passed**; worker failed on missing finalizer; rolled back 20:49Z. **Source gate cleared** — next action is bounded Stage A retry on `.11` with existing `DISPATCH-NOW RAL-820` comment.
+### Pending (Stage A blocker)
 
-On live `.11`, only `ops/ral733-budget-guard/__init__.py` must carry the finalizer; preserved `mandatory_provider_guard.py` + `oneshot.py` preimages already call the bridge.
+| PR | Status | Fix |
+|----|--------|-----|
+| [#86](https://github.com/ilike4movies/hermes-agent-cos/pull/86) | **Draft** — reconstructing on `cos-local@054895ab` | Identity-bound WAL finalizer + durable `reportback_verified=true` |
 
-## Current live state (readback)
+**21:23Z RAL-798 receipt:** Stage A remains blocked on **RAL-733 worker-finalizer acceptance**, not on Ralph. PR #84 does not reconcile identity-bound middleware WAL usage. **No live Stage A retry** until merged PR #86 passes independent review.
+
+**20:47Z live proof (PR #82+#83):** interrupt/discovery/claim **passed**; worker failed `ral733-core-worker-finalizer-missing`; rolled back 20:49Z. Host restored to healthy preimage `2cb904b8…`; timer active/enabled. Preserved `DISPATCH-NOW RAL-820` comment remains on ticket.
+
+## Current live state (readback 21:33Z)
 
 | Check | Status |
 |-------|--------|
-| RAL-820 successor canary (`subject.txt` → `executed`) | **Open** — rolled back 20:49Z; Stage A retry ready at source |
-| RAL-798 interrupt → executor | **Partial** — discovery/claim proven 20:47Z; executor blocked by finalizer (source fixed #84) |
-| RAL-800 Host surgical-apply OK | **No** — moltbot tip stack not landed via surgical apply |
+| RAL-820 successor canary (`subject.txt` → `executed`) | **Open** — rolled back 20:49Z; retry **prohibited** until PR #86 |
+| RAL-798 interrupt → executor | **Partial** — discovery/claim proven 20:47Z; executor blocked on WAL finalizer |
+| RAL-800 Host surgical-apply OK | **No** — latest comment Aug 22; signal `20260825T212030Z` produced no receipt |
 | RAL-793 CLAIMED + inventory | **No** — Todo; gated behind RAL-820 + own contract |
 
 **Important:** Brief RAL-793 CLAIMED at 20:14–20:15Z was an RAL-798 Stage A accident. No executor ran. Do not treat as canary success.
 
-## Dependency order
+## Blocker order (current)
 
-1. **RAL-820** — harmless fixture canary proves interrupt → real executor movement
-2. **RAL-798** — interrupt contract Done (label + comment + contract resolution)
-3. **RAL-800** — moltbot tip stack on `.11` via surgical apply (GitHub→host path + drift alarms)
-4. **RAL-793** — Media Studio inventory (needs own execution contract; not `hermes-now` until reviewed)
+1. **PR #86** merge + independent review (identity-bound WAL finalizer)
+2. **RAL-800** surgical land — credentialed Mac/cloud agent or Mac Hermes curl-land
+3. **Stage A** live retry on `.11` with merged PR #86 + preserved `DISPATCH-NOW RAL-820`
+4. **RAL-820** `subject.txt` = `executed\n` + `worker_session_finalized` with `reportback_verified=true`
+5. **RAL-793** CLAIMED + inventory (own execution contract required)
 
 ## Pick one path
 
@@ -62,7 +69,7 @@ On live `.11`, only `ops/ral733-budget-guard/__init__.py` must carry the finaliz
 2. Environment: **LEGACY Hermes .11 — do not use for Ooterverse**
 3. **Runtime Secrets at agent boot** (not mid-session): `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`
 4. `.cursor/environment.json` on `main` auto-runs **Step 1** surgical land when secrets present
-5. Same agent runs **Step 2** Stage A on `.11` per `hermes-agent-cos` deployment packet @ `054895ab`
+5. Same agent runs **Step 2** Stage A on `.11` per deployment packet @ merged PR #86
 
 **Pitfalls:** Mobile cloud agents and Ooterverse override envs do **not** get Hermes secrets at boot.
 
@@ -73,7 +80,7 @@ https://cursor.com/agents/bc-458cf08d-4954-411a-978a-de2adb650e33
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-bootstrap-waiter.sh | bash
 HERMES_PREFER_DIRECT_HOST=1 bash /tmp/hermes-cloud-apply/hermes-moltbot-cloud-apply-install-via-ssh.sh
-# then Stage A per hermes-agent-cos ops/ral798-control-loop/deployment-packet.md @ 054895ab
+# then Stage A per hermes-agent-cos deployment packet @ merged PR #86
 ```
 
 Credentials verified 2026-08-22 17:36Z. Surgical land + Stage A were **not** completed in that session.
@@ -93,7 +100,7 @@ curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/h
 4. `OK INTERRUPT_LABEL hermes-now`
 5. `post-apply canary focus: RAL-820`
 6. RAL-800 → **Host surgical-apply OK**
-7. RAL-820 → `subject.txt` = `executed` + `worker_session_finalized` receipt
+7. RAL-820 → `subject.txt` = `executed` + `worker_session_finalized` with `reportback_verified=true`
 8. RAL-793 → Hermes **CLAIMED** + inventory (only after RAL-820 + own contract)
 
 ## Do not use
@@ -103,6 +110,7 @@ curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/h
 - `hermes-now` on RAL-793 until RAL-820 proves interrupt + contract exists
 - Internal cloud subagents without secrets at boot
 - Merging `moltbot` PR #76 while linked to RAL-820/RAL-793 in Linear
+- Stage A retry with `cos-local@054895ab` alone — PR #84 is insufficient; needs **PR #86**
 - `git reset --hard` on `/opt/moltbot`
 - Treating surgical land success as RAL-798 Done (Stage A still required)
 
