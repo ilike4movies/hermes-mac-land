@@ -2,7 +2,13 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-**Updated:** 2026-08-25T20:32Z
+**Updated:** 2026-08-25T20:38Z
+
+## ⚠️ moltbot PR #76 — do not merge yet
+
+[`moltbot` PR #76](https://github.com/ilike4movies/moltbot/pull/76) is **linked in Linear to RAL-820 and RAL-793**. Merging while attached may auto-Done those issues before live `.11` proof.
+
+Land scripts on `hermes-mac-land` `main` already export `HERMES_POST_APPLY_CANARY=RAL-820` — merge PR #76 only after detaching from canary issues or after canary proof.
 
 ## RAL-798 source update (20:24Z)
 
@@ -17,7 +23,7 @@ PR [#82](https://github.com/ilike4movies/hermes-agent-cos/pull/82) merged to `co
 
 | Check | Status |
 |-------|--------|
-| RAL-820 successor canary (`subject.txt` → `executed`) | **Open** — RAL-798 Stage A in progress on `.11` |
+| RAL-820 successor canary (`subject.txt` → `executed`) | **Open** — rolled back 20:16Z; Stage A retry pending |
 | RAL-798 interrupt → executor | **Source fixed** (PR #82 merged) — live Stage A retry pending on `.11` |
 | RAL-800 Host surgical-apply OK | **No** — moltbot tip stack not landed via surgical apply |
 | RAL-793 CLAIMED + inventory | **No** — accidental claim reverted 20:15Z; gated behind RAL-820 + own contract |
@@ -85,6 +91,7 @@ Optional in `~/.hermes/.env`: `HERMES_HOST_SSH_PRIVATE_KEY` (PEM for BatchMode S
 - Ooterverse-Saturns-Quest repo/env for Hermes deploy (game-only since PR #9)
 - `hermes-now` on RAL-793 until RAL-820 proves interrupt + contract exists
 - Internal cloud subagents without secrets at boot
+- Merging `moltbot` PR #76 while linked to RAL-820/RAL-793 in Linear
 - `git reset --hard` on `/opt/moltbot`
 - `git pull --ff-only` on dirty/no-origin `/opt/moltbot` (use surgical-apply)
 
