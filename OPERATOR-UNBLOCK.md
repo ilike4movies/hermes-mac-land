@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-**Updated:** 2026-08-25T20:30Z
+**Updated:** 2026-08-25T20:32Z
 
 ## RAL-798 source update (20:24Z)
 
@@ -11,7 +11,7 @@ PR [#82](https://github.com/ilike4movies/hermes-agent-cos/pull/82) merged to `co
 - Fresh comment interrupts rank before standing labels
 - Unresolved standing labels skipped when resolvable interrupt exists
 
-**Next:** bounded Stage A live retry on `.11` (not yet run). RAL-820 canary still open.
+**Next:** bounded Stage A live retry on `.11` with PR #82 merged code (not yet run). Existing `DISPATCH-NOW RAL-820` comment from 20:13Z should be discovered after deploy. RAL-820 canary still open.
 
 ## Current live state (readback)
 
@@ -74,9 +74,10 @@ Optional in `~/.hermes/.env`: `HERMES_HOST_SSH_PRIVATE_KEY` (PEM for BatchMode S
 2. `== fetching moltbot tip via gh tarball (caller) ==`
 3. `== uploading tip tarball to ilike4@…`
 4. `OK INTERRUPT_LABEL hermes-now`
-5. RAL-800 → **Host surgical-apply OK**
-6. RAL-820 → `subject.txt` = `executed` (RAL-798 canary)
-7. RAL-793 → Hermes **CLAIMED** + inventory (only after RAL-820 + own contract)
+5. `post-apply canary focus: RAL-820` (not RAL-793)
+6. RAL-800 → **Host surgical-apply OK**
+7. RAL-820 → `subject.txt` = `executed` (RAL-798 canary)
+8. RAL-793 → Hermes **CLAIMED** + inventory (only after RAL-820 + own contract)
 
 ## Do not use
 
