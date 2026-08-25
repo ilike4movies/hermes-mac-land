@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-**Updated:** 2026-08-25T22:05Z
+**Updated:** 2026-08-25T22:10Z
 
 ## ⚠️ Ooterverse / mobile override agents cannot land
 
@@ -43,9 +43,11 @@ After Step 1 succeeds, a credentialed agent on `.11` must run Stage A per `herme
 
 **21:54Z:** `hermes-mac-land` PR [#8](https://github.com/ilike4movies/hermes-mac-land/pull/8) merged — cloud land auto-chains read-only Stage A preflight after successful surgical apply.
 
+**22:05Z:** `hermes-mac-land` PR [#10](https://github.com/ilike4movies/hermes-mac-land/pull/10) merged — source+live Stage A preflight chain.
+
 **20:47Z live proof (PR #82+#83):** interrupt/discovery/claim **passed**; worker failed `ral733-core-worker-finalizer-missing`; rolled back 20:49Z. Host at healthy preimage `2cb904b8…`; timer active/enabled.
 
-## Current live state (readback 21:57Z)
+## Current live state (readback 22:10Z)
 
 | Check | Status |
 |-------|--------|
@@ -71,19 +73,28 @@ After Step 1 succeeds, a credentialed agent on `.11` must run Stage A per `herme
 3. **Runtime Secrets at agent boot**: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`
 4. Auto-runs **Step 1** surgical land + read-only Stage A source/live preflight (`HERMES_AUTO_STAGE_A_PREFLIGHT=1` default). Bounded Stage A activation remains manual per deployment packet (`APPROVE-RJS-LIVE-BUNDLE-1` for Stage A only; full engine bundle: `APPROVE-RJS-EXECUTION-ENGINE-LIVE-1`).
 
-### B — Resume verified agent (or re-run land on credentialed pod)
+### B — Resume credentialed agent (one-liner)
 
-https://cursor.com/agents/bc-458cf08d-4954-411a-978a-de2adb650e33
+**Requires** Runtime Secrets `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` on a `hermes-mac-land` agent (LEGACY Hermes .11 env).
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-credentialed-resume-land.sh | bash
+```
+
+Chains: bootstrap → direct `.11` surgical land → source preflight → live preflight. Log: `/tmp/hermes-cloud-apply/resume-land.log`.
+
+Verified agent (if still accessible): https://cursor.com/agents/bc-458cf08d-4954-411a-978a-de2adb650e33
+
+**Manual equivalent:**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-bootstrap-waiter.sh | bash
 HERMES_PREFER_DIRECT_HOST=1 bash /tmp/hermes-cloud-apply/hermes-moltbot-cloud-apply-install-via-ssh.sh
-# preflight auto-runs after land on credentialed agents (HERMES_AUTO_STAGE_A_PREFLIGHT=1)
-# or run manually:
+bash /tmp/hermes-cloud-apply/hermes-stage-a-source-preflight.sh
 bash /tmp/hermes-cloud-apply/hermes-stage-a-preflight.sh
-# then bounded Stage A activation per deployment-packet.md @ cos-local 5bcb257e
-# approval token: APPROVE-RJS-LIVE-BUNDLE-1
 ```
+
+Then bounded Stage A activation per `deployment-packet.md` @ cos-local `5bcb257e` with preserved `DISPATCH-NOW RAL-820` comment + token `APPROVE-RJS-LIVE-BUNDLE-1`.
 
 ### C — Mac Hermes
 
