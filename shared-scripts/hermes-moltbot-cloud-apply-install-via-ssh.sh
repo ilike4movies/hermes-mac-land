@@ -347,7 +347,7 @@ _run_on_host() {
     ssh -o BatchMode=yes -o ConnectTimeout=20 \
       -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
       "${idargs[@]}" "$target" \
-      env HERMES_SKIP_TIP_CLONE="${HERMES_SKIP_TIP_CLONE:-0}" HERMES_MOLTBOT_REMOTE="$REMOTE_URL" HERMES_MOLTBOT_CLONE_TIMEOUT_SEC="$CLONE_TIMEOUT_SEC" bash -s <<'REMOTE'
+      env HERMES_SKIP_TIP_CLONE="${HERMES_SKIP_TIP_CLONE:-0}" HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}" HERMES_MOLTBOT_REMOTE="$REMOTE_URL" HERMES_MOLTBOT_CLONE_TIMEOUT_SEC="$CLONE_TIMEOUT_SEC" bash -s <<'REMOTE'
 set -euo pipefail
 REPO="${HERMES_MOLTBOT_REPO:-/opt/moltbot}"
 REMOTE_URL="${HERMES_MOLTBOT_REMOTE:-git@github.com:ilike4movies/moltbot.git}"
@@ -394,13 +394,13 @@ else
     fi
   fi
 fi
-HERMES_SKIP_TIP_CLONE=1 bash "$CLONE/shared-scripts/hermes-moltbot-surgical-apply.sh"
+HERMES_SKIP_TIP_CLONE=1 HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}" bash "$CLONE/shared-scripts/hermes-moltbot-surgical-apply.sh"
 REMOTE
   else
     ssh -o BatchMode=yes -o ConnectTimeout=20 \
       -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
       "$target" \
-      env HERMES_SKIP_TIP_CLONE="${HERMES_SKIP_TIP_CLONE:-0}" HERMES_MOLTBOT_REMOTE="$REMOTE_URL" HERMES_MOLTBOT_CLONE_TIMEOUT_SEC="$CLONE_TIMEOUT_SEC" bash -s <<'REMOTE'
+      env HERMES_SKIP_TIP_CLONE="${HERMES_SKIP_TIP_CLONE:-0}" HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}" HERMES_MOLTBOT_REMOTE="$REMOTE_URL" HERMES_MOLTBOT_CLONE_TIMEOUT_SEC="$CLONE_TIMEOUT_SEC" bash -s <<'REMOTE'
 set -euo pipefail
 REPO="${HERMES_MOLTBOT_REPO:-/opt/moltbot}"
 REMOTE_URL="${HERMES_MOLTBOT_REMOTE:-git@github.com:ilike4movies/moltbot.git}"
@@ -447,7 +447,7 @@ else
     fi
   fi
 fi
-HERMES_SKIP_TIP_CLONE=1 bash "$CLONE/shared-scripts/hermes-moltbot-surgical-apply.sh"
+HERMES_SKIP_TIP_CLONE=1 HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}" bash "$CLONE/shared-scripts/hermes-moltbot-surgical-apply.sh"
 REMOTE
   fi
 }
