@@ -32,6 +32,7 @@ _fetch shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh hermes-mo
 _fetch shared-scripts/hermes-cloud-wait-login-supervisor.sh hermes-cloud-wait-login-supervisor.sh
 _fetch shared-scripts/hermes-stage-a-preflight.sh hermes-stage-a-preflight.sh
 _fetch shared-scripts/hermes-stage-a-source-preflight.sh hermes-stage-a-source-preflight.sh
+_fetch shared-scripts/hermes-credentialed-resume-land.sh hermes-credentialed-resume-land.sh
 if ! pgrep -f 'wait-join-then-apply.sh' >/dev/null 2>&1; then
   nohup bash "$DIR/wait-join-then-apply.sh" >>"$DIR/wait-join.log" 2>&1 &
   echo $! >"$DIR/waiter.pid"
@@ -48,3 +49,4 @@ else
 fi
 echo "Inject TS_AUTHKEY / SSH keys via Cursor env secrets; waiters reload every 15s."
 echo "If NeedsLogin: approve URL from $DIR/CURRENT_AUTHURL.txt or tailscale status"
+echo "One-shot land+preflight: bash $DIR/hermes-credentialed-resume-land.sh"
