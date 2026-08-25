@@ -1,29 +1,46 @@
 # Hermes dispatcher — operator unblock (RAL-800)
 
-**Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`). GitHub `main` alone is not sufficient.
+**Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-## Status checklist
+**Updated:** 2026-08-25T20:20Z
 
-| Check | How to verify |
-|-------|----------------|
-| RAL-793 CLAIMED + inventory | Linear issue RAL-793 |
-| RAL-800 Host surgical-apply OK | Machine comment on RAL-800 |
-| Live `.11` tip stack | `OK INTERRUPT_LABEL hermes-now` in land output |
+## Current live state (readback)
+
+| Check | Status |
+|-------|--------|
+| RAL-820 successor canary (`subject.txt` → `executed`) | **Open** — RAL-798 Stage A in progress on `.11` |
+| RAL-798 interrupt → executor | **Partial** — force-claim works; comment `DISPATCH-NOW` not polled; stale labels can steal wrong ticket |
+| RAL-800 Host surgical-apply OK | **No** — moltbot tip stack not landed via surgical apply |
+| RAL-793 CLAIMED + inventory | **No** — accidental claim reverted 20:15Z; gated behind RAL-820 + own contract |
+
+**Important:** A brief RAL-793 CLAIMED at 20:14–20:15Z was an RAL-798 Stage A accident (stale `hermes-now`). No executor ran. Issue returned to **Todo**. Do not treat it as canary success.
+
+## Dependency order
+
+1. **RAL-820** — harmless fixture canary proves interrupt → real executor movement
+2. **RAL-798** — interrupt contract Done (label + comment + contract resolution)
+3. **RAL-800** — moltbot tip stack on `.11` via surgical apply (GitHub→host path + drift alarms)
+4. **RAL-793** — Media Studio inventory (needs own execution contract; not `hermes-now` until reviewed)
+
+Two parallel tracks exist today:
+- **RAL-798** (`hermes-agent-cos`): in-place Stage A patches on live `.11` dispatcher
+- **RAL-800** (`moltbot` via this repo): surgical apply lands full tip stack from GitHub `main`
+
+Either path can advance interrupt work; RAL-800 is still required for ongoing GitHub→host apply + drift alarms.
 
 ## Pick one path
 
-### A — New cloud agent (preferred after 2026-08-22 scope separation)
+### A — New cloud agent (preferred)
 
 1. **Web UI only** (not mobile) → repo **`ilike4movies/hermes-mac-land`**
 2. Environment: **LEGACY Hermes .11 — do not use for Ooterverse**
 3. **Runtime Secrets at agent boot** (not mid-session): `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`
 4. `.cursor/environment.json` on `main` auto-runs surgical land when secrets present
 
-**Pitfalls:** Mobile cloud agents and Ooterverse override envs do **not** get Hermes secrets at boot. Internal subagents cannot receive Runtime Secrets mid-session — start a **new** web agent on `hermes-mac-land` with the LEGACY env.
+**Pitfalls:** Mobile cloud agents and Ooterverse override envs do **not** get Hermes secrets at boot. Internal subagents cannot receive Runtime Secrets mid-session.
 
 ### B — Resume verified agent
 
-Open in browser (other agents cannot see this run):
 https://cursor.com/agents/bc-458cf08d-4954-411a-978a-de2adb650e33
 
 ```bash
@@ -31,11 +48,9 @@ curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/s
 HERMES_PREFER_DIRECT_HOST=1 bash /tmp/hermes-cloud-apply/hermes-moltbot-cloud-apply-install-via-ssh.sh
 ```
 
-Credentials were verified 2026-08-22 17:36Z (Tailscale Running, SSH to `four-openclaw:ilike4`). Surgical land was **not** run in that session.
+Credentials verified 2026-08-22 17:36Z. Surgical land was **not** run in that session.
 
 ### C — Mac Hermes (home LAN / Tailscale)
-
-Last machine attempt **FAILED at 16:26Z** (pre host-key install at 17:22Z). **Re-run required:**
 
 ```bash
 gh auth login
@@ -51,12 +66,14 @@ Optional in `~/.hermes/.env`: `HERMES_HOST_SSH_PRIVATE_KEY` (PEM for BatchMode S
 3. `== uploading tip tarball to ilike4@…`
 4. `OK INTERRUPT_LABEL hermes-now`
 5. RAL-800 → **Host surgical-apply OK**
-6. RAL-793 → Hermes **CLAIMED** within ~5m
+6. RAL-820 → `subject.txt` = `executed` (RAL-798 canary)
+7. RAL-793 → Hermes **CLAIMED** + inventory (only after RAL-820 + own contract)
 
 ## Do not use
 
-- Slack rockets
+- Slack rockets as primary wake path
 - Ooterverse-Saturns-Quest repo/env for Hermes deploy (game-only since PR #9)
+- `hermes-now` on RAL-793 until RAL-820 proves interrupt + contract exists
 - Internal cloud subagents without secrets at boot
 - `git reset --hard` on `/opt/moltbot`
 - `git pull --ff-only` on dirty/no-origin `/opt/moltbot` (use surgical-apply)
@@ -65,5 +82,6 @@ Optional in `~/.hermes/.env`: `HERMES_HOST_SSH_PRIVATE_KEY` (PEM for BatchMode S
 
 | Repo | Role |
 |------|------|
-| `ilike4movies/hermes-mac-land` | Public Mac/cloud land scripts |
+| `ilike4movies/hermes-mac-land` | Public Mac/cloud land scripts (this repo) |
 | `ilike4movies/moltbot` | Private dispatcher stack (cos-linear-dispatcher, surgical-apply) |
+| `ilike4movies/hermes-agent-cos` | RAL-798 control-loop adapter (Stage A on `.11`) |
