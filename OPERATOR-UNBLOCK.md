@@ -2,11 +2,23 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` (`four-openclaw`) **with inventory progress**. GitHub `main` alone is not sufficient.
 
-**Updated:** 2026-08-25T22:10Z
+**Updated:** 2026-08-25T22:14Z
 
 ## ⚠️ Ooterverse / mobile override agents cannot land
 
 Agents on `Ooterverse-Saturns-Quest` (including mobile override) **do not receive** `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` at boot. Tailscale stays `NeedsLogin`; no surgical land or Stage A is possible from those pods. Use path A, B, or C below on `hermes-mac-land` with **LEGACY Hermes .11** secrets.
+
+## ⚠️ Do not link deploy/operator PRs to open canary issues
+
+Linear auto-Dones linked issues on PR merge **without** live `.11` proof.
+
+| Issue | Risk |
+|-------|------|
+| **RAL-800** | PR #11 (22:11Z) falsely closed surgical-land gate — reopened |
+| **RAL-820 / RAL-793** | `moltbot` PR #76 linked — do not merge until detached |
+| **RAL-798** | Root interrupt ticket — keep PRs unlinked during prove-out |
+
+Link operator/doc PRs to **RAL-799** or leave unlinked. Live proof comments belong on the canary tickets after execution.
 
 ## ⚠️ moltbot PR #76 — do not merge yet
 
@@ -47,13 +59,13 @@ After Step 1 succeeds, a credentialed agent on `.11` must run Stage A per `herme
 
 **20:47Z live proof (PR #82+#83):** interrupt/discovery/claim **passed**; worker failed `ral733-core-worker-finalizer-missing`; rolled back 20:49Z. Host at healthy preimage `2cb904b8…`; timer active/enabled.
 
-## Current live state (readback 22:10Z)
+## Current live state (readback 22:14Z)
 
 | Check | Status |
 |-------|--------|
 | RAL-820 successor canary (`subject.txt` → `executed`) | **Open** — source ready @ `5bcb257e`; **awaiting credentialed `.11` agent** |
 | RAL-798 interrupt → executor | **Partial** — discovery/claim proven 20:47Z; executor unproven until Stage A retry @ `5bcb257e` |
-| RAL-800 Host surgical-apply OK | **No** — latest comment Aug 22 18:15Z; signal `20260825T212030Z` no receipt |
+| RAL-800 Host surgical-apply OK | **No** — reopened after PR #11 false Done; no live proof since Aug 22 18:15Z |
 | RAL-793 CLAIMED + inventory | **No** — Todo; gated behind RAL-820 |
 | This pod (Ooterverse override) | **Cannot land** — secrets absent; Tailscale NeedsLogin |
 
@@ -120,6 +132,7 @@ curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/h
 - Ooterverse override env for Hermes deploy (no secrets at boot)
 - `hermes-now` on RAL-793 until RAL-820 proves interrupt + contract exists
 - Merging `moltbot` PR #76 while linked to RAL-820/RAL-793 in Linear
+- Linking operator PRs to RAL-800/RAL-820/RAL-793/RAL-798 (auto-Done without live proof)
 - Stage A with pre-#86 `cos-local@054895ab` alone
 - `git reset --hard` on `/opt/moltbot`
 
