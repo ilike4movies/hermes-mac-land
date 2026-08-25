@@ -13,6 +13,7 @@ PIN="${HERMES_MAC_LAND_PIN:-main}"
 # Mac Hermes at home reaches .11 directly; jump install often fails (private clone on grok-cos-1).
 export HERMES_PREFER_DIRECT_HOST="${HERMES_PREFER_DIRECT_HOST:-1}"
 export HERMES_UPLOAD_TIP_FROM_CALLER="${HERMES_UPLOAD_TIP_FROM_CALLER:-1}"
+export HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}"
 
 _notify() {
   local title="$1" msg="$2"
