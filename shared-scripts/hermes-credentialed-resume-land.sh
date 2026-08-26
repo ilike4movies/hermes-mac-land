@@ -83,6 +83,7 @@ else
 fi
 
 echo "" | tee -a "$LOG"
-echo "NEXT: bounded Stage A per hermes-agent-cos ops/ral798-control-loop/deployment-packet.md @ cos-local 5bcb257e" | tee -a "$LOG"
-echo "Preserve DISPATCH-NOW RAL-820 comment. Token: APPROVE-RJS-LIVE-BUNDLE-1" | tee -a "$LOG"
-echo "Success gate: RAL-820 subject.txt = executed" | tee -a "$LOG"
+echo "NEXT: confirm Host surgical-apply OK on RAL-800 (local cloud-apply watch from moltbot #79)." | tee -a "$LOG"
+echo "Then stage RAL-793 inventory contract on .11 (docs/RAL-793-CONTRACT-STAGING.md / hermes-agent-cos #125)." | tee -a "$LOG"
+echo "Only then: hermes-now / DISPATCH-NOW RAL-793. Do not DISPATCH without pinned live contract." | tee -a "$LOG"
+echo "Success gate: RAL-793 Hermes CLAIMED + inventory evidence. RAL-820 already Done." | tee -a "$LOG"
