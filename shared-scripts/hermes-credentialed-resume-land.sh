@@ -95,18 +95,26 @@ else
   echo "WARN: RAL-799 verify script missing" >&2
 fi
 
-RAL634_VERIFY="$DIR/hermes-ral634-starvation-verify.sh"
-[[ -x "$RAL634_VERIFY" ]] || RAL634_VERIFY="$ROOT/shared-scripts/hermes-ral634-starvation-verify.sh"
-
-echo "== RAL-634 starvation verify (read-only) ==" | tee -a "$LOG"
-if [[ -x "$RAL634_VERIFY" ]]; then
-  bash "$RAL634_VERIFY" --post-linear 2>&1 | tee -a "$LOG" || echo "WARN: RAL-634 verify failed (see log)" | tee -a "$LOG"
+# Downstream gates: RAL-793 contract install + RAL-634 starvation verify.
+# Skippable via HERMES_SKIP_DOWNSTREAM=1 (e.g. land-only smoke).
+if [[ "${HERMES_SKIP_DOWNSTREAM:-0}" != "1" ]]; then
+  DOWNSTREAM="$DIR/hermes-dispatcher-downstream.sh"
+  [[ -x "$DOWNSTREAM" ]] || DOWNSTREAM="$ROOT/shared-scripts/hermes-dispatcher-downstream.sh"
+  if [[ ! -x "$DOWNSTREAM" ]]; then
+    curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh \
+      -o "$DIR/hermes-dispatcher-downstream.sh"
+    chmod +x "$DIR/hermes-dispatcher-downstream.sh"
+    DOWNSTREAM="$DIR/hermes-dispatcher-downstream.sh"
+  fi
+  echo "== downstream gates (RAL-793 contract + RAL-634 verify) ==" | tee -a "$LOG"
+  bash "$DOWNSTREAM" 2>&1 | tee -a "$LOG" || echo "WARN: downstream gates failed — see $LOG" | tee -a "$LOG"
 else
-  echo "WARN: RAL-634 verify script missing" >&2
+  echo "SKIP downstream gates (HERMES_SKIP_DOWNSTREAM=1)" | tee -a "$LOG"
 fi
 
 echo "" | tee -a "$LOG"
-echo "NEXT (downstream — RAL-800/799 Done):" | tee -a "$LOG"
-echo "  1. bash shared-scripts/hermes-ral793-contract-install.sh  # stage inventory contract" | tee -a "$LOG"
-echo "  2. DISPATCH-NOW RAL-793 only after contract readback + orchestrator hash pin" | tee -a "$LOG"
-echo "  3. Expect inventory evidence on RAL-793 (not WORK-PACKET-DONE alone)" | tee -a "$LOG"
+echo "NEXT (manual — scripts do NOT dispatch):" | tee -a "$LOG"
+echo "  1. Confirm RAL-793 contract readback posted to Linear (Step downstream)" | tee -a "$LOG"
+echo "  2. DISPATCH-NOW RAL-793 or hermes-now on RAL-793" | tee -a "$LOG"
+echo "  3. Expect inventory evidence on RAL-793 (evidence/RAL-793-inventory.md)" | tee -a "$LOG"
+echo "  4. Do NOT treat prior WORK-PACKET-DONE as objective closure" | tee -a "$LOG"
