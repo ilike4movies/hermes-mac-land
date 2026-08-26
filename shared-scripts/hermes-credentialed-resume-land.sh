@@ -95,8 +95,18 @@ else
   echo "WARN: RAL-799 verify script missing" >&2
 fi
 
+RAL634_VERIFY="$DIR/hermes-ral634-starvation-verify.sh"
+[[ -x "$RAL634_VERIFY" ]] || RAL634_VERIFY="$ROOT/shared-scripts/hermes-ral634-starvation-verify.sh"
+
+echo "== RAL-634 starvation verify (read-only) ==" | tee -a "$LOG"
+if [[ -x "$RAL634_VERIFY" ]]; then
+  bash "$RAL634_VERIFY" --post-linear 2>&1 | tee -a "$LOG" || echo "WARN: RAL-634 verify failed (see log)" | tee -a "$LOG"
+else
+  echo "WARN: RAL-634 verify script missing" >&2
+fi
+
 echo "" | tee -a "$LOG"
-echo "NEXT: confirm Host surgical-apply OK on RAL-800 (local cloud-apply watch from moltbot #79)." | tee -a "$LOG"
-echo "Then stage RAL-793 inventory contract on .11 (docs/RAL-793-CONTRACT-STAGING.md / hermes-agent-cos stage_ral793_inventory_contract.py)." | tee -a "$LOG"
-echo "Only then: hermes-now / DISPATCH-NOW RAL-793. Do not DISPATCH without pinned live contract." | tee -a "$LOG"
-echo "Success gate: RAL-793 inventory evidence (CLAIMED already observed). RAL-820 Done; RAL-799 verify should PASS above." | tee -a "$LOG"
+echo "NEXT (downstream — RAL-800/799 Done):" | tee -a "$LOG"
+echo "  1. bash shared-scripts/hermes-ral793-contract-install.sh  # stage inventory contract" | tee -a "$LOG"
+echo "  2. DISPATCH-NOW RAL-793 only after contract readback + orchestrator hash pin" | tee -a "$LOG"
+echo "  3. Expect inventory evidence on RAL-793 (not WORK-PACKET-DONE alone)" | tee -a "$LOG"
