@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T22:00Z
+**Updated:** 2026-08-26T22:36Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -31,6 +31,10 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 **Scripts on main (#27):** downstream + contract-install default `HERMES_RAL793_LINEAR_ISSUE_ID`; RAL-634 verify defaults `HERMES_RAL634_LINEAR_ISSUE_ID`.
 
 **Prefer ticket identifiers in scripts** (`HERMES_RAL793_LINEAR_TICKET=RAL-793`) — scripts resolve via `issueSearch`. MCP agents must use UUIDs explicitly.
+
+## Machine status inbox (GitHub)
+
+[hermes-mac-land issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) receives machine posts when Mac/credentialed runs execute (land DIAG + downstream STARTED/DONE/FAILED). Cloud agents without SSH can watch this inbox for credentialed-run receipts.
 
 ## Live now — RAL-820 Done; #121/#122 installed
 
@@ -61,6 +65,8 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 | hermes-mac-land [#25](https://github.com/ilike4movies/hermes-mac-land/pull/25) | **merged** — Linear UUID cheat sheet for MCP posting |
 | hermes-mac-land [#26](https://github.com/ilike4movies/hermes-mac-land/pull/26) | **merged** — starvation verify latest-run + fail-closed proof |
 | hermes-mac-land [#27](https://github.com/ilike4movies/hermes-mac-land/pull/27) | **merged** — downstream + contract-install pin HERMES_RAL793_LINEAR_ISSUE_ID |
+| hermes-mac-land [#28](https://github.com/ilike4movies/hermes-mac-land/pull/28) | **merged** — OPERATOR-UNBLOCK sync #25–#27 |
+| hermes-mac-land [#29](https://github.com/ilike4movies/hermes-mac-land/pull/29) | **merged** — README downstream-only critical path |
 
 ### Critical path (remaining)
 
