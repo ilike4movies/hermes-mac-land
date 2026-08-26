@@ -2,6 +2,7 @@
 # Cursor Cloud Agent start hook — bootstrap waiter + optional immediate surgical land.
 # Requires Runtime Secrets at boot: TS_AUTHKEY, HERMES_HOST_SSH_PRIVATE_KEY.
 # Set HERMES_AUTO_SURGICAL_LAND=0 to disable immediate land (waiter still runs).
+# Set HERMES_AUTO_DOWNSTREAM=1 (default) to chain RAL-799 verify + downstream gates after land.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
@@ -38,6 +39,26 @@ _missing_secrets() {
   return 1
 }
 
+_run_downstream_chain() {
+  local ral799 downstream
+  ral799="$DIR/hermes-ral799-live-verify.sh"
+  [[ -x "$ral799" ]] || ral799="$ROOT/shared-scripts/hermes-ral799-live-verify.sh"
+  downstream="$ROOT/shared-scripts/hermes-dispatcher-downstream.sh"
+
+  if [[ "${HERMES_AUTO_RAL799_VERIFY:-1}" == "1" ]] && [[ -x "$ral799" ]]; then
+    echo "OK running RAL-799 live verify (canary + drift)"
+    bash "$ral799" --post-linear >>"$LOG" 2>&1 || echo "WARN: RAL-799 verify failed — see $LOG" >&2
+  fi
+
+  if [[ -x "$downstream" ]]; then
+    echo "OK running downstream gates (RAL-793 contract + RAL-634 verify)"
+    bash "$downstream" >>"$LOG" 2>&1 || echo "WARN: downstream gates failed — see $LOG" >&2
+    echo "NEXT (manual): DISPATCH-NOW RAL-793 after contract readback on RAL-793"
+  else
+    echo "WARN: hermes-dispatcher-downstream.sh missing — run bootstrap waiter" >&2
+  fi
+}
+
 _preflight || exit 0
 
 bash "$ROOT/shared-scripts/hermes-cloud-bootstrap-waiter.sh" || true
@@ -47,7 +68,12 @@ if [[ -x "$DIR/bridge-secrets-from-env.sh" ]]; then
 fi
 
 if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
-  echo "INFO: auto-land disabled (HERMES_AUTO_SURGICAL_LAND=0)"
+  if [[ "${HERMES_AUTO_DOWNSTREAM:-1}" == "1" ]] && ! _missing_secrets; then
+    echo "INFO: land disabled — running downstream-only chain"
+    _run_downstream_chain
+  else
+    echo "INFO: auto-land disabled (HERMES_AUTO_SURGICAL_LAND=0)"
+  fi
   exit 0
 fi
 
@@ -90,6 +116,9 @@ if bash "$ROOT/shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh" >>"
     else
       echo "WARN: hermes-stage-a-preflight.sh missing — run bootstrap waiter first" >&2
     fi
+  fi
+  if [[ "${HERMES_AUTO_DOWNSTREAM:-1}" == "1" ]]; then
+    _run_downstream_chain
   fi
 else
   echo "WARN: auto-land failed — see $LOG" >&2
