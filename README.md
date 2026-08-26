@@ -4,6 +4,29 @@
 
 > **Wrong repo?** Do not run Hermes land from Ooterverse-Saturns-Quest. Use **`ilike4movies/hermes-mac-land`** + env **LEGACY Hermes .11** + Runtime Secrets at boot.
 
+## Current critical path (2026-08-26)
+
+**Upstream gates Done:** RAL-820 interrupt, RAL-800 tip-main land, RAL-799 live canary+drift (@ 20:21–20:22Z).
+
+**Still open:** RAL-793 contract + inventory evidence, RAL-634 live starvation verify. **Do not re-land** unless tip refresh is needed.
+
+### Fastest now — downstream only (Mac)
+
+1. Download **fresh** `HERMES-DOWNSTREAM-ONLY.command` from this repo
+2. **Right-click → Open** on Mac Hermes (Tailscale or LAN to `.11`)
+
+Or terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
+```
+
+**Chain:** RAL-793 contract install + readback → auto `DISPATCH-NOW` (Linear interrupt) → RAL-634 verify PASS/FAIL.
+
+**Pass criteria:** contract readback + CLAIMED + `evidence/RAL-793-inventory.md` on RAL-793; PASS receipt on RAL-634. **Not** WORK-PACKET-DONE alone.
+
+**Linear hygiene:** do not attach GitHub PRs to open canary tickets; do not put `RAL-793` in PR titles.
+
 ## macOS Gatekeeper (read this first)
 
 Double-clicking a downloaded `.command` file may show **"could not verify … is free of malware"** before the script runs. That is normal for GitHub downloads.
@@ -26,7 +49,7 @@ Double-clicking a downloaded `.command` file may show **"could not verify … is
 
 `HERMES-DIAGNOSE-THEN-LAND.command` prefers a **single GitHub archive tarball** (co-located diag + via-ssh), then falls back to per-file raw/CDN. Default pin: **`main`** (override with `HERMES_MAC_LAND_PIN` for a frozen SHA).
 
-## Fastest — one double-click (diagnose + land)
+## Full diagnose + land (when tip refresh needed)
 
 1. Open: https://github.com/ilike4movies/hermes-mac-land
 2. Download a **fresh** `HERMES-DIAGNOSE-THEN-LAND.command` (default pin `main`)
@@ -91,6 +114,15 @@ Optional in `~/.hermes/.env`:
 
 ## Expect
 
+### After downstream-only (current path)
+
+1. RAL-793 contract install readback on Linear
+2. Auto `DISPATCH-NOW RAL-793` posted (Linear interrupt — no Slack rocket)
+3. Hermes **CLAIMED** under pinned contract + `evidence/RAL-793-inventory.md`
+4. RAL-634 verify PASS receipt on RAL-634
+
+### After full land (tip refresh)
+
 Terminal output markers:
 1. `INFO: HERMES_PREFER_DIRECT_HOST=1 — skipping jump`
 2. `== fetching moltbot tip via gh tarball (caller) ==`
@@ -98,7 +130,7 @@ Terminal output markers:
 4. `OK INTERRUPT_LABEL hermes-now`
 5. `post-apply canary focus: RAL-820` (not media-studio canary)
 
-Then: RAL-800 `Host surgical-apply OK` → RAL-820 canary (`subject.txt` executed) → RAL-793 Hermes **CLAIMED** + inventory (own contract; not before RAL-820).
+Then: RAL-800 `Host surgical-apply OK` → RAL-820 canary → downstream gates (contract + dispatch + RAL-634 verify).
 
 No Slack rockets.
 
@@ -109,5 +141,7 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 **Runtime Secrets must be attached at agent boot.** Internal cloud subagents, mobile-started agents, and draft override environment builds do **not** receive `TS_AUTHKEY` or `HERMES_HOST_SSH_PRIVATE_KEY` mid-session.
 
 **Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **LEGACY Hermes .11 — do not use for Ooterverse**, never the Ooterverse game environment.
+
+For downstream-only boot on a credentialed cloud agent: `HERMES_AUTO_SURGICAL_LAND=0` (default `HERMES_AUTO_DOWNSTREAM=1`).
 
 See **[OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md)** for the full checklist and pitfalls.
