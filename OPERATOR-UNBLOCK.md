@@ -2,46 +2,61 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-25T23:00Z
+**Updated:** 2026-08-26T09:20Z
 
-## Live now (22:58Z)
+## Live now — RAL-820 Done; #121/#122 installed
 
-Post-PR #91 Stage A retry: **CLAIMED** at 22:58:56Z (`run 4007763`). Awaiting executor + `subject.txt` = `executed\n`.
+| Item | Evidence |
+|------|----------|
+| Canary | Run `1097131`, `req-c8a22ccbc2504e6b`, `VERIFIED_COMPLETE`, **0** model/API/tool calls |
+| Replay | `1099734` = `healthy_noop` |
+| Comment discovery | [#122](https://github.com/ilike4movies/hermes-agent-cos/pull/122) **merged + live** (`comments(last:N)` V2, dispatcher `54cccf31…`) |
+| Natural cycle | `1131057` / dispatcher `1131978` = `healthy_noop` |
+| Timer | Active (5m) |
+| RAL-820 | **Done** |
 
-## Source state (`cos-local@36260a9f`)
+### Source follow-ups
 
-| PR | Merge | Fix |
-|----|-------|-----|
-| [#86](https://github.com/ilike4movies/hermes-agent-cos/pull/86) | `5bcb257e` | WAL finalizer |
-| [#90](https://github.com/ilike4movies/hermes-agent-cos/pull/90) | `e156bf9b` | Thermal/pre-execution reconcile |
-| [#91](https://github.com/ilike4movies/hermes-agent-cos/pull/91) | `36260a9f` | Historical recovery-marker migration |
+| PR | Status |
+|----|--------|
+| [#121](https://github.com/ilike4movies/hermes-agent-cos/pull/121) | **merged + live** — preserve 0755 modes on apply |
+| [#122](https://github.com/ilike4movies/hermes-agent-cos/pull/122) | **merged + live** — newest-comment DISPATCH-NOW discovery |
+| [#123](https://github.com/ilike4movies/hermes-agent-cos/pull/123) | **closed** — superseded by #122 |
+| [#115](https://github.com/ilike4movies/hermes-agent-cos/pull/115) | **merged** — direction binding for recovery ledger |
+| [#125](https://github.com/ilike4movies/hermes-agent-cos/pull/125) | **merged** — RAL-793 inventory contract stager |
+| moltbot [#76](https://github.com/ilike4movies/moltbot/pull/76) | **merged** — post-apply canary default away from media-studio |
+| moltbot [#77](https://github.com/ilike4movies/moltbot/pull/77) | **merged** — drift check fails on missing interrupt |
+| moltbot [#78](https://github.com/ilike4movies/moltbot/pull/78) | **merged** — miss/idle watchdog + timers |
+| moltbot [#79](https://github.com/ilike4movies/moltbot/pull/79) | **merged** — surgical-apply installs **local** cloud-apply watch |
 
-PR #92 closed as duplicate of #90+#91.
+### Critical path
 
-## Tonight's live timeline
+1. ~~#121/#122 live apply + natural cycle~~ **DONE**
+2. **Mac / credentialed land tip** (lands #79 → installs local cloud-apply watch on `.11`)
+3. Stage **RAL-793 execution contract** on `.11` (see `docs/RAL-793-CONTRACT-STAGING.md`), then `hermes-now` / `DISPATCH-NOW RAL-793`
+4. Prove Hermes **CLAIMED** + inventory evidence on RAL-793
+5. RAL-800 tip-main land complete (proves RAL-634 starvation alarm on live verifier)
 
-| Time | Event |
-|------|-------|
-| 22:15–22:19Z | Thermal gate 99°C — fail-closed |
-| 22:21Z | Cooled retry → `failed_stale_claim` |
-| 22:36Z | PR #90 live retry → historical marker block |
-| 22:54Z | PR #91 merged |
-| 22:58Z | **CLAIMED** run `4007763` |
+## Gate table
 
-## Blocker order
+| Gate | Status |
+|------|--------|
+| RAL-798 interrupt → executor | **PROVED** |
+| RAL-820 canary + quiet replay | **PROVED / Done** |
+| Comment poll freshness (#122) | **PROVED / live** |
+| RAL-800 tip-main land | **OPEN** — needs credentialed SSH / Mac land (watch absent until first land) |
+| Local cloud-apply watch (#79) | **source ready** — activates on next surgical-apply |
+| RAL-793 CLAIMED | **NO** — blocked on pinned execution contract |
 
-1. **RAL-820 executor** — prove `subject.txt` = `executed\n` (run 4007763 in flight)
-2. **RAL-800** credentialed surgical land (no Host OK since Aug 22)
-3. **RAL-793** CLAIMED + inventory
+## This pod cannot land tip-main
 
-## ⚠️ Do not link PRs to RAL-798/820/793/800
+Cloud agents on Ooterverse lack `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY`. Land via:
 
-PR #90 falsely auto-Doned RAL-798 at 22:34Z — reopened at 22:46Z.
+- Mac Hermes: `HERMES-DIAGNOSE-THEN-LAND.command` / `hermes-credentialed-resume-land.sh`
+- Credentialed agent rebound to **hermes-mac-land** or **moltbot** (not Ooterverse)
 
-## ⚠️ Ooterverse/mobile cannot land
+Signal bumps alone do **not** land until a watch exists (jump or local). #79 makes the next direct-`.11` surgical-apply install the local watch so later bumps work without rockets.
 
-Use credentialed `hermes-mac-land` agent on **LEGACY Hermes .11**:
+Credentialed resume-land / cloud-agent-start now **jump-first** by default (`HERMES_PREFER_DIRECT_HOST=0`) so grok-cos-1 gets the watch when reachable; set `=1` to force direct `.11` only (Mac LAN path still defaults to direct).
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-credentialed-resume-land.sh | bash
-```
+## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse

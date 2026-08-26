@@ -67,8 +67,10 @@ if [[ "$ts_state" != "Running" ]]; then
   exit 0
 fi
 
-echo "OK secrets at boot + Tailscale Running — attempting direct .11 surgical land"
-export HERMES_PREFER_DIRECT_HOST=1
+echo "OK secrets at boot + Tailscale Running — attempting surgical land (jump-first)"
+# Jump-first installs cloud-apply watch on grok-cos-1; direct fallback uses moltbot #79 local watch.
+# Override with HERMES_PREFER_DIRECT_HOST=1 to skip jump.
+export HERMES_PREFER_DIRECT_HOST="${HERMES_PREFER_DIRECT_HOST:-0}"
 export HERMES_UPLOAD_TIP_FROM_CALLER=1
 export HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}"
 if bash "$ROOT/shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh" >>"$LOG" 2>&1; then

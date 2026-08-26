@@ -48,14 +48,17 @@ if [[ -x "$DIR/bridge-secrets-from-env.sh" ]]; then
   bash "$DIR/bridge-secrets-from-env.sh" || true
 fi
 
-export HERMES_PREFER_DIRECT_HOST=1
+# Jump-first by default so grok-cos-1 gets the cloud-apply signal watch.
+# Direct .11 fallback still works; moltbot #79 installs a local watch there.
+# Set HERMES_PREFER_DIRECT_HOST=1 to skip jump (Mac LAN-only path).
+export HERMES_PREFER_DIRECT_HOST="${HERMES_PREFER_DIRECT_HOST:-0}"
 export HERMES_UPLOAD_TIP_FROM_CALLER=1
 export HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}"
 
 LAND_SCRIPT="$DIR/hermes-moltbot-cloud-apply-install-via-ssh.sh"
 [[ -x "$LAND_SCRIPT" ]] || LAND_SCRIPT="$ROOT/shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh"
 
-echo "== surgical land (direct .11) ==" | tee -a "$LOG"
+echo "== surgical land (prefer_direct=${HERMES_PREFER_DIRECT_HOST}; jump-first unless 1) ==" | tee -a "$LOG"
 if bash "$LAND_SCRIPT" 2>&1 | tee -a "$LOG"; then
   echo "OK surgical land complete" | tee -a "$LOG"
 else
@@ -83,6 +86,7 @@ else
 fi
 
 echo "" | tee -a "$LOG"
-echo "NEXT: bounded Stage A per hermes-agent-cos ops/ral798-control-loop/deployment-packet.md @ cos-local 5bcb257e" | tee -a "$LOG"
-echo "Preserve DISPATCH-NOW RAL-820 comment. Token: APPROVE-RJS-LIVE-BUNDLE-1" | tee -a "$LOG"
-echo "Success gate: RAL-820 subject.txt = executed" | tee -a "$LOG"
+echo "NEXT: confirm Host surgical-apply OK on RAL-800 (local cloud-apply watch from moltbot #79)." | tee -a "$LOG"
+echo "Then stage RAL-793 inventory contract on .11 (docs/RAL-793-CONTRACT-STAGING.md / hermes-agent-cos #125)." | tee -a "$LOG"
+echo "Only then: hermes-now / DISPATCH-NOW RAL-793. Do not DISPATCH without pinned live contract." | tee -a "$LOG"
+echo "Success gate: RAL-793 Hermes CLAIMED + inventory evidence. RAL-820 already Done." | tee -a "$LOG"
