@@ -11,10 +11,15 @@ RAL-793 when `contract-unresolved`.
 Credentialed Mac/cloud agent with SSH to `.11`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral793-contract-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral793-contract-install.sh | bash -s -- --post-linear
 ```
 
-Dry-run first if desired: append `--dry-run`.
+Options:
+- `--dry-run` — preflight only, no registry mutation
+- `--post-linear` — post install/readback comment to RAL-793
+
+The install script also auto-updates registry SHA pins in crontab/launchers when
+the old pin appears exactly once (fail-closed on ambiguous counts).
 
 ## Why this exists
 
@@ -37,8 +42,7 @@ python3 -c 'import json,sys; p=json.load(open(sys.argv[1])); print(p.get("schema
 
 Schema must be `cos.linear.execution_contract_registry.v1`.
 
-Also pin orchestrator registry-hash if the live orchestrator embeds SHA-256 of
-the registry (same pattern as `stage_ral820_registry.py`).
+SHA pin updates are handled by the install script when registry hash changes.
 
 ## Phase-1 contract (inventory only)
 
@@ -66,8 +70,8 @@ Draft registry entry key `RAL-793` (staged by cos-local #125 stager):
 
 ## Apply procedure (surgical)
 
-1. Run `hermes-ral793-contract-install.sh` (backs up registry, stages contract).
-2. Readback: registry contains `RAL-793`, hash matches orchestrator pin if embedded.
+1. Run `hermes-ral793-contract-install.sh --post-linear` (backs up registry, stages contract, updates SHA pins).
+2. Readback: registry contains `RAL-793`, comment posted to RAL-793.
 3. Only then interrupt:
 
 ```text
