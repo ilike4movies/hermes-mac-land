@@ -13,10 +13,10 @@ RAL-820 proved Linear interrupt → executor. RAL-798 Done criteria still requir
 RAL-793 **CLAIMED** + inventory under its **own** contract (not the subject.txt
 canary).
 
-## Source stager (preferred)
+## Source stager (on cos-local tip)
 
 [hermes-agent-cos PR #125](https://github.com/ilike4movies/hermes-agent-cos/pull/125)
-adds `ops/ral798-control-loop/stage_ral793_inventory_contract.py`:
+**merged** to `cos-local` — `ops/ral798-control-loop/stage_ral793_inventory_contract.py`:
 
 ```bash
 python3 ops/ral798-control-loop/stage_ral793_inventory_contract.py \
@@ -24,6 +24,9 @@ python3 ops/ral798-control-loop/stage_ral793_inventory_contract.py \
   --registry-output /tmp/registry-with-ral793.json \
   --expected-input-sha256 "<live-preimage-sha256>"
 ```
+
+Also on tip: [#115](https://github.com/ilike4movies/hermes-agent-cos/pull/115) recovery ledger
+direction binding (admin state/label churn no longer conflicts).
 
 ## Live registry location (read first)
 
@@ -83,5 +86,3 @@ if claim did not start.
 
 - Continue inventory → EP04 dry-run under revised contract (still no upload).
 - Parallel: RAL-800 tip-main land for RAL-634 prove-out.
-- Keep [#115](https://github.com/ilike4movies/hermes-agent-cos/pull/115) draft
-  until tip direction-binding is confirmed missing.
