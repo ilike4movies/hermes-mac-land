@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T21:31Z
+**Updated:** 2026-08-26T21:42Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -14,6 +14,21 @@
 |----------|-------|-----|
 | 20:48Z | #18 merged + attached | Reverted; attachment detached @ 21:02Z |
 | 21:29Z | #20 title contained `RAL-793` → auto-attach | Reverted @ 21:30Z; attachment detached |
+| 21:38Z | MCP comment used wrong issue UUID → posted on RAL-800 | Corrected @ 21:40Z; see UUID table below |
+
+## Linear issue UUIDs (MCP / API comment posting)
+
+When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not guess from subscriptions.
+
+| Ticket | UUID | Status |
+|--------|------|--------|
+| **RAL-793** | `963472c8-cc84-426a-9ed6-79e08566353a` | In Progress — canary open |
+| **RAL-634** | `1b5a7e86-1d14-456f-b0d1-39a02df243c2` | Todo — live prove-out pending |
+| **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** — host-land only |
+| **RAL-799** | `52e94e17-69e6-4688-a60e-aea25b090ebf` | Done |
+| **RAL-820** | `0d76e06f-bf49-4587-a733-1b6f397f1392` | Done |
+
+**Prefer ticket identifiers in scripts** (`HERMES_RAL793_LINEAR_TICKET=RAL-793`) — scripts resolve via `issueSearch`. MCP agents must use UUIDs explicitly.
 
 ## Live now — RAL-820 Done; #121/#122 installed
 
@@ -40,6 +55,7 @@
 | hermes-mac-land [#18](https://github.com/ilike4movies/hermes-mac-land/pull/18) | **merged** — verify + contract install + starvation prove-out scripts |
 | hermes-mac-land [#19](https://github.com/ilike4movies/hermes-mac-land/pull/19) | **merged** — downstream auto-chain + Mac launcher |
 | hermes-mac-land [#20](https://github.com/ilike4movies/hermes-mac-land/pull/20) | **merged** — auto DISPATCH-NOW after contract install (do not link to RAL-793) |
+| hermes-mac-land [#24](https://github.com/ilike4movies/hermes-mac-land/pull/24) | **merged** — cloud-agent-start log sync with auto-dispatch |
 
 ### Critical path (remaining)
 
