@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T08:40Z
+**Updated:** 2026-08-26T08:47Z
 
 ## Live now — RAL-820 Done; #121/#122 installed
 
@@ -23,15 +23,17 @@
 | [#122](https://github.com/ilike4movies/hermes-agent-cos/pull/122) | **merged + live** — newest-comment DISPATCH-NOW discovery |
 | [#123](https://github.com/ilike4movies/hermes-agent-cos/pull/123) | **closed** — superseded by #122 |
 | [#125](https://github.com/ilike4movies/hermes-agent-cos/pull/125) | **draft** — RAL-793 inventory contract stager (source) |
-| [#115](https://github.com/ilike4movies/hermes-agent-cos/pull/115) | **draft** — recovery ledger direction binding |
-| moltbot [#77](https://github.com/ilike4movies/moltbot/pull/77) | **draft** — drift check fails on missing interrupt |
+| [#115](https://github.com/ilike4movies/hermes-agent-cos/pull/115) | **draft** — recovery ledger direction binding (CI infra red) |
+| moltbot [#77](https://github.com/ilike4movies/moltbot/pull/77) | **MERGED** — drift check fails on missing interrupt |
+| moltbot signal | **bumped** `20260826T084500Z-post-moltbot-77-drift-gate` (`8c0e76e1…`) |
 
 ### Critical path
 
 1. ~~#121/#122 live apply + natural cycle~~ **DONE**
-2. Credentialed `.11`: run `#125` stager / `docs/RAL-793-CONTRACT-STAGING.md` → pin contract → `DISPATCH-NOW RAL-793`
-3. Prove Hermes **CLAIMED** + inventory evidence on RAL-793
-4. RAL-800 tip-main land (proves RAL-634 + lands moltbot #77 drift fix)
+2. ~~moltbot #77 merge + SURGICAL_APPLY signal bump~~ **DONE** (await Host surgical-apply OK if watch installed)
+3. Credentialed `.11`: run `#125` stager / `docs/RAL-793-CONTRACT-STAGING.md` → pin contract → `DISPATCH-NOW RAL-793`
+4. Prove Hermes **CLAIMED** + inventory evidence on RAL-793
+5. Confirm RAL-800 tip-main land (proves RAL-634 WIP truth + RAL-799 auto-apply canary)
 
 ## Gate table
 
@@ -40,7 +42,7 @@
 | RAL-798 interrupt → executor | **PROVED** |
 | RAL-820 canary + quiet replay | **PROVED / Done** |
 | Comment poll freshness (#122) | **PROVED / live** |
-| RAL-800 tip-main land | **OPEN** — needs credentialed SSH / Mac land |
+| RAL-800 tip-main land | **OPEN** — signal bumped; needs watch OR Mac land / SSH secrets |
 | RAL-793 CLAIMED | **NO** — blocked on pinned execution contract |
 | moltbot [PR #76](https://github.com/ilike4movies/moltbot/pull/76) | **DRAFT** — do not merge while linked to canaries |
 
@@ -50,5 +52,6 @@ Cloud agents on Ooterverse lack `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY`. La
 
 - Mac Hermes: `HERMES-DIAGNOSE-THEN-LAND.command` / `hermes-credentialed-resume-land.sh`
 - Credentialed agent rebound to **hermes-mac-land** or **moltbot** (not Ooterverse)
+- If jump/.11 already has `install-hermes-moltbot-cloud-apply-signal-watch.sh`, the 08:45Z signal bump should land within ~2m
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
