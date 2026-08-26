@@ -13,6 +13,18 @@ RAL-820 proved Linear interrupt → executor. RAL-798 Done criteria still requir
 RAL-793 **CLAIMED** + inventory under its **own** contract (not the subject.txt
 canary).
 
+## Source stager (preferred)
+
+[hermes-agent-cos PR #125](https://github.com/ilike4movies/hermes-agent-cos/pull/125)
+adds `ops/ral798-control-loop/stage_ral793_inventory_contract.py`:
+
+```bash
+python3 ops/ral798-control-loop/stage_ral793_inventory_contract.py \
+  --registry-input /path/to/live-registry.json \
+  --registry-output /tmp/registry-with-ral793.json \
+  --expected-input-sha256 "<live-preimage-sha256>"
+```
+
 ## Live registry location (read first)
 
 On `.11` (credentialed SSH / Mac land only):
@@ -31,7 +43,7 @@ the registry (same pattern as `stage_ral820_registry.py`).
 
 ## Phase-1 contract (inventory only)
 
-Scope matches RAL-793 ticket slice 1–2 + evidence write. **Out of scope:**
+Scope matches ticket slice 1–2 + evidence write. **Out of scope:**
 YouTube upload, OAuth, dashboard restart, asset deletion, EP produce/render
 mutation beyond read-only inventory.
 
@@ -43,40 +55,11 @@ sudo chown -R "$(whoami)" /opt/moltbot/data/cos-hermes/canaries/ral793-inventory
 printf '%s\n' 'pending' > /opt/moltbot/data/cos-hermes/canaries/ral793-inventory/evidence/RAL-793-inventory.md
 ```
 
-Draft registry entry key `RAL-793` (adjust paths after live inventory of
-actual Bullpen homes):
-
-```json
-{
-  "enabled": true,
-  "execution_mode": "implement",
-  "implementation_objective": "Inventory Bullpen Bedtime workspace and stage scripts on this host (read-only). Map EP04-EP14 artifact completeness (script/audio/images/render/metadata). Write a Markdown evidence report to evidence/RAL-793-inventory.md replacing pending with a dated inventory summary. Do not upload to YouTube, do not restart openclaw-dashboard, do not delete assets, do not perform OAuth consent.",
-  "implementation_allow_paths": ["evidence/RAL-793-inventory.md"],
-  "implementation_repo": "/opt/moltbot/data/cos-hermes/canaries/ral793-inventory",
-  "implementation_test_command": "python3 -c \"from pathlib import Path; t=Path('evidence/RAL-793-inventory.md').read_text(); assert 'pending' not in t.splitlines()[:1]; assert 'EP04' in t; assert len(t) > 200\"",
-  "implementation_test_timeout_seconds": 60,
-  "implementation_worktree_root": "/tmp/cos-execution-worktrees/ral793-inventory"
-}
-```
-
-Notes:
-
-- Prefer adding `implementation_action` only when the first slice is a
-  deterministic replace_text (RAL-820 style). Inventory text is usually
-  model/tool-assisted — keep allow-paths narrow and red-lines explicit.
-- If live consumer requires `implementation_action` for all implement
-  contracts, stage a tiny deterministic starter (e.g. flip a status marker
-  file) **plus** a follow-up contract revision for the real inventory write —
-  do not widen allow-paths to the whole tree.
-- Validate with the same field checks used for RAL-820
-  (`CONSUMER_REQUIRED_IMPLEMENT_FIELDS` in
-  `ops/ral798-control-loop/stage_ral820_registry.py`).
-
 ## Apply procedure (surgical)
 
 1. Backup live registry + orchestrator bytes (timestamped under
    `/opt/moltbot/data/cos-hermes/deploy-backups/`).
-2. Insert `RAL-793` contract; recompute registry SHA-256.
+2. Run `#125` stager (or equivalent insert); recompute registry SHA-256.
 3. Update orchestrator embedded registry hash if present; `bash -n` check.
 4. Atomic install; confirm modes `0755` on entrypoints (#121).
 5. Readback: registry contains `RAL-793`, hash matches orchestrator pin.

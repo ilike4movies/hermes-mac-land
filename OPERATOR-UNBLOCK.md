@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T08:45Z
+**Updated:** 2026-08-26T08:40Z
 
 ## Live now — RAL-820 Done; #121/#122 installed
 
@@ -21,15 +21,17 @@
 |----|--------|
 | [#121](https://github.com/ilike4movies/hermes-agent-cos/pull/121) | **merged + live** — preserve 0755 modes on apply |
 | [#122](https://github.com/ilike4movies/hermes-agent-cos/pull/122) | **merged + live** — newest-comment DISPATCH-NOW discovery |
-| [#123](https://github.com/ilike4movies/hermes-agent-cos/pull/123) | **closed** — superseded by #122 (ff74 pageInfo draft inapplicable post-live) |
-| [#115](https://github.com/ilike4movies/hermes-agent-cos/pull/115) | **draft** — direction binding (optional; tip may already cover reopen keys) |
+| [#123](https://github.com/ilike4movies/hermes-agent-cos/pull/123) | **closed** — superseded by #122 |
+| [#125](https://github.com/ilike4movies/hermes-agent-cos/pull/125) | **draft** — RAL-793 inventory contract stager (source) |
+| [#115](https://github.com/ilike4movies/hermes-agent-cos/pull/115) | **draft** — recovery ledger direction binding |
+| moltbot [#77](https://github.com/ilike4movies/moltbot/pull/77) | **draft** — drift check fails on missing interrupt |
 
 ### Critical path
 
 1. ~~#121/#122 live apply + natural cycle~~ **DONE**
-2. Stage **RAL-793 execution contract** on `.11` (see `docs/RAL-793-CONTRACT-STAGING.md`), then `hermes-now` / `DISPATCH-NOW RAL-793`
+2. Credentialed `.11`: run `#125` stager / `docs/RAL-793-CONTRACT-STAGING.md` → pin contract → `DISPATCH-NOW RAL-793`
 3. Prove Hermes **CLAIMED** + inventory evidence on RAL-793
-4. RAL-800 tip-main land (proves RAL-634 starvation alarm on live verifier)
+4. RAL-800 tip-main land (proves RAL-634 + lands moltbot #77 drift fix)
 
 ## Gate table
 
