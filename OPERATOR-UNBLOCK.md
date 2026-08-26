@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T22:36Z
+**Updated:** 2026-08-26T22:38Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -67,6 +67,7 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 | hermes-mac-land [#27](https://github.com/ilike4movies/hermes-mac-land/pull/27) | **merged** — downstream + contract-install pin HERMES_RAL793_LINEAR_ISSUE_ID |
 | hermes-mac-land [#28](https://github.com/ilike4movies/hermes-mac-land/pull/28) | **merged** — OPERATOR-UNBLOCK sync #25–#27 |
 | hermes-mac-land [#29](https://github.com/ilike4movies/hermes-mac-land/pull/29) | **merged** — README downstream-only critical path |
+| hermes-mac-land [#30](https://github.com/ilike4movies/hermes-mac-land/pull/30) | **merged** — downstream GitHub status beacon on issue #1 |
 
 ### Critical path (remaining)
 
