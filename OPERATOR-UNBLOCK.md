@@ -2,13 +2,18 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T21:17Z
+**Updated:** 2026-08-26T21:31Z
 
 ## ⚠️ Linear auto-Done hygiene
 
 **Do NOT attach GitHub PRs to RAL-793, RAL-798, RAL-799, or RAL-634** while canaries are open — Linear auto-Dones on PR merge and falsely closes tickets before `.11` prove-out.
 
-RAL-793 was falsely auto-Done @ 20:48Z when hermes-mac-land #18 merged (operator scripts only, no inventory). Reverted to In Progress @ 20:51Z. **PR #18 attachment detached @ 21:02Z.**
+**Also:** do **not** put `RAL-793` (or other open canary IDs) in **PR titles** — GitHub auto-links on merge even when you do not attach manually.
+
+| Incident | Cause | Fix |
+|----------|-------|-----|
+| 20:48Z | #18 merged + attached | Reverted; attachment detached @ 21:02Z |
+| 21:29Z | #20 title contained `RAL-793` → auto-attach | Reverted @ 21:30Z; attachment detached |
 
 ## Live now — RAL-820 Done; #121/#122 installed
 
@@ -33,12 +38,13 @@ RAL-793 was falsely auto-Done @ 20:48Z when hermes-mac-land #18 merged (operator
 | [#141](https://github.com/ilike4movies/hermes-agent-cos/pull/141) | **merged** — movement-SLA wallclock to cos-local |
 | moltbot [#76](https://github.com/ilike4movies/moltbot/pull/76)–[#79](https://github.com/ilike4movies/moltbot/pull/79) | **merged + live** on `.11` @ 20:21Z |
 | hermes-mac-land [#18](https://github.com/ilike4movies/hermes-mac-land/pull/18) | **merged** — verify + contract install + starvation prove-out scripts |
-| hermes-mac-land `a4093f0` | **live** — resume-land chains downstream gates |
+| hermes-mac-land [#19](https://github.com/ilike4movies/hermes-mac-land/pull/19) | **merged** — downstream auto-chain + Mac launcher |
+| hermes-mac-land [#20](https://github.com/ilike4movies/hermes-mac-land/pull/20) | **merged** — auto DISPATCH-NOW after contract install (do not link to RAL-793) |
 
 ### Critical path (remaining)
 
 1. ~~Interrupt + apply gates~~ **DONE** (RAL-820, RAL-800, RAL-799)
-2. **Credentialed run** → contract readback on RAL-793 → `DISPATCH-NOW RAL-793`
+2. **Credentialed run** → contract readback on RAL-793 → auto `DISPATCH-NOW` (downstream script)
 3. Prove inventory evidence on RAL-793 (not WORK-PACKET-DONE alone)
 4. RAL-634 starvation verify result on RAL-634 (posted by downstream script)
 
@@ -53,7 +59,7 @@ RAL-793 was falsely auto-Done @ 20:48Z when hermes-mac-land #18 merged (operator
 | RAL-799 live prove-out | **Done** @ 20:22Z — canary+drift verified |
 | Local cloud-apply watch (#79) | **installed** @ 19:14Z surgical-apply |
 | Operator scripts on main | **Done** |
-| PR #18 detached from RAL-793 | **Done** @ 21:02Z |
+| PR attachments detached from RAL-793 | **Done** (#18 @ 21:02Z, #20 @ 21:30Z) |
 | RAL-793 contract pinned | **OPEN** — run credentialed script |
 | RAL-793 inventory evidence | **OPEN** |
 | RAL-634 starvation alarm | **OPEN** — live prove-out pending |
@@ -62,7 +68,7 @@ RAL-793 was falsely auto-Done @ 20:48Z when hermes-mac-land #18 merged (operator
 
 ### Mac double-click (recommended when RAL-800/799 already Done)
 
-- **`HERMES-DOWNSTREAM-ONLY.command`** — contract install + RAL-634 verify only (no land)
+- **`HERMES-DOWNSTREAM-ONLY.command`** — contract install + auto DISPATCH-NOW + RAL-634 verify (no land)
 - **`HERMES-DIAGNOSE-THEN-LAND.command`** — full diagnose + land (when tip refresh needed)
 
 ### Shell one-liners
@@ -71,7 +77,7 @@ RAL-793 was falsely auto-Done @ 20:48Z when hermes-mac-land #18 merged (operator
 # Full chain: land + verify + contract install + RAL-634 verify
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-credentialed-resume-land.sh | bash
 
-# Or downstream-only (if land already done):
+# Or downstream-only (if land already done; auto DISPATCH-NOW default):
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 
 # Or individually:
@@ -79,7 +85,7 @@ curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/s
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral634-starvation-verify.sh | bash -s -- --post-linear
 ```
 
-Set `HERMES_SKIP_DOWNSTREAM=1` on resume-land for land-only smoke.
+Set `HERMES_SKIP_DOWNSTREAM=1` on resume-land for land-only smoke. Set `HERMES_AUTO_DISPATCH_RAL793=0` to skip auto DISPATCH-NOW.
 
 ### hermes-mac-land cloud agent (env LEGACY Hermes .11)
 
