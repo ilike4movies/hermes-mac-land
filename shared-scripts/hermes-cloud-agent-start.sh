@@ -51,9 +51,9 @@ _run_downstream_chain() {
   fi
 
   if [[ -x "$downstream" ]]; then
-    echo "OK running downstream gates (RAL-793 contract + RAL-634 verify)"
+    echo "OK running downstream gates (RAL-793 contract + auto DISPATCH-NOW + RAL-634 verify)"
     bash "$downstream" >>"$LOG" 2>&1 || echo "WARN: downstream gates failed — see $LOG" >&2
-    echo "NEXT (manual): DISPATCH-NOW RAL-793 after contract readback on RAL-793"
+    echo "NEXT: watch Linear for contract readback + CLAIMED + inventory evidence (not WORK-PACKET-DONE alone)"
   else
     echo "WARN: hermes-dispatcher-downstream.sh missing — run bootstrap waiter" >&2
   fi
