@@ -2,7 +2,13 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T21:05Z
+**Updated:** 2026-08-26T21:10Z
+
+## ⚠️ Linear auto-Done hygiene
+
+**Do NOT attach GitHub PRs to RAL-793, RAL-798, RAL-799, or RAL-634** while canaries are open — Linear auto-Dones on PR merge and falsely closes tickets before `.11` prove-out.
+
+RAL-793 was falsely auto-Done @ 20:48Z when hermes-mac-land #18 merged (operator scripts only, no inventory). Reverted to In Progress.
 
 ## Live now — RAL-820 Done; #121/#122 installed
 
@@ -31,8 +37,8 @@
 ### Critical path (remaining)
 
 1. ~~Interrupt + apply gates~~ **DONE** (RAL-820, RAL-800, RAL-799)
-2. **`hermes-ral793-contract-install.sh`** → readback → `DISPATCH-NOW RAL-793`
-3. Prove Hermes **CLAIMED** + inventory evidence on RAL-793 (not WORK-PACKET-DONE alone)
+2. **`hermes-dispatcher-downstream.sh`** or contract install → readback → `DISPATCH-NOW RAL-793`
+3. Prove inventory evidence on RAL-793 (not WORK-PACKET-DONE alone)
 4. **`hermes-ral634-starvation-verify.sh --post-linear`** prove-out on live verifier
 
 ## Gate table
@@ -47,19 +53,17 @@
 | Local cloud-apply watch (#79) | **installed** @ 19:14Z surgical-apply |
 | Operator scripts on main (#18) | **Done** @ 21:00Z |
 | RAL-793 contract pinned | **OPEN** — run contract install script |
-| RAL-793 CLAIMED + inventory | **PARTIAL** — CLAIMED @ 12:55Z; inventory evidence missing |
+| RAL-793 inventory evidence | **OPEN** — falsely auto-Done @ 20:48Z, reverted |
 | RAL-634 starvation alarm | **OPEN** — source on main; live prove-out pending |
 
 ## Credentialed run commands (Mac / cloud agent with SSH secrets)
 
 ```bash
-# Full chain: land → preflight → RAL-799 verify → RAL-634 verify
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-credentialed-resume-land.sh | bash
+# Downstream gates: contract install + RAL-634 verify
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 
-# RAL-793 contract staging (does NOT dispatch)
+# Or individually:
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral793-contract-install.sh | bash
-
-# RAL-634 starvation prove-out
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral634-starvation-verify.sh | bash -s -- --post-linear
 ```
 
@@ -69,9 +73,5 @@ Cloud agents on Ooterverse lack `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY`. La
 
 - Mac Hermes: `HERMES-DIAGNOSE-THEN-LAND.command` / `hermes-credentialed-resume-land.sh`
 - Credentialed agent rebound to **hermes-mac-land** or **moltbot** (not Ooterverse)
-
-Signal bumps alone do **not** land until a watch exists (jump or local). #79 makes the next direct-`.11` surgical-apply install the local watch so later bumps work without rockets.
-
-Credentialed resume-land / cloud-agent-start now **jump-first** by default (`HERMES_PREFER_DIRECT_HOST=0`) so grok-cos-1 gets the watch when reachable; set `=1` to force direct `.11` only (Mac LAN path still defaults to direct).
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
