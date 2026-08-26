@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T21:00Z
+**Updated:** 2026-08-26T21:05Z
 
 ## Live now — RAL-820 Done; #121/#122 installed
 
@@ -25,20 +25,15 @@
 | [#115](https://github.com/ilike4movies/hermes-agent-cos/pull/115) | **merged** — direction binding for recovery ledger |
 | [#125](https://github.com/ilike4movies/hermes-agent-cos/pull/125) | **merged** — RAL-793 inventory contract stager |
 | [#141](https://github.com/ilike4movies/hermes-agent-cos/pull/141) | **merged** — movement-SLA wallclock to cos-local |
-| moltbot [#76](https://github.com/ilike4movies/moltbot/pull/76) | **merged** — post-apply canary default away from media-studio |
-| moltbot [#77](https://github.com/ilike4movies/moltbot/pull/77) | **merged** — drift check fails on missing interrupt |
-| moltbot [#78](https://github.com/ilike4movies/moltbot/pull/78) | **merged** — miss/idle watchdog + timers |
-| moltbot [#79](https://github.com/ilike4movies/moltbot/pull/79) | **merged** — surgical-apply installs **local** cloud-apply watch |
-| hermes-mac-land [#18](https://github.com/ilike4movies/hermes-mac-land/pull/18) | **merging** — live verify + RAL-793 contract install + RAL-634 starvation verify |
+| moltbot [#76](https://github.com/ilike4movies/moltbot/pull/76)–[#79](https://github.com/ilike4movies/moltbot/pull/79) | **merged + live** on `.11` @ 20:21Z |
+| hermes-mac-land [#18](https://github.com/ilike4movies/hermes-mac-land/pull/18) | **merged** — verify + contract install + starvation prove-out scripts |
 
 ### Critical path (remaining)
 
-1. ~~#121/#122 live apply + natural cycle~~ **DONE**
-2. ~~Mac / credentialed land tip~~ **DONE** @ 20:21Z (RAL-800)
-3. ~~RAL-799 live verify~~ **Done** @ 20:22Z
-4. **`hermes-ral793-contract-install.sh`** → readback → `DISPATCH-NOW RAL-793`
-5. Prove Hermes **CLAIMED** + inventory evidence on RAL-793 (not WORK-PACKET-DONE alone)
-6. **`hermes-ral634-starvation-verify.sh --post-linear`** prove-out on live verifier
+1. ~~Interrupt + apply gates~~ **DONE** (RAL-820, RAL-800, RAL-799)
+2. **`hermes-ral793-contract-install.sh`** → readback → `DISPATCH-NOW RAL-793`
+3. Prove Hermes **CLAIMED** + inventory evidence on RAL-793 (not WORK-PACKET-DONE alone)
+4. **`hermes-ral634-starvation-verify.sh --post-linear`** prove-out on live verifier
 
 ## Gate table
 
@@ -50,13 +45,12 @@
 | RAL-800 tip-main land | **Done** @ 20:21Z |
 | RAL-799 live prove-out | **Done** @ 20:22Z — canary+drift verified |
 | Local cloud-apply watch (#79) | **installed** @ 19:14Z surgical-apply |
+| Operator scripts on main (#18) | **Done** @ 21:00Z |
 | RAL-793 contract pinned | **OPEN** — run contract install script |
 | RAL-793 CLAIMED + inventory | **PARTIAL** — CLAIMED @ 12:55Z; inventory evidence missing |
 | RAL-634 starvation alarm | **OPEN** — source on main; live prove-out pending |
 
 ## Credentialed run commands (Mac / cloud agent with SSH secrets)
-
-After hermes-mac-land #18 merges to `main`:
 
 ```bash
 # Full chain: land → preflight → RAL-799 verify → RAL-634 verify
@@ -68,8 +62,6 @@ curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/s
 # RAL-634 starvation prove-out
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral634-starvation-verify.sh | bash -s -- --post-linear
 ```
-
-Until #18 merges, substitute branch `cursor/ral799-live-verify-3436` for `main` in URLs above.
 
 ## This pod cannot land tip-main
 
