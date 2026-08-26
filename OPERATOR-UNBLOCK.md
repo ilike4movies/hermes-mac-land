@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T21:02Z
+**Updated:** 2026-08-26T21:17Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -60,6 +60,13 @@ RAL-793 was falsely auto-Done @ 20:48Z when hermes-mac-land #18 merged (operator
 
 ## Credentialed run commands (Mac / cloud agent with SSH secrets)
 
+### Mac double-click (recommended when RAL-800/799 already Done)
+
+- **`HERMES-DOWNSTREAM-ONLY.command`** — contract install + RAL-634 verify only (no land)
+- **`HERMES-DIAGNOSE-THEN-LAND.command`** — full diagnose + land (when tip refresh needed)
+
+### Shell one-liners
+
 ```bash
 # Full chain: land + verify + contract install + RAL-634 verify
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-credentialed-resume-land.sh | bash
@@ -74,11 +81,15 @@ curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/s
 
 Set `HERMES_SKIP_DOWNSTREAM=1` on resume-land for land-only smoke.
 
+### hermes-mac-land cloud agent (env LEGACY Hermes .11)
+
+On boot with secrets, `hermes-cloud-agent-start.sh` now chains downstream gates by default (`HERMES_AUTO_DOWNSTREAM=1`). Set `HERMES_AUTO_SURGICAL_LAND=0` for downstream-only boot.
+
 ## This pod cannot land tip-main
 
 Cloud agents on Ooterverse lack `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY`. Land via:
 
-- Mac Hermes: `HERMES-DIAGNOSE-THEN-LAND.command` / `hermes-credentialed-resume-land.sh`
-- Credentialed agent rebound to **hermes-mac-land** or **moltbot** (not Ooterverse)
+- Mac Hermes: `HERMES-DOWNSTREAM-ONLY.command` / `HERMES-DIAGNOSE-THEN-LAND.command` / `hermes-credentialed-resume-land.sh`
+- Credentialed agent rebound to **hermes-mac-land** (not Ooterverse) with env LEGACY Hermes .11
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
