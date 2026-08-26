@@ -6,6 +6,8 @@
 #   2. DISPATCH-NOW RAL-793 via Linear comment (default on; HERMES_AUTO_DISPATCH_RAL793=0 to skip)
 #   3. RAL-634 starvation verify (--post-linear)
 #
+# Machine status: posts STARTED/DONE/FAILED to hermes-mac-land GitHub issue #1 when `gh` available.
+#
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 set -euo pipefail
@@ -17,6 +19,9 @@ LOG="$DIR/dispatcher-downstream.log"
 LINEAR_TICKET="${HERMES_RAL793_LINEAR_TICKET:-RAL-793}"
 LINEAR_ISSUE_ID="${HERMES_RAL793_LINEAR_ISSUE_ID:-963472c8-cc84-426a-9ed6-79e08566353a}"
 AUTO_DISPATCH="${HERMES_AUTO_DISPATCH_RAL793:-1}"
+GH_STATUS_ISSUE="${HERMES_MAC_LAND_STATUS_ISSUE:-1}"
+GH_STATUS_REPO="${HERMES_MAC_LAND_STATUS_REPO:-ilike4movies/hermes-mac-land}"
+STARVE_RC=0
 
 _contract="$DIR/hermes-ral793-contract-install.sh"
 [[ -x "$_contract" ]] || _contract="$ROOT/shared-scripts/hermes-ral793-contract-install.sh"
@@ -31,7 +36,7 @@ _load_hermes_ssh_env() {
     while IFS= read -r line || [[ -n "$line" ]]; do
       case "$line" in
         ''|\#*) continue ;;
-        LINEAR_API_KEY=*|LINEAR_API_TOKEN=*)
+        LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|GH_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*)
           key="${line%%=*}"
           val="${line#*=}"
           val="${val%\"}"; val="${val#\"}"
@@ -41,6 +46,12 @@ _load_hermes_ssh_env() {
       esac
     done < "$f"
   done
+}
+
+_post_github_status() {
+  local body="$1"
+  command -v gh >/dev/null 2>&1 || return 0
+  gh issue comment "$GH_STATUS_ISSUE" --repo "$GH_STATUS_REPO" --body "$body" >/dev/null 2>&1 || true
 }
 
 _post_linear_comment() {
@@ -88,12 +99,25 @@ fi
 _load_hermes_ssh_env || true
 export HERMES_RAL793_LINEAR_ISSUE_ID="${LINEAR_ISSUE_ID}"
 WHEN="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+HOST="$(hostname 2>/dev/null || echo unknown)"
+USER_NAME="$(whoami 2>/dev/null || echo unknown)"
+
+_post_github_status "## Downstream STARTED @ $WHEN
+
+host=\`$HOST\` user=\`$USER_NAME\`
+chain: contract install → DISPATCH-NOW (auto=$AUTO_DISPATCH) → RAL-634 verify
+log: \`$LOG\`"
 
 echo "== Hermes dispatcher downstream @ $WHEN ==" | tee -a "$LOG"
 
 echo "== Step 1: RAL-793 contract install ==" | tee -a "$LOG"
 if ! bash "$_contract" --post-linear 2>&1 | tee -a "$LOG"; then
   echo "FAIL: contract install failed — not dispatching" | tee -a "$LOG"
+  _post_github_status "## Downstream FAILED @ $WHEN
+
+step=contract-install
+host=\`$HOST\` user=\`$USER_NAME\`
+See log: \`$LOG\`"
   exit 1
 fi
 
@@ -115,11 +139,35 @@ fi
 
 echo "" | tee -a "$LOG"
 echo "== Step 3: RAL-634 starvation verify ==" | tee -a "$LOG"
-bash "$_starve" --post-linear 2>&1 | tee -a "$LOG" || {
+if bash "$_starve" --post-linear 2>&1 | tee -a "$LOG"; then
+  STARVE_RC=0
+else
+  STARVE_RC=$?
   echo "WARN: RAL-634 verify failed — see $LOG" | tee -a "$LOG"
-}
+fi
 
 echo "" | tee -a "$LOG"
 echo "DONE downstream @ $WHEN" | tee -a "$LOG"
 echo "  Expect inventory evidence on $LINEAR_TICKET (evidence/RAL-793-inventory.md)" | tee -a "$LOG"
 echo "  Do NOT treat prior WORK-PACKET-DONE as objective closure" | tee -a "$LOG"
+
+if [[ "$STARVE_RC" -eq 0 ]]; then
+  _post_github_status "## Downstream DONE @ $WHEN
+
+host=\`$HOST\` user=\`$USER_NAME\`
+contract install: OK
+DISPATCH-NOW: auto=$AUTO_DISPATCH
+RAL-634 verify: PASS
+
+Watch Linear for inventory evidence on $LINEAR_TICKET — not WORK-PACKET-DONE alone."
+else
+  _post_github_status "## Downstream PARTIAL @ $WHEN
+
+host=\`$HOST\` user=\`$USER_NAME\`
+contract install: OK
+DISPATCH-NOW: auto=$AUTO_DISPATCH
+RAL-634 verify: FAIL (rc=$STARVE_RC)
+
+See log: \`$LOG\`"
+  exit "$STARVE_RC"
+fi
