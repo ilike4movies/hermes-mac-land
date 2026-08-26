@@ -85,8 +85,18 @@ else
   echo "WARN: live preflight script missing" >&2
 fi
 
+RAL799_VERIFY="$DIR/hermes-ral799-live-verify.sh"
+[[ -x "$RAL799_VERIFY" ]] || RAL799_VERIFY="$ROOT/shared-scripts/hermes-ral799-live-verify.sh"
+
+echo "== RAL-799 live verify (canary + drift receipt) ==" | tee -a "$LOG"
+if [[ -x "$RAL799_VERIFY" ]]; then
+  bash "$RAL799_VERIFY" --post-linear 2>&1 | tee -a "$LOG" || { echo "FAIL RAL-799 live verify" >&2; exit 4; }
+else
+  echo "WARN: RAL-799 verify script missing" >&2
+fi
+
 echo "" | tee -a "$LOG"
 echo "NEXT: confirm Host surgical-apply OK on RAL-800 (local cloud-apply watch from moltbot #79)." | tee -a "$LOG"
-echo "Then stage RAL-793 inventory contract on .11 (docs/RAL-793-CONTRACT-STAGING.md / hermes-agent-cos #125)." | tee -a "$LOG"
+echo "Then stage RAL-793 inventory contract on .11 (docs/RAL-793-CONTRACT-STAGING.md / hermes-agent-cos stage_ral793_inventory_contract.py)." | tee -a "$LOG"
 echo "Only then: hermes-now / DISPATCH-NOW RAL-793. Do not DISPATCH without pinned live contract." | tee -a "$LOG"
-echo "Success gate: RAL-793 Hermes CLAIMED + inventory evidence. RAL-820 already Done." | tee -a "$LOG"
+echo "Success gate: RAL-793 inventory evidence (CLAIMED already observed). RAL-820 Done; RAL-799 verify should PASS above." | tee -a "$LOG"

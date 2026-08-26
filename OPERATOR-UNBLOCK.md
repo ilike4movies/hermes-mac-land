@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T09:20Z
+**Updated:** 2026-08-26T20:15Z
 
 ## Live now — RAL-820 Done; #121/#122 installed
 
@@ -35,7 +35,8 @@
 2. **Mac / credentialed land tip** (lands #79 → installs local cloud-apply watch on `.11`)
 3. Stage **RAL-793 execution contract** on `.11` (see `docs/RAL-793-CONTRACT-STAGING.md`), then `hermes-now` / `DISPATCH-NOW RAL-793`
 4. Prove Hermes **CLAIMED** + inventory evidence on RAL-793
-5. RAL-800 tip-main land complete (proves RAL-634 starvation alarm on live verifier)
+5. RAL-799 live verify (`hermes-ral799-live-verify.sh --post-linear`) closes canary+drift proof
+6. RAL-634 starvation alarm prove-out on live verifier after WIP-park timers active
 
 ## Gate table
 
@@ -44,9 +45,10 @@
 | RAL-798 interrupt → executor | **PROVED** |
 | RAL-820 canary + quiet replay | **PROVED / Done** |
 | Comment poll freshness (#122) | **PROVED / live** |
-| RAL-800 tip-main land | **OPEN** — needs credentialed SSH / Mac land (watch absent until first land) |
-| Local cloud-apply watch (#79) | **source ready** — activates on next surgical-apply |
-| RAL-793 CLAIMED | **NO** — blocked on pinned execution contract |
+| RAL-800 tip-main land | **MET** @ 19:14Z — Host surgical-apply OK; cloud-apply watch idle |
+| RAL-799 live prove-out | **OPEN** — run `hermes-ral799-live-verify.sh` after land |
+| Local cloud-apply watch (#79) | **installed** @ 19:14Z surgical-apply |
+| RAL-793 CLAIMED | **YES** @ 12:55Z — inventory evidence still missing; contract staging required before re-dispatch |
 
 ## This pod cannot land tip-main
 
