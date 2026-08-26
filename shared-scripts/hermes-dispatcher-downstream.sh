@@ -15,6 +15,7 @@ DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 mkdir -p "$DIR"
 LOG="$DIR/dispatcher-downstream.log"
 LINEAR_TICKET="${HERMES_RAL793_LINEAR_TICKET:-RAL-793}"
+LINEAR_ISSUE_ID="${HERMES_RAL793_LINEAR_ISSUE_ID:-963472c8-cc84-426a-9ed6-79e08566353a}"
 AUTO_DISPATCH="${HERMES_AUTO_DISPATCH_RAL793:-1}"
 
 _contract="$DIR/hermes-ral793-contract-install.sh"
@@ -46,17 +47,19 @@ _post_linear_comment() {
   local body="$1"
   local key="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
   [[ -n "$key" ]] || return 1
-  python3 - "$key" "$LINEAR_TICKET" "$body" <<'PY' 2>/dev/null
+  python3 - "$key" "$LINEAR_TICKET" "${LINEAR_ISSUE_ID:-}" "$body" <<'PY' 2>/dev/null
 import json, sys, urllib.request
-key, ticket, body = sys.argv[1], sys.argv[2], sys.argv[3]
-q1 = {"query": "query($q:String!){issueSearch(query:$q,first:1){nodes{id}}}", "variables": {"q": ticket}}
-req = urllib.request.Request("https://api.linear.app/graphql", data=json.dumps(q1).encode(),
-    headers={"Content-Type": "application/json", "Authorization": key})
-with urllib.request.urlopen(req, timeout=12) as r:
-    nodes = (json.load(r).get("data") or {}).get("issueSearch", {}).get("nodes") or []
-if not nodes:
-    raise SystemExit(1)
-iid = nodes[0]["id"]
+key, ticket, issue_id, body = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+iid = issue_id.strip()
+if not iid:
+    q1 = {"query": "query($q:String!){issueSearch(query:$q,first:1){nodes{id}}}", "variables": {"q": ticket}}
+    req = urllib.request.Request("https://api.linear.app/graphql", data=json.dumps(q1).encode(),
+        headers={"Content-Type": "application/json", "Authorization": key})
+    with urllib.request.urlopen(req, timeout=12) as r:
+        nodes = (json.load(r).get("data") or {}).get("issueSearch", {}).get("nodes") or []
+    if not nodes:
+        raise SystemExit(1)
+    iid = nodes[0]["id"]
 q2 = {"query": "mutation($id:String!,$b:String!){commentCreate(input:{issueId:$id,body:$b}){success}}",
       "variables": {"id": iid, "b": body}}
 with urllib.request.urlopen(urllib.request.Request("https://api.linear.app/graphql", data=json.dumps(q2).encode(),
@@ -83,6 +86,7 @@ if [[ ! -x "$_starve" ]]; then
 fi
 
 _load_hermes_ssh_env || true
+export HERMES_RAL793_LINEAR_ISSUE_ID="${LINEAR_ISSUE_ID}"
 WHEN="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 echo "== Hermes dispatcher downstream @ $WHEN ==" | tee -a "$LOG"
