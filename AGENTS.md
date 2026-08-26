@@ -5,6 +5,7 @@
 - `.cursor/environment.json` runs `hermes-cloud-agent-start.sh` on boot (waiter + auto surgical land when secrets present).
 - Mac land: `curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/hermes-mac-land.sh | bash`
 - Success path: RAL-820 interrupt canary **Done** (zero-model `1097131`). Next: stage RAL-793 own contract on `.11` (`docs/RAL-793-CONTRACT-STAGING.md`) → `DISPATCH-NOW RAL-793` → CLAIMED + inventory; parallel RAL-800 tip-main land. No Slack rockets.
+- moltbot [#77](https://github.com/ilike4movies/moltbot/pull/77) **merged** — git-drift verifier fails closed on missing `hermes-now`. SURGICAL_APPLY signal `20260826T084500Z-post-moltbot-77-drift-gate` bumped; if cloud-apply watch is installed, tip lands without Mac shell.
 - Do **not** `hermes-now` / `DISPATCH-NOW` on RAL-793 until its execution contract is pinned live (accidental CLAIMED 2026-08-25 was reverted).
 - Core Hermes Agent, CLI, gateway, provider, skill, memory, or agent-loop development belongs in `ilike4movies/hermes-agent-cos`, not this deployment repository.
 - Default routine Cursor work to Composer 2.5 Fast. Use one accountable agent and never enable paid overage without Ralph's exact approval.
