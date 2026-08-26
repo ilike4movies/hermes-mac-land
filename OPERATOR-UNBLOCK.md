@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T22:38Z
+**Updated:** 2026-08-26T23:10Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -68,6 +68,7 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 | hermes-mac-land [#28](https://github.com/ilike4movies/hermes-mac-land/pull/28) | **merged** — OPERATOR-UNBLOCK sync #25–#27 |
 | hermes-mac-land [#29](https://github.com/ilike4movies/hermes-mac-land/pull/29) | **merged** — README downstream-only critical path |
 | hermes-mac-land [#30](https://github.com/ilike4movies/hermes-mac-land/pull/30) | **merged** — downstream GitHub status beacon on issue #1 |
+| hermes-mac-land [#31](https://github.com/ilike4movies/hermes-mac-land/pull/31) | **merged** — downstream launcher pins GitHub beacon script |
 
 ### Critical path (remaining)
 
@@ -118,6 +119,25 @@ Set `HERMES_SKIP_DOWNSTREAM=1` on resume-land for land-only smoke. Set `HERMES_A
 ### hermes-mac-land cloud agent (env LEGACY Hermes .11)
 
 On boot with secrets, `hermes-cloud-agent-start.sh` now chains downstream gates by default (`HERMES_AUTO_DOWNSTREAM=1`). Set `HERMES_AUTO_SURGICAL_LAND=0` for downstream-only boot.
+
+## Troubleshooting downstream FAIL (SSH / wrong environment)
+
+If `hermes-dispatcher-downstream.sh` exits at Step 1 with `FAIL SSH to .11` and **no** `DISPATCH-NOW` is posted, that is **correct fail-closed behavior** — do not post `DISPATCH-NOW` manually.
+
+| Symptom | Likely cause |
+|---------|--------------|
+| `ssh: connect to host 100.105.194.96 port 22: Connection timed out` | Missing `TS_AUTHKEY` (no Tailscale mesh) or wrong cloud environment |
+| `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` unset | Agent booted on **Ooterverse** env instead of **LEGACY Hermes .11** |
+| Log: `FAIL: contract install failed — not dispatching` | SSH preflight failed (exit 10); steps 2–3 never run |
+| No `## Downstream STARTED` on GitHub #1 | Run never reached host; or `gh` token missing on Mac |
+
+**Fix (pick one):**
+
+1. **Mac Hermes** (Tailscale up): run downstream curl one-liner above
+2. **New cloud agent** on repo `ilike4movies/hermes-mac-land` with environment **LEGACY Hermes .11 — do not use for Ooterverse**
+3. **Add secrets** `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` to the agent environment
+
+**Success receipts:** GitHub #1 `## Downstream STARTED` → `## Downstream DONE`; RAL-793 contract readback; RAL-634 verify PASS; `evidence/RAL-793-inventory.md` on `.11`.
 
 ## This pod cannot land tip-main
 
