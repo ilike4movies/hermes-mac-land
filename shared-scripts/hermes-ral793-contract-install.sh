@@ -22,6 +22,7 @@ CANARY_ROOT="/opt/moltbot/data/cos-hermes/canaries/ral793-inventory"
 COS_REPO="${HERMES_COS_OWNER_REPO:-ilike4movies/hermes-agent-cos}"
 COS_BRANCH="${HERMES_COS_BRANCH:-cos-local}"
 LINEAR_TICKET="${HERMES_RAL793_LINEAR_TICKET:-RAL-793}"
+LINEAR_ISSUE_ID="${HERMES_RAL793_LINEAR_ISSUE_ID:-963472c8-cc84-426a-9ed6-79e08566353a}"
 DRY_RUN=0
 POST_LINEAR=0
 TMP_HOST_KEY=""
@@ -64,17 +65,19 @@ _post_linear() {
   local body="$1"
   local key="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
   [[ -n "$key" ]] || return 0
-  python3 - "$key" "$LINEAR_TICKET" "$body" <<'PY' 2>/dev/null || true
+  python3 - "$key" "$LINEAR_TICKET" "${LINEAR_ISSUE_ID:-}" "$body" <<'PY' 2>/dev/null || true
 import json, sys, urllib.request
-key, ticket, body = sys.argv[1], sys.argv[2], sys.argv[3]
-q1 = {"query": "query($q:String!){issueSearch(query:$q,first:1){nodes{id}}}", "variables": {"q": ticket}}
-req = urllib.request.Request("https://api.linear.app/graphql", data=json.dumps(q1).encode(),
-    headers={"Content-Type": "application/json", "Authorization": key})
-with urllib.request.urlopen(req, timeout=12) as r:
-    nodes = (json.load(r).get("data") or {}).get("issueSearch", {}).get("nodes") or []
-if not nodes:
-    raise SystemExit(0)
-iid = nodes[0]["id"]
+key, ticket, issue_id, body = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+iid = issue_id.strip()
+if not iid:
+    q1 = {"query": "query($q:String!){issueSearch(query:$q,first:1){nodes{id}}}", "variables": {"q": ticket}}
+    req = urllib.request.Request("https://api.linear.app/graphql", data=json.dumps(q1).encode(),
+        headers={"Content-Type": "application/json", "Authorization": key})
+    with urllib.request.urlopen(req, timeout=12) as r:
+        nodes = (json.load(r).get("data") or {}).get("issueSearch", {}).get("nodes") or []
+    if not nodes:
+        raise SystemExit(0)
+    iid = nodes[0]["id"]
 q2 = {"query": "mutation($id:String!,$b:String!){commentCreate(input:{issueId:$id,body:$b}){success}}",
       "variables": {"id": iid, "b": body}}
 urllib.request.urlopen(urllib.request.Request("https://api.linear.app/graphql", data=json.dumps(q2).encode(),
