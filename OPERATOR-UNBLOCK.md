@@ -57,4 +57,6 @@ Cloud agents on Ooterverse lack `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY`. La
 
 Signal bumps alone do **not** land until a watch exists (jump or local). #79 makes the next direct-`.11` surgical-apply install the local watch so later bumps work without rockets.
 
+Credentialed resume-land / cloud-agent-start now **jump-first** by default (`HERMES_PREFER_DIRECT_HOST=0`) so grok-cos-1 gets the watch when reachable; set `=1` to force direct `.11` only (Mac LAN path still defaults to direct).
+
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
