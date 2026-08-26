@@ -3,7 +3,8 @@
 #
 # Fail-closed install using hermes-agent-cos cos-local stage_ral793_inventory_contract.py.
 # Updates dispatcher registry SHA pins in crontab/launchers when old pin appears exactly once.
-# Does NOT dispatch — operator must verify readback then DISPATCH-NOW manually.
+# Does NOT dispatch by itself — use hermes-dispatcher-downstream.sh (auto DISPATCH-NOW default)
+#   or post DISPATCH-NOW manually after verifying contract readback.
 #
 # Usage (credentialed Mac/cloud with SSH to .11):
 #   bash shared-scripts/hermes-ral793-contract-install.sh
