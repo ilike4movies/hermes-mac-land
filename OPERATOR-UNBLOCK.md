@@ -2,9 +2,9 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T04:50Z
+**Updated:** 2026-08-26T04:52Z
 
-## Live now (04:38Z acceptance gate)
+## Live now (RAL-820 acceptance gate)
 
 RAL-820 successor canary **execution proved** on live `.11`:
 
@@ -13,9 +13,22 @@ RAL-820 successor canary **execution proved** on live `.11`:
 | Execution | Run `20260826T023838783748Z-397968`, request `req-5d76e1f5e5544e6b` |
 | Worktree | Isolated `subject.txt` = `executed\n`, deterministic test exit 0 |
 | Terminal | `VERIFIED_COMPLETE` after PR #103/#106/#108 live recovery |
-| Replay (04:34–04:38Z) | Cycles excluded `execution-verified-awaiting-objective-state-change`; `model_calls=0`, no duplicate worker |
+| Replay (04:34–04:38Z) | Cycles `667830`/`670382` excluded; `model_calls=0`, no duplicate worker |
 
-**RAL-820 is at acceptance review.** Verify post-acceptance dispatcher `CLAIMED` runs (`681664`, `693193`) did not invoke executor before closing.
+**RAL-820 returned to In Progress** after timer-restored wakes posted post-acceptance `CLAIMED` comments (runs `681664` @ 04:40Z, `693193` @ 04:45Z). Ralph must read back both runs before close.
+
+### ⚠️ CLAIM comment text is NOT acceptance evidence
+
+Every `CLAIMED` comment includes `Candidate model route: … (not invoked by dispatcher)` — including run `397968` where the worker **did** execute. That phrase only means the dispatcher does not call the model directly.
+
+### Required readback (runs `681664`, `693193`)
+
+On `.11`, confirm for each post-acceptance run:
+
+1. `execution_evidence.json` shows `executor_started=false`, `model_calls=0`, tokens=0
+2. No new worker run dir under `…/home/runtime/ral798/runs/` after `397968`
+3. Canary worktree `subject.txt` still `executed\n`; canonical fixture unchanged
+4. Outcome = `execution-verified-awaiting-objective-state-change` (exclusion), not fresh mission
 
 Run `4007763` is **superseded** (terminal WAL mismatch 23:07Z) — do not replay `req-1e9dba0acd1e4cce`.
 
@@ -39,14 +52,14 @@ Open secondary: [PR #105](https://github.com/ilike4movies/hermes-agent-cos/pull/
 | Gate | Status |
 |------|--------|
 | RAL-798 interrupt → executor | **PROVED** (RAL-820 run 397968) |
-| RAL-820 `executed\n` + replay | **PARTIAL** — execution + replay yes; Ralph acceptance pending |
+| RAL-820 `executed\n` + replay | **PARTIAL** — execution + replay yes; post-acceptance CLAIM readback pending |
 | RAL-800 tip-main `moltbot` land | **OPEN** — interrupt stack live via `hermes-agent-cos` surgical packets; wholesale tip-main apply not evidenced |
 | RAL-793 CLAIMED | **NO** — Todo; gated behind RAL-820 close |
 | moltbot [PR #76](https://github.com/ilike4movies/moltbot/pull/76) | **DRAFT** — do not merge while linked to canary issues |
 
 ## Blocker order (current)
 
-1. **RAL-820 acceptance** — Ralph verify post-acceptance CLAIMs had no executor; close canary
+1. **RAL-820 acceptance** — readback runs `681664`/`693193` for zero executor; close canary
 2. **RAL-793 dispatch** — fresh interrupt under its own execution contract after RAL-820 close
 3. **RAL-800 tip-main apply** — GitHub→`/opt/moltbot` drift closure (credentialed land or Mac Hermes)
 4. **RAL-634 / WIP truth** — claimable-queue starvation alarms (not started)
@@ -57,15 +70,13 @@ Open secondary: [PR #105](https://github.com/ilike4movies/hermes-agent-cos/pull/
 |------|-------|
 | 23:07Z | Run `4007763` terminal WAL mismatch → rollback `pending\n` |
 | 23:34Z | PR #93 merged |
-| 23:59Z | Comment dedupe collision canary — rolled back |
-| 00:19Z | PR #96 canary: executor reached, allowlist violation |
 | 02:38Z | **Run `397968` success** — `executed\n`, proof gate passed |
-| 02:42Z | Replay defect: ordinary queue re-selected RAL-820 |
 | 03:00Z | PR #102 merged + live replay-quarantine |
-| 03:05Z | Active-request block: request stuck `WORKING` |
 | 04:00Z | PR #103 merged; live recovery → `VERIFIED_COMPLETE` |
 | 04:30Z | PR #108 merged; ledger marker published |
-| 04:38Z | Acceptance cycles: zero worker/model calls |
+| 04:38Z | Acceptance cycles `667830`/`670382`: zero worker/model calls |
+| 04:40Z | Post-acceptance CLAIM run `681664` — readback pending |
+| 04:45Z | Post-acceptance CLAIM run `693193` — readback pending |
 
 ## ⚠️ Do not link PRs to RAL-798/820/793/800
 
