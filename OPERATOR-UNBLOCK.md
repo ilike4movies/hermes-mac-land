@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T00:15Z
+**Updated:** 2026-08-27T00:53Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -36,7 +36,7 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 
 [hermes-mac-land issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) receives machine posts when Mac/credentialed runs execute (land DIAG + downstream STARTED/DONE/FAILED). Cloud agents without SSH can watch this inbox for credentialed-run receipts.
 
-## Live stall — RAL-793 run `2954673` (CLAIMED @ 23:25Z, silent ~45m+)
+## Live stall — RAL-793 run `2954673` (CLAIMED @ 23:25Z, silent ~90m+)
 
 | Item | Status |
 |------|--------|
@@ -95,6 +95,8 @@ Chain: inspect → contract install → DISPATCH-NOW → RAL-634 verify.
 | hermes-mac-land [#31](https://github.com/ilike4movies/hermes-mac-land/pull/31) | **merged** — downstream launcher pins GitHub beacon script |
 | hermes-mac-land [#33](https://github.com/ilike4movies/hermes-mac-land/pull/33) | **merged** — `hermes-ral793-run-inspect.sh` + stall runbook |
 | hermes-mac-land [#34](https://github.com/ilike4movies/hermes-mac-land/pull/34) | **merged** — downstream Step 0 auto-inspect when `HERMES_RUN_ID` set |
+| hermes-mac-land [#35](https://github.com/ilike4movies/hermes-mac-land/pull/35) | **closed/superseded** — stall launcher landed direct to main |
+| hermes-mac-land [#36](https://github.com/ilike4movies/hermes-mac-land/pull/36) | **merged** — cloud boot auto-pins stall run when `HERMES_AUTO_SURGICAL_LAND=0` |
 
 ### Critical path (remaining)
 
@@ -149,13 +151,15 @@ Set `HERMES_SKIP_DOWNSTREAM=1` on resume-land for land-only smoke. Set `HERMES_A
 
 ### hermes-mac-land cloud agent (env LEGACY Hermes .11)
 
-On boot with secrets, `hermes-cloud-agent-start.sh` now chains downstream gates by default (`HERMES_AUTO_DOWNSTREAM=1`). Set `HERMES_AUTO_SURGICAL_LAND=0` for downstream-only boot.
+On boot with secrets, `hermes-cloud-agent-start.sh` chains downstream gates by default (`HERMES_AUTO_DOWNSTREAM=1`). Set `HERMES_AUTO_SURGICAL_LAND=0` for downstream-only boot.
 
-For the stalled run, also set at boot:
+Since **#36** (2026-08-27): when `HERMES_AUTO_SURGICAL_LAND=0` and `HERMES_RUN_ID` is unset, boot auto-pins stall run `20260826T232521106484Z-2954673` (override via `HERMES_RUN_ID` or `HERMES_DEFAULT_STALL_RUN_ID`).
+
+Minimum boot env after #36:
 
 ```bash
-HERMES_RUN_ID=20260826T232521106484Z-2954673
 HERMES_AUTO_SURGICAL_LAND=0
+# HERMES_RUN_ID optional — defaults to stalled canary run
 ```
 
 ## Troubleshooting downstream FAIL (SSH / wrong environment)
