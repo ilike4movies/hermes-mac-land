@@ -41,7 +41,7 @@ _load_hermes_ssh_env() {
     while IFS= read -r line || [[ -n "$line" ]]; do
       case "$line" in
         ''|\#*) continue ;;
-        LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|GH_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*)
+        LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|GH_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*|HERMES_HOST_SSH_PRIVATE_KEY=*)
           key="${line%%=*}"
           val="${line#*=}"
           val="${val%\"}"; val="${val#\"}"
@@ -51,6 +51,34 @@ _load_hermes_ssh_env() {
       esac
     done < "$f"
   done
+}
+
+_has_ssh_key() {
+  [[ -n "${HERMES_HOST_SSH_PRIVATE_KEY:-}" ]] && return 0
+  [[ -s "${DIR}/host-ssh-key" ]] && return 0
+  [[ -f "${HOME}/.hermes/.env" ]] && grep -q '^HERMES_HOST_SSH_PRIVATE_KEY=' "${HOME}/.hermes/.env" 2>/dev/null && return 0
+  return 1
+}
+
+_preflight_env() {
+  local reason=""
+  if [[ "${COMPOSER_REPO_URL:-}" == *ooterverse* ]] || [[ "${COMPOSER_REPO_URL:-}" == *Ooterverse* ]]; then
+    reason="wrong_repo=Ooterverse (need ilike4movies/hermes-mac-land + LEGACY Hermes .11 env)"
+  elif [[ -n "${COMPOSER_REPO_URL:-}" ]]; then
+    if [[ -z "${TS_AUTHKEY:-}" ]] && ! _has_ssh_key; then
+      reason="missing_secrets=TS_AUTHKEY+HERMES_HOST_SSH_PRIVATE_KEY (attach Runtime Secrets at boot)"
+    elif [[ -z "${TS_AUTHKEY:-}" ]] && ! command -v tailscale >/dev/null 2>&1; then
+      reason="missing_tailscale=TS_AUTHKEY unset and tailscale not installed"
+    fi
+  fi
+  if [[ -n "$reason" ]]; then
+    echo "FAIL preflight: $reason" >&2
+    echo "  COMPOSER_REPO_URL=${COMPOSER_REPO_URL:-unset}" >&2
+    echo "  fix: start NEW cloud agent on hermes-mac-land with LEGACY Hermes .11 secrets" >&2
+    echo "  or Mac Hermes: double-click HERMES-DOWNSTREAM-RAL793-STALL.command" >&2
+    return 1
+  fi
+  return 0
 }
 
 _post_github_status() {
@@ -122,6 +150,20 @@ fi
 WHEN="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 HOST="$(hostname 2>/dev/null || echo unknown)"
 USER_NAME="$(whoami 2>/dev/null || echo unknown)"
+
+if ! _preflight_env 2>&1 | tee -a "$LOG"; then
+  _post_github_status "## Downstream FAILED @ $WHEN
+
+host=\`$HOST\` user=\`$USER_NAME\`
+step=preflight (wrong env / missing secrets)
+COMPOSER_REPO_URL=\`${COMPOSER_REPO_URL:-unset}\`
+TS_AUTHKEY=\`${TS_AUTHKEY:+set}${TS_AUTHKEY:-unset}\`
+HERMES_HOST_SSH_PRIVATE_KEY=\`${HERMES_HOST_SSH_PRIVATE_KEY:+set}${HERMES_HOST_SSH_PRIVATE_KEY:-unset}\`
+
+Fix: hermes-mac-land + LEGACY Hermes .11 secrets at boot, or Mac stall launcher.
+log: \`$LOG\`"
+  exit 1
+fi
 
 _post_github_status "## Downstream STARTED @ $WHEN
 
