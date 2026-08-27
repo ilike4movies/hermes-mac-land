@@ -4,26 +4,36 @@
 
 > **Wrong repo?** Do not run Hermes land from Ooterverse-Saturns-Quest. Use **`ilike4movies/hermes-mac-land`** + env **LEGACY Hermes .11** + Runtime Secrets at boot.
 
-## Current critical path (2026-08-26)
+## Current critical path (2026-08-27)
 
 **Upstream gates Done:** RAL-820 interrupt, RAL-800 tip-main land, RAL-799 live canary+drift (@ 20:21–20:22Z).
 
-**Still open:** RAL-793 contract + inventory evidence, RAL-634 live starvation verify. **Do not re-land** unless tip refresh is needed.
+**Still open:** RAL-793 contract + inventory evidence (run `2954673` CLAIMED but stalled), RAL-634 live starvation verify. **Do not re-land** unless tip refresh is needed.
 
-### Fastest now — downstream only (Mac)
+### Fastest now — stalled RAL-793 run (Mac)
+
+1. Download **fresh** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command)
+2. **Right-click → Open** on Mac Hermes (Tailscale or LAN to `.11`)
+
+Pins run `20260826T232521106484Z-2954673` and runs: inspect → contract install → DISPATCH-NOW → RAL-634 verify.
+
+### Or downstream-only (generic)
 
 1. Download **fresh** `HERMES-DOWNSTREAM-ONLY.command` from this repo
-2. **Right-click → Open** on Mac Hermes (Tailscale or LAN to `.11`)
+2. **Right-click → Open** on Mac Hermes
 
 Or terminal:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
+HERMES_RUN_ID=20260826T232521106484Z-2954673 HERMES_AUTO_SURGICAL_LAND=0 \
+  curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 ```
 
 **Chain:** RAL-793 contract install + readback → auto `DISPATCH-NOW` (Linear interrupt) → RAL-634 verify PASS/FAIL.
 
 **Pass criteria:** contract readback + CLAIMED + `evidence/RAL-793-inventory.md` on RAL-793; PASS receipt on RAL-634. **Not** WORK-PACKET-DONE alone.
+
+**Machine inbox:** [GitHub issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) — expect `## Downstream STARTED` → `## Downstream DONE`.
 
 **Linear hygiene:** do not attach GitHub PRs to open canary tickets; do not put `RAL-793` in PR titles.
 
@@ -120,6 +130,7 @@ Optional in `~/.hermes/.env`:
 2. Auto `DISPATCH-NOW RAL-793` posted (Linear interrupt — no Slack rocket)
 3. Hermes **CLAIMED** under pinned contract + `evidence/RAL-793-inventory.md`
 4. RAL-634 verify PASS receipt on RAL-634
+5. GitHub #1 `## Downstream STARTED` → `## Downstream DONE`
 
 ### After full land (tip refresh)
 
@@ -142,6 +153,6 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 
 **Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **LEGACY Hermes .11 — do not use for Ooterverse**, never the Ooterverse game environment.
 
-For downstream-only boot on a credentialed cloud agent: `HERMES_AUTO_SURGICAL_LAND=0` (default `HERMES_AUTO_DOWNSTREAM=1`).
+For downstream-only boot on a credentialed cloud agent: `HERMES_AUTO_SURGICAL_LAND=0` + `HERMES_RUN_ID=20260826T232521106484Z-2954673` (default `HERMES_AUTO_DOWNSTREAM=1`).
 
 See **[OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md)** for the full checklist and pitfalls.
