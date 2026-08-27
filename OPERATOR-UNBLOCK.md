@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T04:45Z
+**Updated:** 2026-08-27T05:02Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -93,7 +93,7 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | 3 | RAL-634 starvation / transition dedupe | **DONE** — moltbot #103 + live enter/suppress @ 03:35–03:45Z |
 | 4 | Miss/idle alarms | **DONE** |
 | 5 | RAL-793 canary + inventory | **OPEN** — sole program blocker |
-| 6 | Operator docs | **Done** (#41 + #42 + #44 + #47) |
+| 6 | Operator docs | **Done** (#41 + #42 + #44 + #47–#50) |
 
 ### Source follow-ups (recent)
 
@@ -107,6 +107,9 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | hermes-mac-land [#36](https://github.com/ilike4movies/hermes-mac-land/pull/36) | **merged** — cloud boot auto-pins stall run when `HERMES_AUTO_SURGICAL_LAND=0` |
 | hermes-mac-land [#44](https://github.com/ilike4movies/hermes-mac-land/pull/44) | **merged** @ `8fcac2a` — cloud boot stall defaults (`HERMES_AUTO_STACK_APPLY=0`, `HERMES_STALL_RECOVERY=1`) |
 | hermes-mac-land [#47](https://github.com/ilike4movies/hermes-mac-land/pull/47) | **merged** @ `858cb6a` — bare curl stall auto-defaults (#42/#44 parity in downstream.sh) |
+| hermes-mac-land [#48](https://github.com/ilike4movies/hermes-mac-land/pull/48) | **merged** @ `f3c7578` — OPERATOR sync for #47 |
+| hermes-mac-land [#49](https://github.com/ilike4movies/hermes-mac-land/pull/49) | **merged** @ `964943d` — README post-#47 one-liner |
+| hermes-mac-land [#50](https://github.com/ilike4movies/hermes-mac-land/pull/50) | **merged** @ `dc89811` — skip GitHub beacon on expected preflight fail |
 | hermes-mac-land `60cf813` | **on main** — downstream fail-fast preflight without `COMPOSER_REPO_URL` |
 
 ### Critical path (remaining)
@@ -189,6 +192,7 @@ If `hermes-dispatcher-downstream.sh` exits at Step 1 with `FAIL SSH to .11` and 
 | Symptom | Likely cause |
 |---------|--------------|
 | `FAIL preflight: wrong_repo=Ooterverse` | Agent on wrong repo/env — fails in <1s (since `896251d`) |
+| `SKIP GitHub beacon (preflight expected on wrong env)` | Ooterverse/missing secrets — no `## Downstream FAILED` posted (since #50) |
 | `FAIL preflight: missing_secrets=TS_AUTHKEY+HERMES_HOST_SSH_PRIVATE_KEY` | Cloud agent without Runtime Secrets at boot |
 | `ssh: connect to host 100.105.194.96 port 22: Connection timed out` | Missing `TS_AUTHKEY` (no Tailscale mesh) or wrong cloud environment |
 | `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` unset | Agent booted on **Ooterverse** env instead of **LEGACY Hermes .11** |
