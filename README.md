@@ -8,14 +8,14 @@
 
 **Upstream gates Done:** RAL-820 interrupt, RAL-800 tip-main land, RAL-799 live canary+drift, RAL-634 starvation + transition dedupe (#103 live @ 03:35Z).
 
-**Sole blocker:** RAL-793 contract + inventory evidence (run `2954673` CLAIMED @ 23:25Z but stalled ~4h+). **Do not re-land** unless tip refresh is needed.
+**Sole blocker:** RAL-793 contract + inventory evidence (run `2954673` CLAIMED @ 23:25Z but stalled ~5h+). **Do not re-land** unless tip refresh is needed.
 
 ### Fastest now — stalled RAL-793 run (Mac)
 
 1. Download **fresh** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command)
 2. **Right-click → Open** on Mac Hermes (Tailscale or LAN to `.11`)
 
-Pins run `20260826T232521106484Z-2954673` and runs: inspect → contract install → **governed stack-apply** → DISPATCH-NOW → RAL-634 verify.
+Pins run `20260826T232521106484Z-2954673` and runs: inspect → contract install → (stack-apply **skipped** by default; `.11` already at `6ce15a8`) → DISPATCH-NOW → RAL-634 verify. Defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` (#42/#44).
 
 ### Or downstream-only (generic)
 
@@ -29,7 +29,7 @@ HERMES_RUN_ID=20260826T232521106484Z-2954673 HERMES_AUTO_SURGICAL_LAND=0 \
   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 ```
 
-**Chain:** RAL-793 run inspect → contract install + readback → governed stack-apply (moltbot main → `.11`) → auto `DISPATCH-NOW` (Linear interrupt) → RAL-634 verify PASS/FAIL.
+**Chain:** RAL-793 run inspect → contract install + readback → (stack-apply optional; stall defaults skip) → auto `DISPATCH-NOW` (Linear interrupt) → RAL-634 verify PASS/FAIL.
 
 **Pass criteria:** contract readback + `evidence/RAL-793-inventory.md` on RAL-793. **Not** WORK-PACKET-DONE alone.
 
@@ -128,7 +128,7 @@ Optional in `~/.hermes/.env`:
 
 1. RAL-793 run inspect summary on Linear (when stalled)
 2. RAL-793 contract install readback on Linear
-3. Governed stack-apply lands moltbot main on `.11` (incl. #103 transition dedupe)
+3. Governed stack-apply (skipped by stall defaults unless mirror drifted)
 4. Auto `DISPATCH-NOW RAL-793` posted (Linear interrupt — no Slack rocket)
 5. Hermes progress under pinned contract + `evidence/RAL-793-inventory.md`
 6. RAL-634 verify PASS receipt (downstream step; RAL-634 already Done separately)
@@ -155,8 +155,8 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 
 **Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **LEGACY Hermes .11 — do not use for Ooterverse**, never the Ooterverse game environment.
 
-For downstream-only boot on a credentialed cloud agent: set `HERMES_AUTO_SURGICAL_LAND=0` only (`HERMES_AUTO_DOWNSTREAM=1` default). Since **#36**, `HERMES_RUN_ID` auto-pins stall run `20260826T232521106484Z-2954673` when unset (override via `HERMES_RUN_ID` or `HERMES_DEFAULT_STALL_RUN_ID`).
+For downstream-only boot on a credentialed cloud agent: set `HERMES_AUTO_SURGICAL_LAND=0` only (`HERMES_AUTO_DOWNSTREAM=1` default). Since **#36**, `HERMES_RUN_ID` auto-pins stall run `20260826T232521106484Z-2954673` when unset. Since **#44**, also defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` (parity with stall launcher).
 
-`hermes-dispatcher-downstream.sh` fail-fast preflights Ooterverse misroute in <1s (`896251d`) — see [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md).
+`hermes-dispatcher-downstream.sh` fail-fast preflights missing secrets / wrong repo in <1s (`60cf813`) — see [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md).
 
 See **[OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md)** for the full checklist and pitfalls.
