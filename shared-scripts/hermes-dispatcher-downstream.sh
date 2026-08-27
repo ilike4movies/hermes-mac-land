@@ -2,6 +2,7 @@
 # hermes-dispatcher-downstream.sh — credentialed downstream gates after RAL-800/799
 #
 # Runs (in order):
+#   0. RAL-793 run inspect (optional; when HERMES_RUN_ID set or HERMES_AUTO_INSPECT_RAL793=1)
 #   1. RAL-793 contract install (--post-linear)
 #   2. DISPATCH-NOW RAL-793 via Linear comment (default on; HERMES_AUTO_DISPATCH_RAL793=0 to skip)
 #   3. RAL-634 starvation verify (--post-linear)
@@ -19,12 +20,16 @@ LOG="$DIR/dispatcher-downstream.log"
 LINEAR_TICKET="${HERMES_RAL793_LINEAR_TICKET:-RAL-793}"
 LINEAR_ISSUE_ID="${HERMES_RAL793_LINEAR_ISSUE_ID:-963472c8-cc84-426a-9ed6-79e08566353a}"
 AUTO_DISPATCH="${HERMES_AUTO_DISPATCH_RAL793:-1}"
+AUTO_INSPECT="${HERMES_AUTO_INSPECT_RAL793:-}"
 GH_STATUS_ISSUE="${HERMES_MAC_LAND_STATUS_ISSUE:-1}"
 GH_STATUS_REPO="${HERMES_MAC_LAND_STATUS_REPO:-ilike4movies/hermes-mac-land}"
 STARVE_RC=0
 
 _contract="$DIR/hermes-ral793-contract-install.sh"
 [[ -x "$_contract" ]] || _contract="$ROOT/shared-scripts/hermes-ral793-contract-install.sh"
+
+_inspect="$DIR/hermes-ral793-run-inspect.sh"
+[[ -x "$_inspect" ]] || _inspect="$ROOT/shared-scripts/hermes-ral793-run-inspect.sh"
 
 _starve="$DIR/hermes-ral634-starvation-verify.sh"
 [[ -x "$_starve" ]] || _starve="$ROOT/shared-scripts/hermes-ral634-starvation-verify.sh"
@@ -80,24 +85,40 @@ raise SystemExit(0 if ok else 1)
 PY
 }
 
+_fetch_script() {
+  local name="$1" dest="$2"
+  echo "fetching $name from main" | tee -a "$LOG"
+  curl -fsSL "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/$name" \
+    -o "$dest"
+  chmod +x "$dest"
+}
+
 if [[ ! -x "$_contract" ]]; then
-  echo "fetching hermes-ral793-contract-install.sh from main" | tee -a "$LOG"
-  curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral793-contract-install.sh \
-    -o "$DIR/hermes-ral793-contract-install.sh"
-  chmod +x "$DIR/hermes-ral793-contract-install.sh"
+  _fetch_script "hermes-ral793-contract-install.sh" "$DIR/hermes-ral793-contract-install.sh"
   _contract="$DIR/hermes-ral793-contract-install.sh"
 fi
 
+if [[ ! -x "$_inspect" ]]; then
+  _fetch_script "hermes-ral793-run-inspect.sh" "$DIR/hermes-ral793-run-inspect.sh"
+  _inspect="$DIR/hermes-ral793-run-inspect.sh"
+fi
+
 if [[ ! -x "$_starve" ]]; then
-  echo "fetching hermes-ral634-starvation-verify.sh from main" | tee -a "$LOG"
-  curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral634-starvation-verify.sh \
-    -o "$DIR/hermes-ral634-starvation-verify.sh"
-  chmod +x "$DIR/hermes-ral634-starvation-verify.sh"
+  _fetch_script "hermes-ral634-starvation-verify.sh" "$DIR/hermes-ral634-starvation-verify.sh"
   _starve="$DIR/hermes-ral634-starvation-verify.sh"
 fi
 
 _load_hermes_ssh_env || true
 export HERMES_RAL793_LINEAR_ISSUE_ID="${LINEAR_ISSUE_ID}"
+
+if [[ -z "$AUTO_INSPECT" ]]; then
+  if [[ -n "${HERMES_RUN_ID:-}" ]]; then
+    AUTO_INSPECT=1
+  else
+    AUTO_INSPECT=0
+  fi
+fi
+
 WHEN="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 HOST="$(hostname 2>/dev/null || echo unknown)"
 USER_NAME="$(whoami 2>/dev/null || echo unknown)"
@@ -105,10 +126,22 @@ USER_NAME="$(whoami 2>/dev/null || echo unknown)"
 _post_github_status "## Downstream STARTED @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
-chain: contract install → DISPATCH-NOW (auto=$AUTO_DISPATCH) → RAL-634 verify
+chain: inspect(auto=$AUTO_INSPECT) → contract install → DISPATCH-NOW (auto=$AUTO_DISPATCH) → RAL-634 verify
 log: \`$LOG\`"
 
 echo "== Hermes dispatcher downstream @ $WHEN ==" | tee -a "$LOG"
+
+if [[ "$AUTO_INSPECT" == "1" ]]; then
+  echo "== Step 0: RAL-793 run inspect (read-only) ==" | tee -a "$LOG"
+  _inspect_args=(--post-linear)
+  [[ -n "${HERMES_RUN_ID:-}" ]] && _inspect_args=(--run "$HERMES_RUN_ID" --post-linear)
+  if bash "$_inspect" "${_inspect_args[@]}" 2>&1 | tee -a "$LOG"; then
+    echo "OK run inspect" | tee -a "$LOG"
+  else
+    echo "WARN: run inspect failed (continuing downstream)" | tee -a "$LOG"
+  fi
+  echo "" | tee -a "$LOG"
+fi
 
 echo "== Step 1: RAL-793 contract install ==" | tee -a "$LOG"
 if ! bash "$_contract" --post-linear 2>&1 | tee -a "$LOG"; then
@@ -155,6 +188,7 @@ if [[ "$STARVE_RC" -eq 0 ]]; then
   _post_github_status "## Downstream DONE @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
+run inspect: auto=$AUTO_INSPECT
 contract install: OK
 DISPATCH-NOW: auto=$AUTO_DISPATCH
 RAL-634 verify: PASS
@@ -164,6 +198,7 @@ else
   _post_github_status "## Downstream PARTIAL @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
+run inspect: auto=$AUTO_INSPECT
 contract install: OK
 DISPATCH-NOW: auto=$AUTO_DISPATCH
 RAL-634 verify: FAIL (rc=$STARVE_RC)
