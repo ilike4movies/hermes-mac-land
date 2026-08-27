@@ -4,8 +4,9 @@
 # Runs (in order):
 #   0. RAL-793 run inspect (optional; when HERMES_RUN_ID set or HERMES_AUTO_INSPECT_RAL793=1)
 #   1. RAL-793 contract install (--post-linear)
-#   2. DISPATCH-NOW RAL-793 via Linear comment (default on; HERMES_AUTO_DISPATCH_RAL793=0 to skip)
-#   3. RAL-634 starvation verify (--post-linear)
+#   2. governed stack-apply (moltbot main → .11; HERMES_AUTO_STACK_APPLY=0 to skip)
+#   3. DISPATCH-NOW RAL-793 via Linear comment (default on; HERMES_AUTO_DISPATCH_RAL793=0 to skip)
+#   4. RAL-634 starvation verify (--post-linear)
 #
 # Machine status: posts STARTED/DONE/FAILED to hermes-mac-land GitHub issue #1 when `gh` available.
 #
@@ -20,6 +21,7 @@ LOG="$DIR/dispatcher-downstream.log"
 LINEAR_TICKET="${HERMES_RAL793_LINEAR_TICKET:-RAL-793}"
 LINEAR_ISSUE_ID="${HERMES_RAL793_LINEAR_ISSUE_ID:-963472c8-cc84-426a-9ed6-79e08566353a}"
 AUTO_DISPATCH="${HERMES_AUTO_DISPATCH_RAL793:-1}"
+AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-1}"
 AUTO_INSPECT="${HERMES_AUTO_INSPECT_RAL793:-}"
 GH_STATUS_ISSUE="${HERMES_MAC_LAND_STATUS_ISSUE:-1}"
 GH_STATUS_REPO="${HERMES_MAC_LAND_STATUS_REPO:-ilike4movies/hermes-mac-land}"
@@ -33,6 +35,9 @@ _inspect="$DIR/hermes-ral793-run-inspect.sh"
 
 _starve="$DIR/hermes-ral634-starvation-verify.sh"
 [[ -x "$_starve" ]] || _starve="$ROOT/shared-scripts/hermes-ral634-starvation-verify.sh"
+
+_stack_apply="$DIR/hermes-moltbot-stack-apply-via-ssh.sh"
+[[ -x "$_stack_apply" ]] || _stack_apply="$ROOT/shared-scripts/hermes-moltbot-stack-apply-via-ssh.sh"
 
 _load_hermes_ssh_env() {
   local f key val
@@ -115,8 +120,9 @@ PY
 
 _fetch_script() {
   local name="$1" dest="$2"
-  echo "fetching $name from main" | tee -a "$LOG"
-  curl -fsSL "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/$name" \
+  local pin="${HERMES_MAC_LAND_PIN:-main}"
+  echo "fetching $name from $pin" | tee -a "$LOG"
+  curl -fsSL "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${pin}/shared-scripts/$name" \
     -o "$dest"
   chmod +x "$dest"
 }
@@ -134,6 +140,11 @@ fi
 if [[ ! -x "$_starve" ]]; then
   _fetch_script "hermes-ral634-starvation-verify.sh" "$DIR/hermes-ral634-starvation-verify.sh"
   _starve="$DIR/hermes-ral634-starvation-verify.sh"
+fi
+
+if [[ ! -x "$_stack_apply" ]]; then
+  _fetch_script "hermes-moltbot-stack-apply-via-ssh.sh" "$DIR/hermes-moltbot-stack-apply-via-ssh.sh"
+  _stack_apply="$DIR/hermes-moltbot-stack-apply-via-ssh.sh"
 fi
 
 _load_hermes_ssh_env || true
@@ -168,7 +179,7 @@ fi
 _post_github_status "## Downstream STARTED @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
-chain: inspect(auto=$AUTO_INSPECT) → contract install → DISPATCH-NOW (auto=$AUTO_DISPATCH) → RAL-634 verify
+chain: inspect(auto=$AUTO_INSPECT) → contract install → stack-apply(auto=$AUTO_STACK_APPLY) → DISPATCH-NOW (auto=$AUTO_DISPATCH) → RAL-634 verify
 log: \`$LOG\`"
 
 echo "== Hermes dispatcher downstream @ $WHEN ==" | tee -a "$LOG"
@@ -196,9 +207,27 @@ See log: \`$LOG\`"
   exit 1
 fi
 
+
+echo "" | tee -a "$LOG"
+if [[ "$AUTO_STACK_APPLY" == "1" ]]; then
+  echo "== Step 2: governed stack-apply (moltbot main → .11) ==" | tee -a "$LOG"
+  if bash "$_stack_apply" --post-linear 2>&1 | tee -a "$LOG"; then
+    echo "OK stack-apply" | tee -a "$LOG"
+  else
+    echo "FAIL: stack-apply failed — not continuing" | tee -a "$LOG"
+    _post_github_status "## Downstream FAILED @ $WHEN
+
+step=stack-apply
+host=\`$HOST\` user=\`$USER_NAME\`
+See log: \`$LOG\`"
+    exit 1
+  fi
+else
+  echo "SKIP Step 2: HERMES_AUTO_STACK_APPLY=0" | tee -a "$LOG"
+fi
 echo "" | tee -a "$LOG"
 if [[ "$AUTO_DISPATCH" == "1" ]]; then
-  echo "== Step 2: DISPATCH-NOW $LINEAR_TICKET (Linear interrupt) ==" | tee -a "$LOG"
+  echo "== Step 3: DISPATCH-NOW $LINEAR_TICKET (Linear interrupt) ==" | tee -a "$LOG"
   DISPATCH_BODY="DISPATCH-NOW $LINEAR_TICKET"
   if _post_linear_comment "$DISPATCH_BODY"; then
     echo "OK posted Linear interrupt comment: $DISPATCH_BODY" | tee -a "$LOG"
@@ -209,11 +238,11 @@ Posted \`$DISPATCH_BODY\` after contract install/readback. Expect CLAIMED + \`ev
     echo "WARN: could not post DISPATCH-NOW (missing LINEAR_API_KEY?) — post manually on $LINEAR_TICKET" | tee -a "$LOG"
   fi
 else
-  echo "SKIP Step 2: HERMES_AUTO_DISPATCH_RAL793=0 — post DISPATCH-NOW manually" | tee -a "$LOG"
+  echo "SKIP Step 3: HERMES_AUTO_DISPATCH_RAL793=0 — post DISPATCH-NOW manually" | tee -a "$LOG"
 fi
 
 echo "" | tee -a "$LOG"
-echo "== Step 3: RAL-634 starvation verify ==" | tee -a "$LOG"
+echo "== Step 4: RAL-634 starvation verify ==" | tee -a "$LOG"
 if bash "$_starve" --post-linear 2>&1 | tee -a "$LOG"; then
   STARVE_RC=0
 else
@@ -232,6 +261,7 @@ if [[ "$STARVE_RC" -eq 0 ]]; then
 host=\`$HOST\` user=\`$USER_NAME\`
 run inspect: auto=$AUTO_INSPECT
 contract install: OK
+stack-apply: auto=$AUTO_STACK_APPLY
 DISPATCH-NOW: auto=$AUTO_DISPATCH
 RAL-634 verify: PASS
 
@@ -242,6 +272,7 @@ else
 host=\`$HOST\` user=\`$USER_NAME\`
 run inspect: auto=$AUTO_INSPECT
 contract install: OK
+stack-apply: auto=$AUTO_STACK_APPLY
 DISPATCH-NOW: auto=$AUTO_DISPATCH
 RAL-634 verify: FAIL (rc=$STARVE_RC)
 
