@@ -8,7 +8,7 @@
 
 **Upstream gates Done:** RAL-820 interrupt, RAL-800 tip-main land, RAL-799 live canary+drift, RAL-634 starvation + transition dedupe (#103 live @ 03:35Z).
 
-**Sole blocker:** RAL-793 contract + inventory evidence (run `2954673` CLAIMED @ 23:25Z but stalled ~10.9h+). **Do not re-land** unless tip refresh is needed.
+**Sole blocker:** RAL-793 contract + inventory evidence (run `2954673` CLAIMED @ 23:25Z 2026-08-26 but stalled ~24h+). **Do not re-land** unless tip refresh is needed. Gmail ACTION + URGENT threads still UNREAD — Mac Right-click → Open `HERMES-DOWNSTREAM-RAL793-STALL.command`.
 
 ### Fastest now — stalled RAL-793 run (Mac)
 
