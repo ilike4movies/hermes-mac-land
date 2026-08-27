@@ -4,6 +4,7 @@
 # Verifies post-tip-main install includes:
 #   - wip-park + miss-idle watchdog cron lines
 #   - cos-linear-dispatcher-check.py with detect_queue_starvation() + detect_contract_queue_starvation() + is_contract_only_starvation()
+#   - hermes-dispatcher-watchdog-transition.py (#103) + miss-idle watchdog wired to transition helper
 #   - latest miss-idle-watchdog report exists
 #   - latest dispatcher run does not silent-pass on queue starvation (RAL-634)
 #   - when queue is starved, live check fails closed with "queue starved" or degraded queue_starved_no_contracts
@@ -146,8 +147,22 @@ if [[ "$check_py" -eq 1 ]] && grep -q 'def detect_queue_starvation' "$SCRIPTS/co
   starvation_fn=1
 fi
 
+transition_py=0
+[[ -f "$SCRIPTS/hermes-dispatcher-watchdog-transition.py" ]] && transition_py=1
+
+watchdog_transition=0
+grep -Fq 'hermes-dispatcher-watchdog-transition.py' "$SCRIPTS/hermes-dispatcher-miss-idle-watchdog.sh" 2>/dev/null && watchdog_transition=1
+
+stable_scope_fn=0
+grep -q 'def contract_starvation_stable_scope' "$SCRIPTS/cos-linear-dispatcher-check.py" 2>/dev/null && stable_scope_fn=1
+
+stack_apply_mirror="missing"
+if [[ -f "$STATE/stack-apply-last.json" ]]; then
+  stack_apply_mirror="$(python3 -c 'import json; d=json.load(open("'"$STATE/stack-apply-last.json"'")); print(str(d.get("mirror_sha") or "?")[:12])' 2>/dev/null || echo parse_error)"
+fi
+
 watchdog_report="missing"
-[[ -f "$STATE/miss-idle-watchdog-last.json" ]] && watchdog_report="$(cat "$STATE/miss-idle-watchdog-last.json" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("kind"), d.get("heartbeat_status"), len(d.get("failures") or []))' 2>/dev/null || echo parse_error)"
+[[ -f "$STATE/miss-idle-watchdog-last.json" ]] && watchdog_report="$(cat "$STATE/miss-idle-watchdog-last.json" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("kind"), d.get("dedupe_scope"), d.get("heartbeat_status"), len(d.get("failures") or []))' 2>/dev/null || echo parse_error)"
 
 check_json="{}"
 check_rc=99
@@ -207,6 +222,10 @@ printf 'wip_cron=%s\n' "$wip_cron"
 printf 'miss_cron=%s\n' "$miss_cron"
 printf 'check_py=%s\n' "$check_py"
 printf 'starvation_fn=%s\n' "$starvation_fn"
+printf 'transition_py=%s\n' "$transition_py"
+printf 'watchdog_transition=%s\n' "$watchdog_transition"
+printf 'stable_scope_fn=%s\n' "$stable_scope_fn"
+printf 'stack_apply_mirror=%s\n' "$stack_apply_mirror"
 printf 'check_rc=%s\n' "$check_rc"
 printf 'check_starvation_fail=%s\n' "$check_starvation_fail"
 printf 'check_degraded=%s\n' "$check_degraded"
@@ -231,6 +250,10 @@ PASS=()
 [[ "${REMOTE[miss_cron]:-0}" == "1" ]] && PASS+=("miss-idle watchdog cron installed") || FAILS+=("miss-idle watchdog cron missing")
 [[ "${REMOTE[check_py]:-0}" == "1" ]] && PASS+=("cos-linear-dispatcher-check.py present") || FAILS+=("dispatcher check script missing")
 [[ "${REMOTE[starvation_fn]:-0}" == "1" ]] && PASS+=("detect_queue_starvation() + detect_contract_queue_starvation() + is_contract_only_starvation() deployed") || FAILS+=("detect_queue_starvation() missing from live check script")
+[[ "${REMOTE[transition_py]:-0}" == "1" ]] && PASS+=("hermes-dispatcher-watchdog-transition.py deployed (moltbot #103)") || FAILS+=("watchdog-transition.py missing — stack-apply post-#103 not landed")
+[[ "${REMOTE[watchdog_transition]:-0}" == "1" ]] && PASS+=("miss-idle watchdog wired to transition dedupe") || FAILS+=("miss-idle watchdog still on volatile fingerprint dedupe")
+[[ "${REMOTE[stable_scope_fn]:-0}" == "1" ]] && PASS+=("contract_starvation_stable_scope() in live checker") || FAILS+=("stable_scope missing from live checker (pre-#103)")
+[[ "${REMOTE[stack_apply_mirror]:-}" != "missing" ]] && PASS+=("stack-apply-last.json mirror_sha prefix=${REMOTE[stack_apply_mirror]}") || FAILS+=("stack-apply-last.json missing — governed apply may not have run")
 [[ "${REMOTE[watchdog_report]:-}" != "missing" ]] && PASS+=("miss-idle-watchdog report present: ${REMOTE[watchdog_report]}") || FAILS+=("miss-idle-watchdog-last.json missing")
 
 if [[ "${REMOTE[latest_silent_pass]:-1}" == "0" ]]; then
