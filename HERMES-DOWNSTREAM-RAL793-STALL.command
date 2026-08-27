@@ -1,16 +1,20 @@
 #!/bin/bash
 # HERMES-DOWNSTREAM-RAL793-STALL.command — double-click on Mac Hermes
 # Pins stalled run 20260826T232521106484Z-2954673 and runs full downstream chain:
-# inspect → contract install → governed stack-apply → DISPATCH-NOW → RAL-634 verify.
+# inspect → contract install → (optional stack-apply) → DISPATCH-NOW → RAL-634 verify.
 # Posts machine status to GitHub issue #1 when gh is available.
 set -euo pipefail
 export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:-public-downstream-ral793-stall-command}"
 export HERMES_RUN_ID="${HERMES_RUN_ID:-20260826T232521106484Z-2954673}"
 export HERMES_AUTO_SURGICAL_LAND=0
 export HERMES_AUTO_INSPECT_RAL793=1
+# Stack already at 6ce15a8 on .11 @ 03:30Z — skip unless mirror drifted.
+export HERMES_AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-0}"
+export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
 PIN="${HERMES_MAC_LAND_PIN:-main}"
 cd "${TMPDIR:-/tmp}"
 echo "=== Hermes DOWNSTREAM RAL-793 STALL (run=$HERMES_RUN_ID) pin=$PIN ==="
+echo "stack-apply=$HERMES_AUTO_STACK_APPLY stall_recovery=$HERMES_STALL_RECOVERY"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/ilike4movies/hermes-mac-land/issues/1"
 osascript -e 'display notification "Inspecting stalled RAL-793 run on .11…" with title "Hermes STALL downstream" sound name "Glass"' 2>/dev/null || true
