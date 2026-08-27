@@ -153,6 +153,6 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 
 **Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **LEGACY Hermes .11 — do not use for Ooterverse**, never the Ooterverse game environment.
 
-For downstream-only boot on a credentialed cloud agent: `HERMES_AUTO_SURGICAL_LAND=0` + `HERMES_RUN_ID=20260826T232521106484Z-2954673` (default `HERMES_AUTO_DOWNSTREAM=1`).
+For downstream-only boot on a credentialed cloud agent: set `HERMES_AUTO_SURGICAL_LAND=0` only (`HERMES_AUTO_DOWNSTREAM=1` default). Since **#36**, `HERMES_RUN_ID` auto-pins stall run `20260826T232521106484Z-2954673` when unset (override via `HERMES_RUN_ID` or `HERMES_DEFAULT_STALL_RUN_ID`).
 
 See **[OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md)** for the full checklist and pitfalls.
