@@ -6,16 +6,16 @@
 
 ## Current critical path (2026-08-27)
 
-**Upstream gates Done:** RAL-820 interrupt, RAL-800 tip-main land, RAL-799 live canary+drift (@ 20:21–20:22Z).
+**Upstream gates Done:** RAL-820 interrupt, RAL-800 tip-main land, RAL-799 live canary+drift, RAL-634 starvation + transition dedupe (#103 live @ 03:35Z).
 
-**Still open:** RAL-793 contract + inventory evidence (run `2954673` CLAIMED but stalled), RAL-634 live starvation verify. **Do not re-land** unless tip refresh is needed.
+**Sole blocker:** RAL-793 contract + inventory evidence (run `2954673` CLAIMED @ 23:25Z but stalled ~4h+). **Do not re-land** unless tip refresh is needed.
 
 ### Fastest now — stalled RAL-793 run (Mac)
 
 1. Download **fresh** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command)
 2. **Right-click → Open** on Mac Hermes (Tailscale or LAN to `.11`)
 
-Pins run `20260826T232521106484Z-2954673` and runs: inspect → contract install → DISPATCH-NOW → RAL-634 verify.
+Pins run `20260826T232521106484Z-2954673` and runs: inspect → contract install → **governed stack-apply** → DISPATCH-NOW → RAL-634 verify.
 
 ### Or downstream-only (generic)
 
@@ -29,9 +29,9 @@ HERMES_RUN_ID=20260826T232521106484Z-2954673 HERMES_AUTO_SURGICAL_LAND=0 \
   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 ```
 
-**Chain:** RAL-793 contract install + readback → auto `DISPATCH-NOW` (Linear interrupt) → RAL-634 verify PASS/FAIL.
+**Chain:** RAL-793 run inspect → contract install + readback → governed stack-apply (moltbot main → `.11`) → auto `DISPATCH-NOW` (Linear interrupt) → RAL-634 verify PASS/FAIL.
 
-**Pass criteria:** contract readback + CLAIMED + `evidence/RAL-793-inventory.md` on RAL-793; PASS receipt on RAL-634. **Not** WORK-PACKET-DONE alone.
+**Pass criteria:** contract readback + `evidence/RAL-793-inventory.md` on RAL-793. **Not** WORK-PACKET-DONE alone.
 
 **Machine inbox:** [GitHub issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) — expect `## Downstream STARTED` → `## Downstream DONE`.
 
@@ -126,11 +126,13 @@ Optional in `~/.hermes/.env`:
 
 ### After downstream-only (current path)
 
-1. RAL-793 contract install readback on Linear
-2. Auto `DISPATCH-NOW RAL-793` posted (Linear interrupt — no Slack rocket)
-3. Hermes **CLAIMED** under pinned contract + `evidence/RAL-793-inventory.md`
-4. RAL-634 verify PASS receipt on RAL-634
-5. GitHub #1 `## Downstream STARTED` → `## Downstream DONE`
+1. RAL-793 run inspect summary on Linear (when stalled)
+2. RAL-793 contract install readback on Linear
+3. Governed stack-apply lands moltbot main on `.11` (incl. #103 transition dedupe)
+4. Auto `DISPATCH-NOW RAL-793` posted (Linear interrupt — no Slack rocket)
+5. Hermes progress under pinned contract + `evidence/RAL-793-inventory.md`
+6. RAL-634 verify PASS receipt (downstream step; RAL-634 already Done separately)
+7. GitHub #1 `## Downstream STARTED` → `## Downstream DONE`
 
 ### After full land (tip refresh)
 
@@ -141,7 +143,7 @@ Terminal output markers:
 4. `OK INTERRUPT_LABEL hermes-now`
 5. `post-apply canary focus: RAL-820` (not media-studio canary)
 
-Then: RAL-800 `Host surgical-apply OK` → RAL-820 canary → downstream gates (contract + dispatch + RAL-634 verify).
+Then: RAL-800 `Host surgical-apply OK` → RAL-820 canary → downstream gates (contract + stack-apply + dispatch + RAL-634 verify).
 
 No Slack rockets.
 
