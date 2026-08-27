@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T04:28Z
+**Updated:** 2026-08-27T04:45Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -69,6 +69,11 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 Or shell:
 
 ```bash
+# Simplified post-#47 (auto-pins stall run + stack-apply=0 + stall_recovery=1):
+HERMES_AUTO_SURGICAL_LAND=0 \
+  curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
+
+# Alternate — explicit run ID:
 HERMES_RUN_ID=20260826T232521106484Z-2954673 HERMES_AUTO_SURGICAL_LAND=0 \
   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 ```
@@ -88,7 +93,7 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | 3 | RAL-634 starvation / transition dedupe | **DONE** — moltbot #103 + live enter/suppress @ 03:35–03:45Z |
 | 4 | Miss/idle alarms | **DONE** |
 | 5 | RAL-793 canary + inventory | **OPEN** — sole program blocker |
-| 6 | Operator docs | **Done** (#41 + #42 + #44) |
+| 6 | Operator docs | **Done** (#41 + #42 + #44 + #47) |
 
 ### Source follow-ups (recent)
 
@@ -101,6 +106,7 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | hermes-mac-land [#42](https://github.com/ilike4movies/hermes-mac-land/pull/42) | **merged** @ `21f49dc` — stall launcher skip stack-apply + recovery mode |
 | hermes-mac-land [#36](https://github.com/ilike4movies/hermes-mac-land/pull/36) | **merged** — cloud boot auto-pins stall run when `HERMES_AUTO_SURGICAL_LAND=0` |
 | hermes-mac-land [#44](https://github.com/ilike4movies/hermes-mac-land/pull/44) | **merged** @ `8fcac2a` — cloud boot stall defaults (`HERMES_AUTO_STACK_APPLY=0`, `HERMES_STALL_RECOVERY=1`) |
+| hermes-mac-land [#47](https://github.com/ilike4movies/hermes-mac-land/pull/47) | **merged** @ `858cb6a` — bare curl stall auto-defaults (#42/#44 parity in downstream.sh) |
 | hermes-mac-land `60cf813` | **on main** — downstream fail-fast preflight without `COMPOSER_REPO_URL` |
 
 ### Critical path (remaining)
@@ -137,6 +143,11 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 
 ```bash
 # Stalled run (inspect + downstream; recommended now):
+# Simplified post-#47 (auto-pins stall run + stack-apply=0 + stall_recovery=1):
+HERMES_AUTO_SURGICAL_LAND=0 \
+  curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
+
+# Alternate — explicit run ID:
 HERMES_RUN_ID=20260826T232521106484Z-2954673 HERMES_AUTO_SURGICAL_LAND=0 \
   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 
@@ -168,6 +179,8 @@ HERMES_AUTO_SURGICAL_LAND=0
 ```
 
 Since **#44** (2026-08-27): when downstream-only boot pins stall run `2954673`, also defaults `HERMES_AUTO_STACK_APPLY=0` and `HERMES_STALL_RECOVERY=1` (parity with stall launcher #42).
+
+Since **#47** (2026-08-27): `hermes-dispatcher-downstream.sh` itself applies the same stall defaults when run ID matches `2954673` or is auto-pinned via `HERMES_AUTO_SURGICAL_LAND=0`.
 
 ## Troubleshooting downstream FAIL (SSH / wrong environment)
 
