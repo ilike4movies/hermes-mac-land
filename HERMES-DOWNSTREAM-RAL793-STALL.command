@@ -1,7 +1,8 @@
 #!/bin/bash
 # HERMES-DOWNSTREAM-RAL793-STALL.command — double-click on Mac Hermes
 # Pins stalled run 20260826T232521106484Z-2954673 and runs full downstream chain:
-# inspect → contract install → (optional stack-apply) → DISPATCH-NOW → RAL-634 verify.
+# inspect → contract install → (optional stack-apply) → dual DISPATCH-NOW (#52) → RAL-634 verify.
+# Fetches hermes-dispatcher-downstream.sh from main at runtime (post-#52 dual-dispatch included).
 # Posts machine status to GitHub issue #1 when gh is available.
 set -euo pipefail
 export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:-public-downstream-ral793-stall-command}"
@@ -14,7 +15,7 @@ export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
 PIN="${HERMES_MAC_LAND_PIN:-main}"
 cd "${TMPDIR:-/tmp}"
 echo "=== Hermes DOWNSTREAM RAL-793 STALL (run=$HERMES_RUN_ID) pin=$PIN ==="
-echo "stack-apply=$HERMES_AUTO_STACK_APPLY stall_recovery=$HERMES_STALL_RECOVERY"
+echo "stack-apply=$HERMES_AUTO_STACK_APPLY stall_recovery=$HERMES_STALL_RECOVERY (dual DISPATCH-NOW when #52 on tip)"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/ilike4movies/hermes-mac-land/issues/1"
 osascript -e 'display notification "Inspecting stalled RAL-793 run on .11…" with title "Hermes STALL downstream" sound name "Glass"' 2>/dev/null || true
@@ -34,7 +35,8 @@ do
        && grep -q 'stack-apply' "$SCRIPT" 2>/dev/null \
        && grep -q 'DISPATCH-NOW' "$SCRIPT" 2>/dev/null \
        && grep -q 'RAL-634 starvation verify' "$SCRIPT" 2>/dev/null \
-       && grep -q '_post_github_status' "$SCRIPT" 2>/dev/null; then
+       && grep -q '_post_github_status' "$SCRIPT" 2>/dev/null \
+       && grep -q 'STALL_DISPATCH_PASSES' "$SCRIPT" 2>/dev/null; then
       FETCHED="$url"
       break
     fi
@@ -43,7 +45,7 @@ do
 done
 
 if [[ -z "$FETCHED" || ! -s "$SCRIPT" ]]; then
-  echo "FAILED: could not download hermes-dispatcher-downstream.sh (need inspect + stack-apply + auto-dispatch + GitHub beacon chain)"
+  echo "FAILED: could not download hermes-dispatcher-downstream.sh (need inspect + stack-apply + dual-dispatch + GitHub beacon chain)"
   osascript -e 'display notification "Download FAILED." with title "Hermes STALL downstream FAILED" sound name "Basso"' 2>/dev/null || true
   read -r -p "Press Enter to close…" _
   exit 1
