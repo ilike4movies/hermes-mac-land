@@ -8,7 +8,7 @@
 #   3. DISPATCH-NOW RAL-793 via Linear comment (default on; HERMES_AUTO_DISPATCH_RAL793=0 to skip)
 #   4. RAL-634 starvation verify (--post-linear)
 #
-# Machine status: posts STARTED/DONE/FAILED to hermes-mac-land GitHub issue #1 when `gh` available.
+# Machine status: posts STARTED/DONE/FAILED to hermes-mac-land GitHub issue #1 when `gh` available (preflight skips beacon).
 #
 # Usage:
 #   HERMES_AUTO_SURGICAL_LAND=0 curl -fsSL .../hermes-dispatcher-downstream.sh | bash
@@ -183,16 +183,7 @@ HOST="$(hostname 2>/dev/null || echo unknown)"
 USER_NAME="$(whoami 2>/dev/null || echo unknown)"
 
 if ! _preflight_env 2>&1 | tee -a "$LOG"; then
-  _post_github_status "## Downstream FAILED @ $WHEN
-
-host=\`$HOST\` user=\`$USER_NAME\`
-step=preflight (wrong env / missing secrets)
-COMPOSER_REPO_URL=\`${COMPOSER_REPO_URL:-unset}\`
-TS_AUTHKEY=\`${TS_AUTHKEY:+set}${TS_AUTHKEY:-unset}\`
-HERMES_HOST_SSH_PRIVATE_KEY=\`${HERMES_HOST_SSH_PRIVATE_KEY:+set}${HERMES_HOST_SSH_PRIVATE_KEY:-unset}\`
-
-Fix: hermes-mac-land + LEGACY Hermes .11 secrets at boot, or Mac stall launcher.
-log: \`$LOG\`"
+  echo "SKIP GitHub beacon (preflight expected on wrong env — use Mac or LEGACY .11)" >&2
   exit 1
 fi
 
