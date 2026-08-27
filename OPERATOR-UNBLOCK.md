@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T03:52Z
+**Updated:** 2026-08-27T03:58Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -85,7 +85,7 @@ Set `HERMES_AUTO_STACK_APPLY=0` only when `.11` mirror is already current.
 | 3 | RAL-634 starvation / transition dedupe | **DONE** — moltbot #103 + live enter/suppress @ 03:35–03:45Z |
 | 4 | Miss/idle alarms | **DONE** |
 | 5 | RAL-793 canary + inventory | **OPEN** — sole program blocker |
-| 6 | Operator docs | **syncing** (#41) |
+| 6 | Operator docs | **Done** (#41 @ `1e492f3`) |
 
 ### Source follow-ups (recent)
 
@@ -94,6 +94,7 @@ Set `HERMES_AUTO_STACK_APPLY=0` only when `.11` mirror is already current.
 | moltbot [#103](https://github.com/ilike4movies/moltbot/pull/103) | **merged + live** @ `6ce15a8` — transition-aware watchdog dedupe |
 | hermes-mac-land [#39](https://github.com/ilike4movies/hermes-mac-land/pull/39) | **merged** — verify gates on #103 artifacts |
 | hermes-mac-land [#40](https://github.com/ilike4movies/hermes-mac-land/pull/40) | **merged** @ `0ba45ea` — downstream stack-apply step before verify |
+| hermes-mac-land [#41](https://github.com/ilike4movies/hermes-mac-land/pull/41) | **merged** @ `1e492f3` — operator doc sync for #40 chain |
 | hermes-mac-land [#36](https://github.com/ilike4movies/hermes-mac-land/pull/36) | **merged** — cloud boot auto-pins stall run when `HERMES_AUTO_SURGICAL_LAND=0` |
 | hermes-mac-land `896251d` | **on main** — downstream fail-fast preflight (Ooterverse misroute) |
 
