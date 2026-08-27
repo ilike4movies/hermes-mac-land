@@ -6,6 +6,7 @@
 #   1. RAL-793 contract install (--post-linear)
 #   2. governed stack-apply (moltbot main → .11; HERMES_AUTO_STACK_APPLY=0 to skip)
 #   3. DISPATCH-NOW RAL-793 via Linear comment (default on; HERMES_AUTO_DISPATCH_RAL793=0 to skip)
+#      stall_recovery=1 → two DISPATCH-NOW passes (~90s) to clear SLA-stale CLAIM then reopen
 #   4. RAL-634 starvation verify (--post-linear)
 #
 # Machine status: posts STARTED/DONE/FAILED to hermes-mac-land GitHub issue #1 when `gh` available (preflight skips beacon).
@@ -240,21 +241,47 @@ fi
 echo "" | tee -a "$LOG"
 if [[ "$AUTO_DISPATCH" == "1" ]]; then
   echo "== Step 3: DISPATCH-NOW $LINEAR_TICKET (Linear interrupt) ==" | tee -a "$LOG"
+  DISPATCH_BODY="DISPATCH-NOW $LINEAR_TICKET"
+  STALL_DISPATCH_PASSES=1
+  STALL_DISPATCH_WAIT_SECS="${HERMES_STALL_DISPATCH_WAIT_SECS:-90}"
   if [[ "$STALL_RECOVERY" == "1" ]]; then
+    # Stale CLAIM older than movement SLA (300s) may need two interrupts:
+    # pass 1 resumes (recovery_attempts=0) or fails stale CLAIM (SLA exceeded);
+    # pass 2 reopens from FAILED under pinned contract. Second pass is a no-op
+    # if pass 1 already reached WORKING.
+    STALL_DISPATCH_PASSES=2
     _post_linear_comment "## Stall recovery @ $WHEN
 
-Run \`${HERMES_RUN_ID:-unknown}\` was CLAIMED before contract was on registry. Contract install completed; re-dispatching to resume under pinned contract.
+Run \`${HERMES_RUN_ID:-unknown}\` was CLAIMED before contract was on registry (~10h+ silent). Contract install completed.
+
+Posting **two** \`DISPATCH-NOW\` passes (${STALL_DISPATCH_WAIT_SECS}s apart):
+1. resume recovered claim **or** fail stale CLAIM (movement SLA 300s)
+2. reopen from FAILED under pinned contract if pass 1 terminalized the zombie
 
 Expect \`evidence/RAL-793-inventory.md\` — not WORK-PACKET-DONE alone." || true
   fi
-  DISPATCH_BODY="DISPATCH-NOW $LINEAR_TICKET"
-  if _post_linear_comment "$DISPATCH_BODY"; then
-    echo "OK posted Linear interrupt comment: $DISPATCH_BODY" | tee -a "$LOG"
+  _dispatch_ok=0
+  _pass=1
+  while [[ "$_pass" -le "$STALL_DISPATCH_PASSES" ]]; do
+    if [[ "$_pass" -gt 1 ]]; then
+      echo "WAIT ${STALL_DISPATCH_WAIT_SECS}s before DISPATCH-NOW pass $_pass/$STALL_DISPATCH_PASSES" | tee -a "$LOG"
+      sleep "$STALL_DISPATCH_WAIT_SECS"
+      _post_linear_comment "## Stall recovery pass $_pass/$STALL_DISPATCH_PASSES @ $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+Pass 1 may have resumed the claim or failed it as \`claimed_without_executor_movement\`. Pass 2 reopens from FAILED under pinned contract (no-op if already WORKING)." || true
+    fi
+    if _post_linear_comment "$DISPATCH_BODY"; then
+      echo "OK posted Linear interrupt comment (pass $_pass/$STALL_DISPATCH_PASSES): $DISPATCH_BODY" | tee -a "$LOG"
+      _dispatch_ok=1
+    else
+      echo "WARN: could not post DISPATCH-NOW pass $_pass (missing LINEAR_API_KEY?) — post manually on $LINEAR_TICKET" | tee -a "$LOG"
+    fi
+    _pass=$((_pass + 1))
+  done
+  if [[ "$_dispatch_ok" -eq 1 ]]; then
     _post_linear_comment "## Auto-dispatch @ $WHEN
 
-Posted \`$DISPATCH_BODY\` after contract install/readback. Expect CLAIMED + \`evidence/RAL-793-inventory.md\` — not WORK-PACKET-DONE alone." || true
-  else
-    echo "WARN: could not post DISPATCH-NOW (missing LINEAR_API_KEY?) — post manually on $LINEAR_TICKET" | tee -a "$LOG"
+Posted \`$DISPATCH_BODY\` ×${STALL_DISPATCH_PASSES} after contract install/readback (stall_recovery=$STALL_RECOVERY). Expect CLAIMED + \`evidence/RAL-793-inventory.md\` — not WORK-PACKET-DONE alone." || true
   fi
 else
   echo "SKIP Step 3: HERMES_AUTO_DISPATCH_RAL793=0 — post DISPATCH-NOW manually" | tee -a "$LOG"
@@ -282,7 +309,7 @@ run inspect: auto=$AUTO_INSPECT
 stall_recovery: $STALL_RECOVERY
 contract install: OK
 stack-apply: auto=$AUTO_STACK_APPLY
-DISPATCH-NOW: auto=$AUTO_DISPATCH
+DISPATCH-NOW: auto=$AUTO_DISPATCH (stall dual-pass when stall_recovery=1)
 RAL-634 verify: PASS
 
 Watch Linear for inventory evidence on $LINEAR_TICKET — not WORK-PACKET-DONE alone."
@@ -294,7 +321,7 @@ run inspect: auto=$AUTO_INSPECT
 stall_recovery: $STALL_RECOVERY
 contract install: OK
 stack-apply: auto=$AUTO_STACK_APPLY
-DISPATCH-NOW: auto=$AUTO_DISPATCH
+DISPATCH-NOW: auto=$AUTO_DISPATCH (stall dual-pass when stall_recovery=1)
 RAL-634 verify: FAIL (rc=$STARVE_RC)
 
 See log: \`$LOG\`"
