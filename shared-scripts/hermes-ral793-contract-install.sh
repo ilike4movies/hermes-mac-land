@@ -1,1 +1,1 @@
-$(python3 -c 'print(open("/workspace/hermes_pr/hermes-ral793-contract-install.sh").read(), end="")')
+PLACEHOLDER_LOAD_FROM_FILE
