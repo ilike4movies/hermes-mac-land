@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-26T23:10Z
+**Updated:** 2026-08-27T00:05Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -138,6 +138,22 @@ If `hermes-dispatcher-downstream.sh` exits at Step 1 with `FAIL SSH to .11` and 
 3. **Add secrets** `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` to the agent environment
 
 **Success receipts:** GitHub #1 `## Downstream STARTED` → `## Downstream DONE`; RAL-793 contract readback; RAL-634 verify PASS; `evidence/RAL-793-inventory.md` on `.11`.
+
+
+## RAL-793 stall inspect (CLAIMED but silent on Linear)
+
+When RAL-793 shows **CLAIMED** but no inventory / WORK-PACKET-DONE / handoff after ~30m, inspect the live run dir on `.11` (read-only):
+
+```bash
+# Default: current-ticket run or latest run dir
+curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral793-run-inspect.sh | bash -s -- --post-linear
+
+# Pin a specific run (e.g. interrupt canary):
+HERMES_RUN_ID=20260826T232521106484Z-2954673 \
+  curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral793-run-inspect.sh | bash -s -- --post-linear
+```
+
+Posts artifact summary to RAL-793. Then run downstream chain if contract not pinned or run appears dead.
 
 ## This pod cannot land tip-main
 
