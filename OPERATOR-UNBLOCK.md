@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T04:10Z
+**Updated:** 2026-08-27T04:28Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -17,12 +17,13 @@
 | 21:38Z | MCP comment used wrong issue UUID → posted on RAL-800 | Corrected @ 21:40Z; see UUID table below |
 | 01:04Z | Cloud subagent `bc-3914e61d` booted on **Ooterverse** (not hermes-mac-land) | Downstream FAILED pre-SSH; use Mac or web-UI LEGACY `.11` agent |
 | 03:49Z | #40 auto-attached to RAL-634 (Done) | Detach if needed; do not re-open RAL-634 for doc-only merges |
+| 04:22Z | Cloud subagent `bc-cf21d38f` spawned from Ooterverse | Skipped downstream to avoid FAILED spam; use Mac or web-UI `hermes-mac-land` + LEGACY `.11` |
 
 ## ⚠️ Ooterverse cloud agents cannot run downstream
 
 **Do not spawn Hermes subagents from Ooterverse-Saturns-Quest** — they inherit the wrong repo/env and cannot receive `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` at boot.
 
-`hermes-dispatcher-downstream.sh` now **fail-fast preflights** (since `896251d` @ 01:09Z): Ooterverse `COMPOSER_REPO_URL` → `FAIL preflight: wrong_repo` in <1s (no SSH timeout).
+`hermes-dispatcher-downstream.sh` **fail-fast preflights** (since `60cf813` @ 04:12Z): missing `TS_AUTHKEY`/`HERMES_HOST_SSH_PRIVATE_KEY` fails in <1s even when `COMPOSER_REPO_URL` unset; Ooterverse repo also → `FAIL preflight: wrong_repo`.
 
 **Only these paths work for live gates:**
 1. **Mac Hermes** — double-click `HERMES-DOWNSTREAM-RAL793-STALL.command`
@@ -87,7 +88,7 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | 3 | RAL-634 starvation / transition dedupe | **DONE** — moltbot #103 + live enter/suppress @ 03:35–03:45Z |
 | 4 | Miss/idle alarms | **DONE** |
 | 5 | RAL-793 canary + inventory | **OPEN** — sole program blocker |
-| 6 | Operator docs | **Done** (#41 + #42) |
+| 6 | Operator docs | **Done** (#41 + #42 + #44) |
 
 ### Source follow-ups (recent)
 
@@ -99,7 +100,8 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | hermes-mac-land [#41](https://github.com/ilike4movies/hermes-mac-land/pull/41) | **merged** @ `1e492f3` — operator doc sync for #40 chain |
 | hermes-mac-land [#42](https://github.com/ilike4movies/hermes-mac-land/pull/42) | **merged** @ `21f49dc` — stall launcher skip stack-apply + recovery mode |
 | hermes-mac-land [#36](https://github.com/ilike4movies/hermes-mac-land/pull/36) | **merged** — cloud boot auto-pins stall run when `HERMES_AUTO_SURGICAL_LAND=0` |
-| hermes-mac-land `896251d` | **on main** — downstream fail-fast preflight (Ooterverse misroute) |
+| hermes-mac-land [#44](https://github.com/ilike4movies/hermes-mac-land/pull/44) | **merged** @ `8fcac2a` — cloud boot stall defaults (`HERMES_AUTO_STACK_APPLY=0`, `HERMES_STALL_RECOVERY=1`) |
+| hermes-mac-land `60cf813` | **on main** — downstream fail-fast preflight without `COMPOSER_REPO_URL` |
 
 ### Critical path (remaining)
 
@@ -164,6 +166,8 @@ Minimum boot env after #36:
 HERMES_AUTO_SURGICAL_LAND=0
 # HERMES_RUN_ID optional — defaults to stalled canary run
 ```
+
+Since **#44** (2026-08-27): when downstream-only boot pins stall run `2954673`, also defaults `HERMES_AUTO_STACK_APPLY=0` and `HERMES_STALL_RECOVERY=1` (parity with stall launcher #42).
 
 ## Troubleshooting downstream FAIL (SSH / wrong environment)
 
