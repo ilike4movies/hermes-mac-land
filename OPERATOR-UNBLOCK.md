@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T00:05Z
+**Updated:** 2026-08-27T00:15Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -35,6 +35,30 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 ## Machine status inbox (GitHub)
 
 [hermes-mac-land issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) receives machine posts when Mac/credentialed runs execute (land DIAG + downstream STARTED/DONE/FAILED). Cloud agents without SSH can watch this inbox for credentialed-run receipts.
+
+## Live stall — RAL-793 run `2954673` (CLAIMED @ 23:25Z, silent ~45m+)
+
+| Item | Status |
+|------|--------|
+| Run ID | `20260826T232521106484Z-2954673` |
+| CLAIMED | **YES** @ 23:25:30Z via `hermes-now` / DISPATCH-NOW |
+| Contract readback | **MISSING** |
+| Inventory `evidence/RAL-793-inventory.md` | **MISSING** |
+| RAL-634 verify PASS | **NOT RUN** |
+| Ooterverse cloud SSH | **BLOCKED** (no secrets) |
+
+### Fastest unblock (Mac Hermes, Tailscale up)
+
+**Double-click:** `HERMES-DOWNSTREAM-RAL793-STALL.command` (pins run ID + inspect + downstream chain)
+
+Or shell:
+
+```bash
+HERMES_RUN_ID=20260826T232521106484Z-2954673 HERMES_AUTO_SURGICAL_LAND=0 \
+  curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
+```
+
+Chain: inspect → contract install → DISPATCH-NOW → RAL-634 verify.
 
 ## Live now — RAL-820 Done; #121/#122 installed
 
@@ -69,6 +93,8 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 | hermes-mac-land [#29](https://github.com/ilike4movies/hermes-mac-land/pull/29) | **merged** — README downstream-only critical path |
 | hermes-mac-land [#30](https://github.com/ilike4movies/hermes-mac-land/pull/30) | **merged** — downstream GitHub status beacon on issue #1 |
 | hermes-mac-land [#31](https://github.com/ilike4movies/hermes-mac-land/pull/31) | **merged** — downstream launcher pins GitHub beacon script |
+| hermes-mac-land [#33](https://github.com/ilike4movies/hermes-mac-land/pull/33) | **merged** — `hermes-ral793-run-inspect.sh` + stall runbook |
+| hermes-mac-land [#34](https://github.com/ilike4movies/hermes-mac-land/pull/34) | **merged** — downstream Step 0 auto-inspect when `HERMES_RUN_ID` set |
 
 ### Critical path (remaining)
 
@@ -90,19 +116,24 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 | Operator scripts on main | **Done** |
 | PR attachments detached from RAL-793 | **Done** (#18 @ 21:02Z, #20 @ 21:30Z) |
 | RAL-793 contract pinned | **OPEN** — run credentialed script |
-| RAL-793 inventory evidence | **OPEN** |
+| RAL-793 inventory evidence | **OPEN** — run `2954673` stalled |
 | RAL-634 starvation alarm | **OPEN** — live prove-out pending |
 
 ## Credentialed run commands (Mac / cloud agent with SSH secrets)
 
 ### Mac double-click (recommended when RAL-800/799 already Done)
 
+- **`HERMES-DOWNSTREAM-RAL793-STALL.command`** — pins stalled run `2954673` + inspect + downstream (use now)
 - **`HERMES-DOWNSTREAM-ONLY.command`** — contract install + auto DISPATCH-NOW + RAL-634 verify (no land)
 - **`HERMES-DIAGNOSE-THEN-LAND.command`** — full diagnose + land (when tip refresh needed)
 
 ### Shell one-liners
 
 ```bash
+# Stalled run (inspect + downstream; recommended now):
+HERMES_RUN_ID=20260826T232521106484Z-2954673 HERMES_AUTO_SURGICAL_LAND=0 \
+  curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
+
 # Full chain: land + verify + contract install + RAL-634 verify
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-credentialed-resume-land.sh | bash
 
@@ -120,6 +151,13 @@ Set `HERMES_SKIP_DOWNSTREAM=1` on resume-land for land-only smoke. Set `HERMES_A
 
 On boot with secrets, `hermes-cloud-agent-start.sh` now chains downstream gates by default (`HERMES_AUTO_DOWNSTREAM=1`). Set `HERMES_AUTO_SURGICAL_LAND=0` for downstream-only boot.
 
+For the stalled run, also set at boot:
+
+```bash
+HERMES_RUN_ID=20260826T232521106484Z-2954673
+HERMES_AUTO_SURGICAL_LAND=0
+```
+
 ## Troubleshooting downstream FAIL (SSH / wrong environment)
 
 If `hermes-dispatcher-downstream.sh` exits at Step 1 with `FAIL SSH to .11` and **no** `DISPATCH-NOW` is posted, that is **correct fail-closed behavior** — do not post `DISPATCH-NOW` manually.
@@ -133,12 +171,11 @@ If `hermes-dispatcher-downstream.sh` exits at Step 1 with `FAIL SSH to .11` and 
 
 **Fix (pick one):**
 
-1. **Mac Hermes** (Tailscale up): run downstream curl one-liner above
+1. **Mac Hermes** (Tailscale up): double-click `HERMES-DOWNSTREAM-RAL793-STALL.command` or run stall one-liner above
 2. **New cloud agent** on repo `ilike4movies/hermes-mac-land` with environment **LEGACY Hermes .11 — do not use for Ooterverse**
 3. **Add secrets** `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` to the agent environment
 
 **Success receipts:** GitHub #1 `## Downstream STARTED` → `## Downstream DONE`; RAL-793 contract readback; RAL-634 verify PASS; `evidence/RAL-793-inventory.md` on `.11`.
-
 
 ## RAL-793 stall inspect (CLAIMED but silent on Linear)
 
@@ -153,13 +190,13 @@ HERMES_RUN_ID=20260826T232521106484Z-2954673 \
   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral793-run-inspect.sh | bash -s -- --post-linear
 ```
 
-Posts artifact summary to RAL-793. Then run downstream chain if contract not pinned or run appears dead.
+Posts artifact summary to RAL-793. Downstream chain auto-runs inspect when `HERMES_RUN_ID` is set (#34).
 
 ## This pod cannot land tip-main
 
 Cloud agents on Ooterverse lack `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY`. Land via:
 
-- Mac Hermes: `HERMES-DOWNSTREAM-ONLY.command` / `HERMES-DIAGNOSE-THEN-LAND.command` / `hermes-credentialed-resume-land.sh`
+- Mac Hermes: `HERMES-DOWNSTREAM-RAL793-STALL.command` / `HERMES-DOWNSTREAM-ONLY.command` / `HERMES-DIAGNOSE-THEN-LAND.command` / `hermes-credentialed-resume-land.sh`
 - Credentialed agent rebound to **hermes-mac-land** (not Ooterverse) with env LEGACY Hermes .11
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
