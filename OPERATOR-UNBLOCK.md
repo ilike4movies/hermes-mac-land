@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T00:53Z
+**Updated:** 2026-08-27T01:11Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -15,6 +15,17 @@
 | 20:48Z | #18 merged + attached | Reverted; attachment detached @ 21:02Z |
 | 21:29Z | #20 title contained `RAL-793` → auto-attach | Reverted @ 21:30Z; attachment detached |
 | 21:38Z | MCP comment used wrong issue UUID → posted on RAL-800 | Corrected @ 21:40Z; see UUID table below |
+| 01:04Z | Cloud subagent `bc-3914e61d` booted on **Ooterverse** (not hermes-mac-land) | Downstream FAILED pre-SSH; use Mac or web-UI LEGACY `.11` agent |
+
+## ⚠️ Ooterverse cloud agents cannot run downstream
+
+**Do not spawn Hermes subagents from Ooterverse-Saturns-Quest** — they inherit the wrong repo/env and cannot receive `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` at boot.
+
+`hermes-dispatcher-downstream.sh` now **fail-fast preflights** (since `896251d` @ 01:09Z): Ooterverse `COMPOSER_REPO_URL` → `FAIL preflight: wrong_repo` in <1s (no SSH timeout).
+
+**Only these paths work for live gates:**
+1. **Mac Hermes** — double-click `HERMES-DOWNSTREAM-RAL793-STALL.command`
+2. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11**, secrets at boot
 
 ## Linear issue UUIDs (MCP / API comment posting)
 
@@ -36,7 +47,7 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 
 [hermes-mac-land issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) receives machine posts when Mac/credentialed runs execute (land DIAG + downstream STARTED/DONE/FAILED). Cloud agents without SSH can watch this inbox for credentialed-run receipts.
 
-## Live stall — RAL-793 run `2954673` (CLAIMED @ 23:25Z, silent ~90m+)
+## Live stall — RAL-793 run `2954673` (CLAIMED @ 23:25Z, silent ~100m+)
 
 | Item | Status |
 |------|--------|
@@ -46,6 +57,7 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 | Inventory `evidence/RAL-793-inventory.md` | **MISSING** |
 | RAL-634 verify PASS | **NOT RUN** |
 | Ooterverse cloud SSH | **BLOCKED** (no secrets) |
+| Latest downstream attempt | FAILED @ 01:04Z (`bc-3914e61d`, wrong env) |
 
 ### Fastest unblock (Mac Hermes, Tailscale up)
 
@@ -97,6 +109,7 @@ Chain: inspect → contract install → DISPATCH-NOW → RAL-634 verify.
 | hermes-mac-land [#34](https://github.com/ilike4movies/hermes-mac-land/pull/34) | **merged** — downstream Step 0 auto-inspect when `HERMES_RUN_ID` set |
 | hermes-mac-land [#35](https://github.com/ilike4movies/hermes-mac-land/pull/35) | **closed/superseded** — stall launcher landed direct to main |
 | hermes-mac-land [#36](https://github.com/ilike4movies/hermes-mac-land/pull/36) | **merged** — cloud boot auto-pins stall run when `HERMES_AUTO_SURGICAL_LAND=0` |
+| hermes-mac-land `896251d` | **on main** — downstream fail-fast preflight (Ooterverse misroute) |
 
 ### Critical path (remaining)
 
@@ -168,6 +181,8 @@ If `hermes-dispatcher-downstream.sh` exits at Step 1 with `FAIL SSH to .11` and 
 
 | Symptom | Likely cause |
 |---------|--------------|
+| `FAIL preflight: wrong_repo=Ooterverse` | Agent on wrong repo/env — fails in <1s (since `896251d`) |
+| `FAIL preflight: missing_secrets=TS_AUTHKEY+HERMES_HOST_SSH_PRIVATE_KEY` | Cloud agent without Runtime Secrets at boot |
 | `ssh: connect to host 100.105.194.96 port 22: Connection timed out` | Missing `TS_AUTHKEY` (no Tailscale mesh) or wrong cloud environment |
 | `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` unset | Agent booted on **Ooterverse** env instead of **LEGACY Hermes .11** |
 | Log: `FAIL: contract install failed — not dispatching` | SSH preflight failed (exit 10); steps 2–3 never run |
@@ -177,7 +192,7 @@ If `hermes-dispatcher-downstream.sh` exits at Step 1 with `FAIL SSH to .11` and 
 
 1. **Mac Hermes** (Tailscale up): double-click `HERMES-DOWNSTREAM-RAL793-STALL.command` or run stall one-liner above
 2. **New cloud agent** on repo `ilike4movies/hermes-mac-land` with environment **LEGACY Hermes .11 — do not use for Ooterverse**
-3. **Add secrets** `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` to the agent environment
+3. **Add secrets** `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` to the agent environment at boot (not mid-session)
 
 **Success receipts:** GitHub #1 `## Downstream STARTED` → `## Downstream DONE`; RAL-793 contract readback; RAL-634 verify PASS; `evidence/RAL-793-inventory.md` on `.11`.
 
@@ -201,6 +216,6 @@ Posts artifact summary to RAL-793. Downstream chain auto-runs inspect when `HERM
 Cloud agents on Ooterverse lack `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY`. Land via:
 
 - Mac Hermes: `HERMES-DOWNSTREAM-RAL793-STALL.command` / `HERMES-DOWNSTREAM-ONLY.command` / `HERMES-DIAGNOSE-THEN-LAND.command` / `hermes-credentialed-resume-land.sh`
-- Credentialed agent rebound to **hermes-mac-land** (not Ooterverse) with env LEGACY Hermes .11
+- Credentialed agent on **hermes-mac-land** (not Ooterverse) with env LEGACY Hermes .11 — **must start from web UI**, not Ooterverse subagent spawn
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
