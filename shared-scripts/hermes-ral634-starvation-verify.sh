@@ -91,7 +91,40 @@ _pick_host() {
   return 1
 }
 
-HOST_TARGET="$(_pick_host)" || { echo "FAIL SSH to .11" >&2; exit 10; }
+_ssh_fail_diag() {
+  local target err rc
+  echo "FAIL SSH to .11 — diagnostic:" >&2
+  echo "  caller: $(hostname 2>/dev/null)/$(whoami 2>/dev/null)" >&2
+  echo "  targets: $HOST_SSH, $HOST_SSH_LAN" >&2
+  if [[ ${#HOST_SSH_IDENTITY_ARGS[@]} -gt 0 ]]; then
+    echo "  key: loaded (HERMES_HOST_SSH_PRIVATE_KEY or $HOST_KEY_FILE)" >&2
+  elif [[ -f "${HOME}/.hermes/.env" ]]; then
+    echo "  key: not loaded — set HERMES_HOST_SSH_PRIVATE_KEY in ~/.hermes/.env" >&2
+  else
+    echo "  key: not loaded — add ~/.hermes/.env with HERMES_HOST_SSH_PRIVATE_KEY" >&2
+  fi
+  if command -v tailscale >/dev/null 2>&1; then
+    echo "  tailscale: $(tailscale status 2>/dev/null | head -3 | tr '\n' '; ')" >&2
+  else
+    echo "  tailscale: not installed" >&2
+  fi
+  for target in "$HOST_SSH" "$HOST_SSH_LAN"; do
+    set +e
+    if [[ ${#HOST_SSH_IDENTITY_ARGS[@]} -gt 0 ]]; then
+      err="$(ssh -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=accept-new \
+        "${HOST_SSH_IDENTITY_ARGS[@]}" "$target" 'echo OK' 2>&1)"
+    else
+      err="$(ssh -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=accept-new \
+        "$target" 'echo OK' 2>&1)"
+    fi
+    rc=$?
+    set -e
+    echo "  probe $target: rc=$rc (${err//$'\n'/ })" >&2
+  done
+  echo "  fix: Tailscale up + HERMES_HOST_SSH_PRIVATE_KEY in ~/.hermes/.env (Mac) or Runtime Secrets (cloud)" >&2
+}
+
+HOST_TARGET="$(_pick_host)" || { _ssh_fail_diag; exit 10; }
 WHEN="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 REMOTE_REPORT="$(_ssh_host "$HOST_TARGET" bash -s <<'REMOTE'
