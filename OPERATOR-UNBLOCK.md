@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T10:20Z
+**Updated:** 2026-08-27T10:25Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -115,7 +115,7 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | hermes-mac-land [#48](https://github.com/ilike4movies/hermes-mac-land/pull/48) | **merged** @ `f3c7578` — OPERATOR sync for #47 |
 | hermes-mac-land [#49](https://github.com/ilike4movies/hermes-mac-land/pull/49) | **merged** @ `964943d` — README post-#47 one-liner |
 | hermes-mac-land [#50](https://github.com/ilike4movies/hermes-mac-land/pull/50) | **merged** @ `dc89811` — skip GitHub beacon on expected preflight fail |
-| hermes-mac-land [#52](https://github.com/ilike4movies/hermes-mac-land/pull/52) | **draft** — dual DISPATCH-NOW for SLA-stale CLAIM stall recovery |
+| hermes-mac-land [#52](https://github.com/ilike4movies/hermes-mac-land/pull/52) | **merged** @ `c064314` — dual DISPATCH-NOW for SLA-stale CLAIM stall recovery |
 | hermes-mac-land `60cf813` | **on main** — downstream fail-fast preflight without `COMPOSER_REPO_URL` |
 
 ### Critical path (remaining)
@@ -135,7 +135,7 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | RAL-800 tip-main land | **Done** @ 20:21Z |
 | RAL-799 live prove-out | **Done** @ 20:22Z — canary+drift verified |
 | RAL-634 starvation alarm | **Done** — degraded + transition dedupe live |
-| Operator scripts on main | **Done** (#40 stack-apply; #42 stall recovery; #52 dual-dispatch pending) |
+| Operator scripts on main | **Done** (#40 stack-apply; #42 stall recovery; #52 dual-dispatch on main) |
 | PR attachments detached from RAL-793 | **Done** |
 | RAL-793 contract pinned | **OPEN** — run credentialed script |
 | RAL-793 inventory evidence | **OPEN** — run `2954673` stalled |
@@ -191,7 +191,7 @@ Since **#44** (2026-08-27): when downstream-only boot pins stall run `2954673`, 
 
 Since **#47** (2026-08-27): `hermes-dispatcher-downstream.sh` itself applies the same stall defaults when run ID matches `2954673` or is auto-pinned via `HERMES_AUTO_SURGICAL_LAND=0`.
 
-Since **#52** (draft): stall recovery posts **two** `DISPATCH-NOW` passes (~90s) so SLA-stale CLAIMs reopen after fail.
+Since **#52** (merged @ `c064314`): stall recovery posts **two** `DISPATCH-NOW` passes (~90s) so SLA-stale CLAIMs reopen after fail.
 
 ## Troubleshooting downstream FAIL (SSH / wrong environment)
 
