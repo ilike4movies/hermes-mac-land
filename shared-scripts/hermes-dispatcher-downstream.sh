@@ -71,12 +71,12 @@ _preflight_env() {
   local reason=""
   if [[ "${COMPOSER_REPO_URL:-}" == *ooterverse* ]] || [[ "${COMPOSER_REPO_URL:-}" == *Ooterverse* ]]; then
     reason="wrong_repo=Ooterverse (need ilike4movies/hermes-mac-land + LEGACY Hermes .11 env)"
-  elif [[ -n "${COMPOSER_REPO_URL:-}" ]]; then
-    if [[ -z "${TS_AUTHKEY:-}" ]] && ! _has_ssh_key; then
-      reason="missing_secrets=TS_AUTHKEY+HERMES_HOST_SSH_PRIVATE_KEY (attach Runtime Secrets at boot)"
-    elif [[ -z "${TS_AUTHKEY:-}" ]] && ! command -v tailscale >/dev/null 2>&1; then
-      reason="missing_tailscale=TS_AUTHKEY unset and tailscale not installed"
-    fi
+  fi
+  # Always fail-fast when credentialed path is impossible (not only when COMPOSER_REPO_URL is set).
+  if [[ -z "$reason" ]] && [[ -z "${TS_AUTHKEY:-}" ]] && ! _has_ssh_key; then
+    reason="missing_secrets=TS_AUTHKEY+HERMES_HOST_SSH_PRIVATE_KEY (attach Runtime Secrets at boot)"
+  elif [[ -z "$reason" ]] && [[ -z "${TS_AUTHKEY:-}" ]] && ! command -v tailscale >/dev/null 2>&1; then
+    reason="missing_tailscale=TS_AUTHKEY unset and tailscale not installed"
   fi
   if [[ -n "$reason" ]]; then
     echo "FAIL preflight: $reason" >&2
