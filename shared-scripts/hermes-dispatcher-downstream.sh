@@ -23,6 +23,8 @@ LINEAR_ISSUE_ID="${HERMES_RAL793_LINEAR_ISSUE_ID:-963472c8-cc84-426a-9ed6-79e085
 AUTO_DISPATCH="${HERMES_AUTO_DISPATCH_RAL793:-1}"
 AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-1}"
 AUTO_INSPECT="${HERMES_AUTO_INSPECT_RAL793:-}"
+STALL_RECOVERY="${HERMES_STALL_RECOVERY:-}"
+INSPECT_OUT="$DIR/ral793-inspect.out"
 GH_STATUS_ISSUE="${HERMES_MAC_LAND_STATUS_ISSUE:-1}"
 GH_STATUS_REPO="${HERMES_MAC_LAND_STATUS_REPO:-ilike4movies/hermes-mac-land}"
 STARVE_RC=0
@@ -158,6 +160,10 @@ if [[ -z "$AUTO_INSPECT" ]]; then
   fi
 fi
 
+if [[ -z "$STALL_RECOVERY" ]] && [[ -n "${HERMES_RUN_ID:-}" ]]; then
+  STALL_RECOVERY=1
+fi
+
 WHEN="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 HOST="$(hostname 2>/dev/null || echo unknown)"
 USER_NAME="$(whoami 2>/dev/null || echo unknown)"
@@ -180,6 +186,7 @@ _post_github_status "## Downstream STARTED @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
 chain: inspect(auto=$AUTO_INSPECT) → contract install → stack-apply(auto=$AUTO_STACK_APPLY) → DISPATCH-NOW (auto=$AUTO_DISPATCH) → RAL-634 verify
+stall_recovery=$STALL_RECOVERY run=${HERMES_RUN_ID:-unset}
 log: \`$LOG\`"
 
 echo "== Hermes dispatcher downstream @ $WHEN ==" | tee -a "$LOG"
@@ -188,7 +195,7 @@ if [[ "$AUTO_INSPECT" == "1" ]]; then
   echo "== Step 0: RAL-793 run inspect (read-only) ==" | tee -a "$LOG"
   _inspect_args=(--post-linear)
   [[ -n "${HERMES_RUN_ID:-}" ]] && _inspect_args=(--run "$HERMES_RUN_ID" --post-linear)
-  if bash "$_inspect" "${_inspect_args[@]}" 2>&1 | tee -a "$LOG"; then
+  if bash "$_inspect" "${_inspect_args[@]}" 2>&1 | tee -a "$LOG" | tee "$INSPECT_OUT"; then
     echo "OK run inspect" | tee -a "$LOG"
   else
     echo "WARN: run inspect failed (continuing downstream)" | tee -a "$LOG"
@@ -228,6 +235,13 @@ fi
 echo "" | tee -a "$LOG"
 if [[ "$AUTO_DISPATCH" == "1" ]]; then
   echo "== Step 3: DISPATCH-NOW $LINEAR_TICKET (Linear interrupt) ==" | tee -a "$LOG"
+  if [[ "$STALL_RECOVERY" == "1" ]]; then
+    _post_linear_comment "## Stall recovery @ $WHEN
+
+Run \`${HERMES_RUN_ID:-unknown}\` was CLAIMED before contract was on registry. Contract install completed; re-dispatching to resume under pinned contract.
+
+Expect \`evidence/RAL-793-inventory.md\` — not WORK-PACKET-DONE alone." || true
+  fi
   DISPATCH_BODY="DISPATCH-NOW $LINEAR_TICKET"
   if _post_linear_comment "$DISPATCH_BODY"; then
     echo "OK posted Linear interrupt comment: $DISPATCH_BODY" | tee -a "$LOG"
@@ -260,6 +274,7 @@ if [[ "$STARVE_RC" -eq 0 ]]; then
 
 host=\`$HOST\` user=\`$USER_NAME\`
 run inspect: auto=$AUTO_INSPECT
+stall_recovery: $STALL_RECOVERY
 contract install: OK
 stack-apply: auto=$AUTO_STACK_APPLY
 DISPATCH-NOW: auto=$AUTO_DISPATCH
@@ -271,6 +286,7 @@ else
 
 host=\`$HOST\` user=\`$USER_NAME\`
 run inspect: auto=$AUTO_INSPECT
+stall_recovery: $STALL_RECOVERY
 contract install: OK
 stack-apply: auto=$AUTO_STACK_APPLY
 DISPATCH-NOW: auto=$AUTO_DISPATCH
