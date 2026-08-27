@@ -16,6 +16,13 @@ if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]] && [[ -z "${HERMES_RUN_ID:-}" 
   echo "INFO: HERMES_RUN_ID defaulted to stalled canary run $HERMES_RUN_ID (override with env)"
 fi
 
+# Stall recovery defaults when downstream-only boot pins the stalled canary run (#42 parity).
+if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]] && [[ "${HERMES_RUN_ID:-}" == "${HERMES_DEFAULT_STALL_RUN_ID:-20260826T232521106484Z-2954673}" ]]; then
+  export HERMES_AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-0}"
+  export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
+  echo "INFO: stall defaults — stack-apply=$HERMES_AUTO_STACK_APPLY stall_recovery=$HERMES_STALL_RECOVERY"
+fi
+
 _preflight() {
   if [[ ! -f "$ROOT/OPERATOR-UNBLOCK.md" ]]; then
     echo "ERROR: Hermes cloud land requires repo ilike4movies/hermes-mac-land (OPERATOR-UNBLOCK.md missing)." >&2
