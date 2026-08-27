@@ -3,7 +3,7 @@
 #
 # Verifies post-tip-main install includes:
 #   - wip-park + miss-idle watchdog cron lines
-#   - cos-linear-dispatcher-check.py with detect_queue_starvation() + detect_contract_queue_starvation()
+#   - cos-linear-dispatcher-check.py with detect_queue_starvation() + detect_contract_queue_starvation() + is_contract_only_starvation()
 #   - latest miss-idle-watchdog report exists
 #   - latest dispatcher run does not silent-pass on queue starvation (RAL-634)
 #   - when queue is starved, live check fails closed with "queue starved" or degraded queue_starved_no_contracts
@@ -142,7 +142,7 @@ check_py=0
 [[ -f "$SCRIPTS/cos-linear-dispatcher-check.py" ]] && check_py=1
 
 starvation_fn=0
-if [[ "$check_py" -eq 1 ]] && grep -q 'def detect_queue_starvation' "$SCRIPTS/cos-linear-dispatcher-check.py" 2>/dev/null && grep -q 'def detect_contract_queue_starvation' "$SCRIPTS/cos-linear-dispatcher-check.py" 2>/dev/null; then
+if [[ "$check_py" -eq 1 ]] && grep -q 'def detect_queue_starvation' "$SCRIPTS/cos-linear-dispatcher-check.py" 2>/dev/null && grep -q 'def detect_contract_queue_starvation' "$SCRIPTS/cos-linear-dispatcher-check.py" 2>/dev/null && grep -q 'def is_contract_only_starvation' "$SCRIPTS/cos-linear-dispatcher-check.py" 2>/dev/null; then
   starvation_fn=1
 fi
 
@@ -230,7 +230,7 @@ PASS=()
 [[ "${REMOTE[wip_cron]:-0}" == "1" ]] && PASS+=("wip-park cron installed") || FAILS+=("wip-park cron missing")
 [[ "${REMOTE[miss_cron]:-0}" == "1" ]] && PASS+=("miss-idle watchdog cron installed") || FAILS+=("miss-idle watchdog cron missing")
 [[ "${REMOTE[check_py]:-0}" == "1" ]] && PASS+=("cos-linear-dispatcher-check.py present") || FAILS+=("dispatcher check script missing")
-[[ "${REMOTE[starvation_fn]:-0}" == "1" ]] && PASS+=("detect_queue_starvation() deployed") || FAILS+=("detect_queue_starvation() missing from live check script")
+[[ "${REMOTE[starvation_fn]:-0}" == "1" ]] && PASS+=("detect_queue_starvation() + detect_contract_queue_starvation() + is_contract_only_starvation() deployed") || FAILS+=("detect_queue_starvation() missing from live check script")
 [[ "${REMOTE[watchdog_report]:-}" != "missing" ]] && PASS+=("miss-idle-watchdog report present: ${REMOTE[watchdog_report]}") || FAILS+=("miss-idle-watchdog-last.json missing")
 
 if [[ "${REMOTE[latest_silent_pass]:-1}" == "0" ]]; then
