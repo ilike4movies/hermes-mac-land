@@ -2,7 +2,7 @@
 
 **Operator unblock (RAL-800 / live `.11` land):** [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md) — pick cloud agent, verified agent, or Mac path.
 
-> **Wrong repo?** Do not run Hermes land from Ooterverse-Saturns-Quest. Use **`ilike4movies/hermes-mac-land`** + env **LEGACY Hermes .11** + Runtime Secrets at boot.
+> **Wrong repo?** Do not run Hermes land from Ooterverse-Saturns-Quest. Use **`ilike4movies/hermes-mac-land`** + env **LEGACY Hermes .11** + Runtime Secrets at boot. **Ooterverse subagents cannot run downstream** — they inherit the wrong env.
 
 ## Current critical path (2026-08-27)
 
@@ -149,10 +149,12 @@ No Slack rockets.
 
 Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — not in Ooterverse-Saturns-Quest (game-only).
 
-**Runtime Secrets must be attached at agent boot.** Internal cloud subagents, mobile-started agents, and draft override environment builds do **not** receive `TS_AUTHKEY` or `HERMES_HOST_SSH_PRIVATE_KEY` mid-session.
+**Runtime Secrets must be attached at agent boot.** Internal cloud subagents, mobile-started agents, and draft override environment builds do **not** receive `TS_AUTHKEY` or `HERMES_HOST_SSH_PRIVATE_KEY` mid-session. **Do not spawn Hermes subagents from Ooterverse** — they inherit the wrong repo/env.
 
 **Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **LEGACY Hermes .11 — do not use for Ooterverse**, never the Ooterverse game environment.
 
 For downstream-only boot on a credentialed cloud agent: set `HERMES_AUTO_SURGICAL_LAND=0` only (`HERMES_AUTO_DOWNSTREAM=1` default). Since **#36**, `HERMES_RUN_ID` auto-pins stall run `20260826T232521106484Z-2954673` when unset (override via `HERMES_RUN_ID` or `HERMES_DEFAULT_STALL_RUN_ID`).
+
+`hermes-dispatcher-downstream.sh` fail-fast preflights Ooterverse misroute in <1s (`896251d`) — see [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md).
 
 See **[OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md)** for the full checklist and pitfalls.
