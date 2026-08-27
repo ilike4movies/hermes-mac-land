@@ -11,7 +11,8 @@
 # Machine status: posts STARTED/DONE/FAILED to hermes-mac-land GitHub issue #1 when `gh` available.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
+#   HERMES_AUTO_SURGICAL_LAND=0 curl -fsSL .../hermes-dispatcher-downstream.sh | bash
+#   (auto-pins stall run + stack-apply=0 + stall_recovery=1 when run matches default)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,10 +21,23 @@ mkdir -p "$DIR"
 LOG="$DIR/dispatcher-downstream.log"
 LINEAR_TICKET="${HERMES_RAL793_LINEAR_TICKET:-RAL-793}"
 LINEAR_ISSUE_ID="${HERMES_RAL793_LINEAR_ISSUE_ID:-963472c8-cc84-426a-9ed6-79e08566353a}"
+DEFAULT_STALL_RUN_ID="${HERMES_DEFAULT_STALL_RUN_ID:-20260826T232521106484Z-2954673}"
+
+# Downstream-only: auto-pin stalled canary when HERMES_AUTO_SURGICAL_LAND=0 (#36 parity)
+if [[ "${HERMES_AUTO_SURGICAL_LAND:-}" == "0" ]] && [[ -z "${HERMES_RUN_ID:-}" ]]; then
+  export HERMES_RUN_ID="$DEFAULT_STALL_RUN_ID"
+  echo "INFO: HERMES_RUN_ID defaulted to stalled canary run $HERMES_RUN_ID" >&2
+fi
+
 AUTO_DISPATCH="${HERMES_AUTO_DISPATCH_RAL793:-1}"
-AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-1}"
+if [[ "${HERMES_RUN_ID:-}" == "$DEFAULT_STALL_RUN_ID" ]]; then
+  AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-0}"
+  STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
+else
+  AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-1}"
+  STALL_RECOVERY="${HERMES_STALL_RECOVERY:-}"
+fi
 AUTO_INSPECT="${HERMES_AUTO_INSPECT_RAL793:-}"
-STALL_RECOVERY="${HERMES_STALL_RECOVERY:-}"
 INSPECT_OUT="$DIR/ral793-inspect.out"
 GH_STATUS_ISSUE="${HERMES_MAC_LAND_STATUS_ISSUE:-1}"
 GH_STATUS_REPO="${HERMES_MAC_LAND_STATUS_REPO:-ilike4movies/hermes-mac-land}"
