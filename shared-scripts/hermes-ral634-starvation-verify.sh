@@ -3,10 +3,10 @@
 #
 # Verifies post-tip-main install includes:
 #   - wip-park + miss-idle watchdog cron lines
-#   - cos-linear-dispatcher-check.py with detect_queue_starvation()
+#   - cos-linear-dispatcher-check.py with detect_queue_starvation() + detect_contract_queue_starvation() + is_contract_only_starvation()
 #   - latest miss-idle-watchdog report exists
 #   - latest dispatcher run does not silent-pass on queue starvation (RAL-634)
-#   - when queue is starved, live check fails closed with "queue starved"
+#   - when queue is starved, live check fails closed with "queue starved" or degraded queue_starved_no_contracts
 #
 # Usage:
 #   bash shared-scripts/hermes-ral634-starvation-verify.sh
@@ -142,7 +142,7 @@ check_py=0
 [[ -f "$SCRIPTS/cos-linear-dispatcher-check.py" ]] && check_py=1
 
 starvation_fn=0
-if [[ "$check_py" -eq 1 ]] && grep -q 'def detect_queue_starvation' "$SCRIPTS/cos-linear-dispatcher-check.py" 2>/dev/null; then
+if [[ "$check_py" -eq 1 ]] && grep -q 'def detect_queue_starvation' "$SCRIPTS/cos-linear-dispatcher-check.py" 2>/dev/null && grep -q 'def detect_contract_queue_starvation' "$SCRIPTS/cos-linear-dispatcher-check.py" 2>/dev/null && grep -q 'def is_contract_only_starvation' "$SCRIPTS/cos-linear-dispatcher-check.py" 2>/dev/null; then
   starvation_fn=1
 fi
 
@@ -163,8 +163,13 @@ if [[ "$check_py" -eq 1 ]]; then
   fi
 fi
 
+check_degraded=0
+if echo "$check_json" | python3 -c 'import json,sys; d=json.load(sys.stdin); ws=d.get("warnings") or []; sys.exit(0 if d.get("status")=="degraded" or any("queue_starved_no_contracts" in str(w) for w in ws) else 1)' 2>/dev/null; then
+  check_degraded=1
+fi
+
 read -r latest_silent_pass latest_starved_signal latest_verifier_status <<EOF
-$(python3 - <<'PY' 2>/dev/null || echo "0 0 unknown"
+$(python3 - <<'PY' 2>/dev/null || echo "0 0 unknown")
 import json
 from pathlib import Path
 
@@ -185,7 +190,11 @@ state_poll = int(q.get("state_poll_count") or 0)
 skipped = len(q.get("skipped_processed") or [])
 excluded = len(q.get("skipped_excluded") or [])
 queue_empty = q.get("queue") == []
-starved_signal = queue_empty and (label_poll > 0 or state_poll > 0) and (skipped + excluded) > 0
+claim_candidates = int(q.get("claim_candidate_count") if q.get("claim_candidate_count") is not None else len(q.get("queue") or []))
+contract_skipped = int(q.get("contract_skipped_count") or 0)
+legacy_starved = queue_empty and (label_poll > 0 or state_poll > 0) and (skipped + excluded) > 0
+contract_starved = claim_candidates == 0 and contract_skipped > 0 and (label_poll > 0 or state_poll > 0)
+starved_signal = legacy_starved or contract_starved
 silent_pass = starved_signal and v.get("status") == "pass"
 print(f"{1 if silent_pass else 0} {1 if starved_signal else 0} {v.get('status', 'unknown')}")
 PY
@@ -200,6 +209,7 @@ printf 'check_py=%s\n' "$check_py"
 printf 'starvation_fn=%s\n' "$starvation_fn"
 printf 'check_rc=%s\n' "$check_rc"
 printf 'check_starvation_fail=%s\n' "$check_starvation_fail"
+printf 'check_degraded=%s\n' "$check_degraded"
 printf 'check_json=%s\n' "$check_json"
 printf 'watchdog_report=%s\n' "$watchdog_report"
 printf 'latest_silent_pass=%s\n' "$latest_silent_pass"
@@ -220,7 +230,7 @@ PASS=()
 [[ "${REMOTE[wip_cron]:-0}" == "1" ]] && PASS+=("wip-park cron installed") || FAILS+=("wip-park cron missing")
 [[ "${REMOTE[miss_cron]:-0}" == "1" ]] && PASS+=("miss-idle watchdog cron installed") || FAILS+=("miss-idle watchdog cron missing")
 [[ "${REMOTE[check_py]:-0}" == "1" ]] && PASS+=("cos-linear-dispatcher-check.py present") || FAILS+=("dispatcher check script missing")
-[[ "${REMOTE[starvation_fn]:-0}" == "1" ]] && PASS+=("detect_queue_starvation() deployed") || FAILS+=("detect_queue_starvation() missing from live check script")
+[[ "${REMOTE[starvation_fn]:-0}" == "1" ]] && PASS+=("detect_queue_starvation() + detect_contract_queue_starvation() + is_contract_only_starvation() deployed") || FAILS+=("detect_queue_starvation() missing from live check script")
 [[ "${REMOTE[watchdog_report]:-}" != "missing" ]] && PASS+=("miss-idle-watchdog report present: ${REMOTE[watchdog_report]}") || FAILS+=("miss-idle-watchdog-last.json missing")
 
 if [[ "${REMOTE[latest_silent_pass]:-1}" == "0" ]]; then
@@ -232,8 +242,12 @@ fi
 if [[ "${REMOTE[latest_starved_signal]:-0}" == "1" ]]; then
   if [[ "${REMOTE[check_starvation_fail]:-0}" == "1" ]]; then
     PASS+=("live dispatcher check fails closed with queue starved")
+  elif [[ "${REMOTE[check_degraded]:-0}" == "1" ]]; then
+    PASS+=("live dispatcher check reports degraded queue_starved_no_contracts")
   elif [[ "${REMOTE[latest_verifier_status]:-}" == "fail" ]]; then
     PASS+=("latest verifier status=fail on starved queue")
+  elif [[ "${REMOTE[latest_verifier_status]:-}" == "degraded" ]]; then
+    PASS+=("latest verifier status=degraded on starved queue")
   else
     FAILS+=("queue starved on latest run but neither check nor verifier failed closed")
   fi
