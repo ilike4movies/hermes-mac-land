@@ -10,6 +10,12 @@ mkdir -p "$DIR"
 export HERMES_CLOUD_APPLY_DIR="$DIR"
 LOG="$DIR/auto-land.log"
 
+# Downstream-only boot: auto-pin stalled RAL-793 canary run unless HERMES_RUN_ID set.
+if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]] && [[ -z "${HERMES_RUN_ID:-}" ]]; then
+  export HERMES_RUN_ID="${HERMES_DEFAULT_STALL_RUN_ID:-20260826T232521106484Z-2954673}"
+  echo "INFO: HERMES_RUN_ID defaulted to stalled canary run $HERMES_RUN_ID (override with env)"
+fi
+
 _preflight() {
   if [[ ! -f "$ROOT/OPERATOR-UNBLOCK.md" ]]; then
     echo "ERROR: Hermes cloud land requires repo ilike4movies/hermes-mac-land (OPERATOR-UNBLOCK.md missing)." >&2
@@ -52,6 +58,7 @@ _run_downstream_chain() {
 
   if [[ -x "$downstream" ]]; then
     echo "OK running downstream gates (RAL-793 contract + auto DISPATCH-NOW + RAL-634 verify)"
+    [[ -n "${HERMES_RUN_ID:-}" ]] && echo "INFO: downstream pinned to run $HERMES_RUN_ID"
     bash "$downstream" >>"$LOG" 2>&1 || echo "WARN: downstream gates failed — see $LOG" >&2
     echo "NEXT: watch Linear for contract readback + CLAIMED + inventory evidence (not WORK-PACKET-DONE alone)"
   else
@@ -94,8 +101,6 @@ if [[ "$ts_state" != "Running" ]]; then
 fi
 
 echo "OK secrets at boot + Tailscale Running — attempting surgical land (jump-first)"
-# Jump-first installs cloud-apply watch on grok-cos-1; direct fallback uses moltbot #79 local watch.
-# Override with HERMES_PREFER_DIRECT_HOST=1 to skip jump.
 export HERMES_PREFER_DIRECT_HOST="${HERMES_PREFER_DIRECT_HOST:-0}"
 export HERMES_UPLOAD_TIP_FROM_CALLER=1
 export HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}"
