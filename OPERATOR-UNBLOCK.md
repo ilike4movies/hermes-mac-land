@@ -4,16 +4,16 @@ When a cloud agent is waiting on interactive Tailscale login and `HERMES_AUTO_SU
 joining the mesh (`BackendState=Running`) auto-runs `hermes-dispatcher-downstream.sh`
 (stalled-canary defaults) instead of surgical land — **only after** `HERMES_HOST_SSH_PRIVATE_KEY`
 (+ `LINEAR_API_KEY`) is present. Waiters keep looping if Tailscale joins before secrets arrive
-(Runtime Secrets / `/tmp/hermes-cloud-apply/host-ssh-key` / `/tmp/cursor/cloud-agent-secrets`); they do not one-shot-and-exit on Running alone. Tip **#103–#106**: on-join exports `COMPOSER_REPO_URL=hermes-mac-land`; join/supervisor/bridge poll `/tmp/cursor/cloud-agent-secrets`; on-join posts a one-shot #1 beacon when SSH arrives while still NeedsLogin; bridge default poll 10s. Jump-host ping is warn-only on the downstream-only path (direct `.11` SSH).
+(Runtime Secrets / `/tmp/hermes-cloud-apply/host-ssh-key` / `/tmp/cursor/cloud-agent-secrets`); they do not one-shot-and-exit on Running alone. Tip **#103–#110**: on-join exports `COMPOSER_REPO_URL=hermes-mac-land`; join/supervisor/bridge poll `/tmp/cursor/cloud-agent-secrets`; on-join posts a one-shot #1 beacon when SSH arrives while still NeedsLogin (Linear RAL-823 fallback when `gh` blocked — #109); bridge default poll 10s; PENDING AuthURL tip sync (#110); hard AuthURL rotate helper when soft refresh reissues the same URL. Jump-host ping is warn-only on the downstream-only path (direct `.11` SSH).
 
-Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`HERMES_TAILSCALE_AUTHURL_REFRESH_SECS`, default 2700) — see pod `CURRENT_AUTHURL.txt` and tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md). When `gh`/token can write, URL changes also auto-post to [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) (`HERMES_AUTHURL_GITHUB_BEACON=1`, default on; deduped via `LAST_POSTED_AUTHURL.txt`) and refresh tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md) + [`HERMES-APPROVE-TAILSCALE.ics`](HERMES-APPROVE-TAILSCALE.ics) for Mac ONE-SHOT (`HERMES_AUTHURL_TIP_FILE=1`, `HERMES_AUTHURL_TIP_ICS=1`).
+Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`HERMES_TAILSCALE_AUTHURL_REFRESH_SECS`, default 2700) — see pod `CURRENT_AUTHURL.txt` and tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md). Soft `restart-authurl.sh` often **reissues the same** login URL; use [`restart-authurl-hard.sh`](restart-authurl-hard.sh) (wipes `tailscaled.state`) when you need a truly fresh AuthURL for operator wake. Tip **#110** keeps `PENDING_AUTHURL_TIP.txt` + local ICS aligned even if CURRENT was written out-of-band. Tip **#109**: secrets-ready on-join beacon falls back to Linear RAL-823 when `gh` is blocked. When `gh`/token can write, URL changes also auto-post to [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) (`HERMES_AUTHURL_GITHUB_BEACON=1`, default on; deduped via `LAST_POSTED_AUTHURL.txt`) and refresh tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md) + [`HERMES-APPROVE-TAILSCALE.ics`](HERMES-APPROVE-TAILSCALE.ics) for Mac ONE-SHOT (`HERMES_AUTHURL_TIP_FILE=1`, `HERMES_AUTHURL_TIP_ICS=1`). Linear AuthURL beacon needs `LINEAR_API_KEY` (`HERMES_AUTHURL_LINEAR_BEACON=1`).
 
 
 # Hermes dispatcher — operator unblock (RAL-800)
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T16:37Z
+**Updated:** 2026-08-28T17:34Z
 
 ## ⚠️ Linear auto-Done hygiene
 
