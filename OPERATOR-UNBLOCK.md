@@ -2,7 +2,7 @@
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T02:05Z
+**Updated:** 2026-08-28T02:20Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -26,22 +26,23 @@
 **Do not spawn Hermes subagents from Ooterverse-Saturns-Quest** — they inherit the wrong repo/env and cannot receive `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` at boot.
 
 **Paths that work for live gates:**
-1. **Mac Hermes** — **Right-click → Open** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) (not double-click — Gatekeeper). Post-#65: loads `~/.hermes/.env` and **fail-fast** if `LINEAR_API_KEY` missing.
-2. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11**, secrets at boot (`TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`)
-3. **GitHub Actions** (durable; once enabled) — see [docs/CI-DOWNSTREAM-STALL.md](docs/CI-DOWNSTREAM-STALL.md) / [`ci/downstream-stall.yml`](ci/downstream-stall.yml)
+1. **Mac Hermes ONE-SHOT (preferred)** — **Right-click → Open** [`HERMES-ONE-SHOT-UNBLOCK.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command) (not double-click — Gatekeeper). Tries STALL downstream first; on fail auto-runs ENABLE-DOWNSTREAM-ACTIONS. Needs `LINEAR_API_KEY` in `~/.hermes/.env`.
+2. **Mac STALL only** — [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) when Tailscale+SSH already known-good.
+3. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11**, secrets at boot (`TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`)
+4. **GitHub Actions** (durable; once enabled) — see [docs/CI-DOWNSTREAM-STALL.md](docs/CI-DOWNSTREAM-STALL.md) / [`ci/downstream-stall.yml`](ci/downstream-stall.yml)
 
 ### Enable GitHub Actions path (one-time, ~2 min)
 
-API tokens often cannot write `.github/workflows/` (missing `workflows` scope). Prefer Mac local `gh`:
+API tokens often cannot write `.github/workflows/` (missing `workflows` scope). Prefer Mac local `gh` (ONE-SHOT Phase 2, or ENABLE launcher):
 
-1. **Right-click → Open** [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command)
+1. **Right-click → Open** [`HERMES-ONE-SHOT-UNBLOCK.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command) **or** [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command)
    - Installs `ci/downstream-stall.yml` → `.github/workflows/downstream-stall.yml` on main
    - Runs `gh workflow run downstream-stall.yml`
    - If scope error: `gh auth refresh -h github.com -s workflow` then re-open
 2. **Action secrets** (if not already set): Settings → Secrets and variables → Actions → `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`
 3. Or web UI: copy [`ci/downstream-stall.yml`](ci/downstream-stall.yml) → `.github/workflows/downstream-stall.yml` on main, then Run workflow
 
-Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1). Mac STALL.command remains valid (and is faster tonight if Tailscale+SSH already work).
+Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
 ## Linear issue UUIDs (MCP / API comment posting)
 
@@ -54,18 +55,16 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 | **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** |
 | **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
 
-## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~26h+)
+## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~27h+)
 
 | Item | Status |
 |------|--------|
 | Contract / inventory / Downstream DONE | **MISSING** |
 | False Done @ 00:17Z | **REVERTED** — still open |
 
-**Fastest tonight:** Mac Right-click → Open STALL.command.
+**Fastest tonight:** Mac Right-click → Open **ONE-SHOT**.command (STALL → Actions fallback).
 
-**Durable:** Mac Right-click → Open ENABLE-DOWNSTREAM-ACTIONS.command (or web UI enable), then watch Actions + issue #1.
-
-Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait (~3 min)**. Runtime ~3–5 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
+Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait (~3 min)**. Runtime ~3–5 min (STALL) or Actions ~5–10 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
 ## Program gates
 
@@ -73,6 +72,6 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — #59–#68 (+ Mac enable-Actions launcher) |
+| 6 | Operator docs | **DONE** — #59–#69 (+ ONE-SHOT STALL→Actions launcher) |
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
