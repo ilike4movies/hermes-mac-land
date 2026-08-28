@@ -20,13 +20,42 @@ _ensure_single_tailscale_up_wait() {
     fi
     if [[ "${age_s:-0}" =~ ^[0-9]+$ ]] && (( age_s >= ${HERMES_TAILSCALE_AUTHURL_REFRESH_SECS:-2700} )); then
       echo "WARN proactive AuthURL refresh — up wait age=${age_s}s >= refresh threshold; restarting"
+      # Soft kill+re-up often reissues the SAME AuthURL. Prefer hard state wipe so
+      # operators get a fresh approve link (esp. when tip/beacon GH_TOKEN is dead).
+      # Opt out: HERMES_AUTHURL_HARD_ON_REFRESH=0. Default on when GH_TOKEN_INVALID /
+      # AUTHURL_MCP_SURFACE_NEEDED, else HERMES_AUTHURL_HARD_ON_REFRESH (default 1).
+      _hard=0
+      if [[ "${HERMES_AUTHURL_HARD_ON_REFRESH:-1}" == "1" ]]; then _hard=1; fi
+      if [[ -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" || -f "${SCRIPT_DIR}/AUTHURL_MCP_SURFACE_NEEDED.txt" ]]; then
+        _hard=1
+      fi
       if [[ -n "${pid:-}" ]]; then
         sudo kill "$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
-        # also kill child tailscale up if sudo wrapper
-        pkill -f "tailscale.* up --timeout" 2>/dev/null || true
-        sleep 2
+        # Kill only interactive up waiters (avoid pkill -f self-match on wait-login).
+        python3 - <<'PY' 2>/dev/null || true
+import os, signal, subprocess, time
+out = subprocess.check_output(["ps", "-eo", "pid,args"], text=True)
+for line in out.splitlines():
+    args = line.split(None, 1)[1] if " " in line else ""
+    if ("up --timeout" in args) and ("tailscale" in args):
+        pid = int(line.split()[0])
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+time.sleep(1)
+PY
+        sleep 1
       fi
       rm -f "$TS_UP_PIDFILE" 2>/dev/null || true
+      if [[ "$_hard" == "1" ]]; then
+        local _state="${HERMES_TAILSCALED_STATE:-/var/lib/tailscale/tailscaled.state}"
+        echo "WARN hard AuthURL rotate on refresh — wiping ${_state} (soft often reissues same URL)"
+        sudo tailscale --socket="${SOCK:-/var/run/tailscale/tailscaled.sock}" logout 2>/dev/null || true
+        sudo rm -fv "$_state" "${_state}.tmp" 2>/dev/null || true
+        # Leave AUTHURL_MCP_SURFACE_NEEDED so agent tip/beacon still surfaces the NEW URL.
+        echo "hard_refresh=$(date -u +%FT%TZ) age_s=${age_s}" >>"${SCRIPT_DIR}/LAST_HARD_AUTHURL_REFRESH.txt" 2>/dev/null || true
+      fi
     else
       # Throttle OK chatter (was every 5s → multi-MB wait-login.log).
       local every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}" stamp="$SCRIPT_DIR/LAST_UP_OK_ECHO.at" now
