@@ -8,27 +8,34 @@
 
 **Upstream gates Done:** RAL-820 interrupt, RAL-800 tip-main land, RAL-799 live canary+drift, RAL-634 starvation + transition dedupe (#103 live @ 03:35Z).
 
-**Sole blocker:** Media Studio canary contract + inventory evidence (run `2954673` CLAIMED @ 23:25Z 2026-08-26 but stalled ~26h+). **Do not re-land** unless tip refresh is needed.
+**Sole blocker:** Media Studio canary contract + inventory evidence (run `2954673` CLAIMED @ 23:25Z 2026-08-26 but stalled ~27h+). **Do not re-land** unless tip refresh is needed.
 
 **Parallel (not media-studio canary):** moltbot [#110](https://github.com/ilike4movies/moltbot/pull/110) WIP-park material-evidence **MERGED** to `main` @ `a535cb7` / tip `c753da8a` — confirm `.11` apply (RAL-799 auto-apply or `HERMES_AUTO_STACK_APPLY=1`); keep RAL-798 In Progress until host readback.
 
 ### Fastest now — stalled media-studio canary run (Mac)
 
-1. Confirm **`LINEAR_API_KEY` in `~/.hermes/.env`** (required post-#59 — downstream fails closed without it; post-#65 STALL.command fail-fast before SSH)
-2. Download **fresh** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command)
-3. **Right-click → Open** on Mac Hermes (Tailscale or LAN to `.11`)
+1. Confirm **`LINEAR_API_KEY` in `~/.hermes/.env`** (required post-#59 — downstream fails closed without it; ONE-SHOT fail-fast before SSH)
+2. Download **fresh** [`HERMES-ONE-SHOT-UNBLOCK.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command)
+3. **Right-click → Open** on Mac Hermes (not double-click — Gatekeeper)
 
-Pins run `20260826T232521106484Z-2954673` and runs: inspect → contract install → (stack-apply **skipped** by default; `.11` already at `6ce15a8`) → **two** `DISPATCH-NOW` passes (~90s; SLA-stale CLAIM recovery) → RAL-634 verify → inventory wait (~3 min). Defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` + `HERMES_WAIT_INVENTORY=1` (#42/#44/#52/#59/#62/#65).
+**Prefer ONE-SHOT:** tries **STALL** downstream first (SSH/Tailscale to `.11`); on fail auto-runs **ENABLE-DOWNSTREAM-ACTIONS** (install workflow + `gh workflow run`). Better than picking between STALL vs ENABLE yourself.
 
-**Runtime ~3–5 min.** Watch [GitHub issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) for `## Downstream STARTED` → `DONE`.
+Pins run `20260826T232521106484Z-2954673`. STALL path: inspect → contract install → (stack-apply **skipped** by default; `.11` already at `6ce15a8`) → **two** `DISPATCH-NOW` passes (~90s; SLA-stale CLAIM recovery) → RAL-634 verify → inventory wait (~3 min). Defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` + `HERMES_WAIT_INVENTORY=1` (#42/#44/#52/#59/#62/#65/#70).
+
+**Runtime ~3–5 min (STALL) or ~5–10 min (Actions fallback).** Watch [GitHub issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) for `## Downstream STARTED` → `DONE`.
+
+**Secondary — STALL only** (when Tailscale+SSH already known-good):
+
+1. Download [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command)
+2. **Right-click → Open** on Mac Hermes
 
 ### Or GitHub Actions (durable; one-time enable)
 
-Avoids Mac click after secrets are set. See [docs/CI-DOWNSTREAM-STALL.md](docs/CI-DOWNSTREAM-STALL.md).
+Avoids Mac click after secrets are set. See [docs/CI-DOWNSTREAM-STALL.md](docs/CI-DOWNSTREAM-STALL.md). Prefer ONE-SHOT (Phase 2 fallback), or ENABLE launcher below.
 
-**Mac one-shot enable** (uses local `gh`, which can have `workflow` scope cloud APIs lack):
+**Mac enable** (uses local `gh`, which can have `workflow` scope cloud APIs lack):
 
-1. Download [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command)
+1. Download [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command) (or use ONE-SHOT which falls back here)
 2. **Right-click → Open** — installs `.github/workflows/downstream-stall.yml` + runs the workflow
 3. If scope error: `gh auth refresh -h github.com -s workflow` then re-open
 4. Action secrets must exist: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`, `LINEAR_API_KEY`
@@ -184,7 +191,7 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 
 **Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **LEGACY Hermes .11 — do not use for Ooterverse**, never the Ooterverse game environment.
 
-For downstream-only boot on a credentialed cloud agent: set `HERMES_AUTO_SURGICAL_LAND=0` only (`HERMES_AUTO_DOWNSTREAM=1` default). Since **#36**, stall run auto-pins when unset. Since **#44**, also defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` (parity with stall launcher). Since **#47** (2026-08-27): bare `curl | bash` downstream applies the same stall defaults when run ID matches or is auto-pinned. Since **#52**: stall recovery posts two `DISPATCH-NOW` passes (~90s) so SLA-stale CLAIMs reopen after fail. Since **#59**: fail-closed if Linear key missing + inventory wait (~3 min). Since **#62**: Right-click → Open wording in downstream preflight + stall `.command` header. Since **#65**: STALL.command fail-fast LINEAR preflight before SSH. Since **#68**: copyable Actions workflow under `ci/`. Mac enable launcher installs it under `.github/workflows/` via local `gh`.
+For downstream-only boot on a credentialed cloud agent: set `HERMES_AUTO_SURGICAL_LAND=0` only (`HERMES_AUTO_DOWNSTREAM=1` default). Since **#36**, stall run auto-pins when unset. Since **#44**, also defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` (parity with stall launcher). Since **#47** (2026-08-27): bare `curl | bash` downstream applies the same stall defaults when run ID matches or is auto-pinned. Since **#52**: stall recovery posts two `DISPATCH-NOW` passes (~90s) so SLA-stale CLAIMs reopen after fail. Since **#59**: fail-closed if Linear key missing + inventory wait (~3 min). Since **#62**: Right-click → Open wording in downstream preflight + stall `.command` header. Since **#65**: STALL.command fail-fast LINEAR preflight before SSH. Since **#68**: copyable Actions workflow under `ci/`. Mac enable launcher installs it under `.github/workflows/` via local `gh`. Since **#70**: ONE-SHOT unblock launcher (`HERMES-ONE-SHOT-UNBLOCK.command`) tries STALL then ENABLE-ACTIONS fallback.
 
 `hermes-dispatcher-downstream.sh` fail-fast preflights missing secrets / wrong repo in <1s (`60cf813`) — see [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md).
 
