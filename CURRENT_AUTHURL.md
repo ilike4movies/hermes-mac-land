@@ -1,12 +1,12 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-28T20:31:27Z
+**Last refreshed:** 2026-08-28T21:18:53Z
 
-**Approve:** https://login.tailscale.com/a/1f410a5301cf93
+**Approve:** https://login.tailscale.com/a/7a69b1a01e964
 
-Hard #115 rotate @ ~20:30Z (retired `1bcf51f9` / interim `11789ce2`). Tip **#123** soft keep-alive is now default — ~45m refresh prefers the **same** AuthURL so Gmail/RAL-823/Notion/tip links stay valid mid-approve. Hard wipe only with `HERMES_AUTHURL_HARD_ON_REFRESH=1`.
+Soft #123/#124 ~45m refresh @ ~21:15Z (HARD=0). Soft keep-alive preferred the same URL; Tailscale minted a **new** login — approve **this** URL. Retired `1f410a53` (and older).
 
-**Ignore retired AuthURLs:** `1bcf51f9`, `1a1dd33b`, `16b94d1f`, `12e9ef58`, `184fd6d6`, `1953f34c`, `eeaef760`, `48641840`, …
+**Ignore retired AuthURLs:** `1f410a53`, `1bcf51f9`, `11789ce2`, `1a1dd33b`, `16b94d1f`, `12e9ef58`, `184fd6d6`, …
 
 Cloud waiters armed on Ooterverse pod. Prefer **Mac ONE-SHOT** if Runtime Secrets stay unset:
 
@@ -14,4 +14,4 @@ Cloud waiters armed on Ooterverse pod. Prefer **Mac ONE-SHOT** if Runtime Secret
 curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
 ```
 
-Tip through **#123**. Expect `zombie=1 zombie_passes=3`. Success = GitHub #1 `## Downstream DONE` + RAL-793 inventory.
+Tip through **#124**. Expect `zombie=1 zombie_passes=3`. Success = GitHub #1 `## Downstream DONE` + RAL-793 inventory.
