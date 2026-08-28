@@ -1,0 +1,90 @@
+name: Downstream stall recovery
+
+# Credentialed GitHub→.11 path that does not require Mac double-click.
+# ONE-TIME enable (API tokens often lack workflows scope):
+#   1. Copy this file to .github/workflows/downstream-stall.yml on main
+#      (GitHub web UI → Add file, or: mkdir -p .github/workflows && cp ci/downstream-stall.yml .github/workflows/)
+#   2. Repo Settings → Secrets and variables → Actions:
+#        TS_AUTHKEY
+#        HERMES_HOST_SSH_PRIVATE_KEY
+#        LINEAR_API_KEY
+#   3. Actions → Downstream stall recovery → Run workflow
+#      or: gh workflow run downstream-stall.yml --repo ilike4movies/hermes-mac-land
+#
+# Do NOT put open canary ticket IDs in PR titles when enabling this.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "HERMES_RUN_ID (default = stalled canary)"
+        required: false
+        default: "20260826T232521106484Z-2954673"
+      stack_apply:
+        description: "HERMES_AUTO_STACK_APPLY (0 skip / 1 apply)"
+        required: false
+        default: "0"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: hermes-downstream-stall
+  cancel-in-progress: false
+
+jobs:
+  downstream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout hermes-mac-land
+        uses: actions/checkout@v4
+
+      - name: Require Action secrets
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
+          HERMES_HOST_SSH_PRIVATE_KEY: ${{ secrets.HERMES_HOST_SSH_PRIVATE_KEY }}
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+        run: |
+          set -euo pipefail
+          missing=
+          [[ -n "${TS_AUTHKEY:-}" ]] || missing="${missing} TS_AUTHKEY"
+          [[ -n "${HERMES_HOST_SSH_PRIVATE_KEY:-}" ]] || missing="${missing} HERMES_HOST_SSH_PRIVATE_KEY"
+          [[ -n "${LINEAR_API_KEY:-}" ]] || missing="${missing} LINEAR_API_KEY"
+          if [[ -n "$missing" ]]; then
+            echo "::error::Missing Action secrets:$missing"
+            echo "Add them under Settings → Secrets and variables → Actions, then re-run."
+            echo "Mac path remains available: HERMES-DOWNSTREAM-RAL793-STALL.command"
+            exit 1
+          fi
+          echo "OK secrets present"
+
+      - name: Connect Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TS_AUTHKEY }}
+          hostname: hermes-gha-downstream
+
+      - name: Confirm gh CLI
+        run: gh --version
+
+      - name: Run dispatcher downstream
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
+          HERMES_HOST_SSH_PRIVATE_KEY: ${{ secrets.HERMES_HOST_SSH_PRIVATE_KEY }}
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HERMES_STATUS_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HERMES_RUN_ID: ${{ inputs.run_id }}
+          HERMES_AUTO_SURGICAL_LAND: "0"
+          HERMES_AUTO_STACK_APPLY: ${{ inputs.stack_apply }}
+          HERMES_STALL_RECOVERY: "1"
+          HERMES_WAIT_INVENTORY: "1"
+          HERMES_AUTO_INSPECT_RAL793: "1"
+          COMPOSER_REPO_URL: "github.com/ilike4movies/hermes-mac-land"
+        run: |
+          set -euo pipefail
+          echo "== GHA downstream @ $(date -u +%Y-%m-%dT%H:%M:%SZ) =="
+          echo "run_id=$HERMES_RUN_ID stack_apply=$HERMES_AUTO_STACK_APPLY"
+          bash shared-scripts/hermes-dispatcher-downstream.sh
