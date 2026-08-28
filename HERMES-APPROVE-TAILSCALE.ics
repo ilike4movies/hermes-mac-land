@@ -4,13 +4,13 @@ PRODID:-//Hermes//AuthURL//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 BEGIN:VEVENT
-UID:hermes-authurl-1f410a53-20260828T203127Z@hermes
-DTSTAMP:20260828T203127Z
-DTSTART:20260828T203127Z
-DTEND:20260828T211627Z
-SUMMARY:ACTION: Approve Hermes Tailscale 1f410a53 NOW
-DESCRIPTION:Approve https://login.tailscale.com/a/1f410a5301cf93 — ignore retired 1bcf51f9/1a1dd33b/…. Prefer Mac ONE-SHOT from hermes-mac-land tip #122. Success: Downstream DONE + RAL-793 inventory. No Slack rockets.
-URL:https://login.tailscale.com/a/1f410a5301cf93
+UID:hermes-authurl-7a69b1a0-20260828T211932Z@hermes
+DTSTAMP:20260828T211932Z
+DTSTART:20260828T211932Z
+DTEND:20260828T220432Z
+SUMMARY:ACTION: Approve Hermes Tailscale 7a69b1a0 NOW
+DESCRIPTION:Approve https://login.tailscale.com/a/7a69b1a01e964 — ignore retired 1f410a53/1bcf51f9/…. Soft #123/#124 refresh minted new URL. Prefer Mac ONE-SHOT tip #124. Success: Downstream DONE + inventory. No Slack rockets.
+URL:https://login.tailscale.com/a/7a69b1a01e964
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR
