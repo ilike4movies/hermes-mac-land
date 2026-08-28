@@ -2,7 +2,7 @@
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T00:30Z
+**Updated:** 2026-08-28T00:46Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -26,8 +26,8 @@
 **Do not spawn Hermes subagents from Ooterverse-Saturns-Quest** — they inherit the wrong repo/env and cannot receive `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` at boot.
 
 **Only these paths work for live gates:**
-1. **Mac Hermes** — double-click `HERMES-DOWNSTREAM-RAL793-STALL.command`
-2. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11**, secrets at boot
+1. **Mac Hermes** — **Right-click → Open** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) (not double-click — Gatekeeper)
+2. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11**, secrets at boot (`TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`)
 
 ## Linear issue UUIDs (MCP / API comment posting)
 
@@ -47,9 +47,9 @@
 | Contract / inventory / Downstream DONE | **MISSING** |
 | False Done @ 00:17Z | **REVERTED** — still open |
 
-**Mac:** Right-click → Open [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command)
+**Mac:** confirm `LINEAR_API_KEY` in `~/.hermes/.env`, then **Right-click → Open** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command)
 
-Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait (~3 min)**. Needs `LINEAR_API_KEY` in `~/.hermes/.env` on Mac. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
+Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait (~3 min)**. Runtime ~3–5 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
 ## Program gates
 
@@ -57,6 +57,6 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **Sync** — stall fail-closed + inventory wait |
+| 6 | Operator docs | **Sync** — #59 fail-closed + #60 README/issue #1 |
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
