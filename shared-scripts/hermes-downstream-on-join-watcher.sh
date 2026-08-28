@@ -55,12 +55,44 @@ _host_ready() {
   [[ -n "${HERMES_HOST_SSH_PRIVATE_KEY:-}" || -s "$HOST_KEY_FILE" ]]
 }
 
+
+_beacon_secrets_ready_once() {
+  local mark="$DIR/secrets-ready.beacon"
+  [[ -f "$mark" ]] && return 0
+  local authurl=""
+  authurl="$(head -1 "$DIR/CURRENT_AUTHURL.txt" 2>/dev/null || true)"
+  local body
+  body=$(cat <<EOF
+## Cloud secrets ready — approve Tailscale to launch Downstream
+
+host=\`cursor-cloud\` user=\`ubuntu\`
+agent=\`${CURSOR_AGENT_ID:-bc-01a02142}\`
+state=NeedsLogin + HERMES_HOST_SSH_PRIVATE_KEY present
+
+SSH/Linear keys arrived while Tailscale still NeedsLogin. Approve:
+${authurl:-see tip CURRENT_AUTHURL.md}
+
+Or Mac ONE-SHOT from tip. Expect \`## Downstream STARTED\` → \`DONE\` next.
+EOF
+)
+  if command -v gh >/dev/null 2>&1; then
+    gh issue comment 1 --repo ilike4movies/hermes-mac-land --body "$body" >/dev/null 2>&1 || true
+  fi
+  date -u +%FT%TZ > "$mark"
+  echo "$(date -u +%FT%TZ) watcher: posted secrets-ready beacon" | tee -a "$DIR/wait-login.log"
+}
+
 while true; do
   st=$(sudo tailscale --socket="$SOCK" status --json 2>/dev/null | python3 -c 'import json,sys
 try:
   print(json.load(sys.stdin).get("BackendState") or "")
 except Exception:
   print("")' || true)
+  if [[ "$st" == "NeedsLogin" || "$st" == "NoState" || -z "$st" ]]; then
+    if _host_ready; then
+      _beacon_secrets_ready_once || true
+    fi
+  fi
   if [[ "$st" == "Running" ]]; then
     if ! _host_ready; then
       echo "$(date -u +%FT%TZ) watcher: Running but host SSH missing — waiting" | tee -a "$DIR/wait-login.log"

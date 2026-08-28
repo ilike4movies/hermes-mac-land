@@ -5,7 +5,7 @@ set -euo pipefail
 DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 LOG="$DIR/secrets-bridge-poller.log"
 PIDFILE="$DIR/secrets-bridge-poller.pid"
-INTERVAL="${HERMES_SECRETS_BRIDGE_POLL_SECS:-30}"
+INTERVAL="${HERMES_SECRETS_BRIDGE_POLL_SECS:-10}"
 mkdir -p "$DIR"
 if [[ -f "$PIDFILE" ]]; then
   old="$(tr -d ' \r\n' < "$PIDFILE" 2>/dev/null || true)"

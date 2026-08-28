@@ -7,8 +7,8 @@
 #   C) --wait-login → print AuthURL and wait until BackendState=Running, then land
 #
 # Mid-wait secret reload (cloud agents): if secrets are injected after start, they
-# may appear in HERMES_CLOUD_SECRETS_ENV / TS_AUTHKEY file paths rather than the
-# frozen process environment. Reloaded each wait tick.
+# may appear in HERMES_CLOUD_SECRETS_ENV / TS_AUTHKEY /tmp/cursor/cloud-agent-secrets
+# rather than the frozen process environment. Reloaded each wait tick.
 # After Running + HERMES_AUTO_SURGICAL_LAND=0: wait for host SSH key before
 # downstream (secrets often arrive after Tailscale approve). Jump ping is
 # warn-only on this path (direct host SSH).
@@ -87,7 +87,11 @@ reload_cloud_secrets() {
     HERMES_HOST_SSH_PRIVATE_KEY="$(cat "$HOST_KEY_FILE")"
     export HERMES_HOST_SSH_PRIVATE_KEY
   fi
-  for _f in /tmp/cursor-secrets/HERMES_HOST_SSH_PRIVATE_KEY             "$HOME/.cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY"             /opt/cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY; do
+  for _f in \
+      /tmp/cursor/cloud-agent-secrets/HERMES_HOST_SSH_PRIVATE_KEY \
+      /tmp/cursor-secrets/HERMES_HOST_SSH_PRIVATE_KEY \
+      "$HOME/.cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY" \
+      /opt/cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY; do
     if [[ -z "${HERMES_HOST_SSH_PRIVATE_KEY:-}" && -f "$_f" ]]; then
       HERMES_HOST_SSH_PRIVATE_KEY="$(cat "$_f")"
       export HERMES_HOST_SSH_PRIVATE_KEY
@@ -99,12 +103,28 @@ reload_cloud_secrets() {
     LINEAR_API_KEY="$(tr -d '\r\n' < "${HERMES_LINEAR_API_KEY_FILE:-$SCRIPT_DIR/linear-api-key}")"
     export LINEAR_API_KEY
   fi
-  for _f in /tmp/cursor-secrets/LINEAR_API_KEY             "$HOME/.cursor/secrets/LINEAR_API_KEY"             /opt/cursor/secrets/LINEAR_API_KEY; do
+  for _f in \
+      /tmp/cursor/cloud-agent-secrets/LINEAR_API_KEY \
+      /tmp/cursor-secrets/LINEAR_API_KEY \
+      "$HOME/.cursor/secrets/LINEAR_API_KEY" \
+      /opt/cursor/secrets/LINEAR_API_KEY; do
     if [[ -z "${LINEAR_API_KEY:-}" && -f "$_f" ]]; then
       LINEAR_API_KEY="$(tr -d '\r\n' < "$_f")"
       export LINEAR_API_KEY
       printf '%s' "$LINEAR_API_KEY" > "${HERMES_LINEAR_API_KEY_FILE:-$SCRIPT_DIR/linear-api-key}"
       chmod 600 "${HERMES_LINEAR_API_KEY_FILE:-$SCRIPT_DIR/linear-api-key}" 2>/dev/null || true
+    fi
+  done
+  for _f in \
+      /tmp/cursor/cloud-agent-secrets/TS_AUTHKEY \
+      /tmp/cursor-secrets/TS_AUTHKEY \
+      "$HOME/.cursor/secrets/TS_AUTHKEY" \
+      /opt/cursor/secrets/TS_AUTHKEY; do
+    if [[ -z "${TS_AUTHKEY:-}" && -f "$_f" ]]; then
+      TS_AUTHKEY="$(tr -d '\r\n' < "$_f")"
+      export TS_AUTHKEY
+      printf '%s' "$TS_AUTHKEY" > "$TS_KEY_FILE"
+      chmod 600 "$TS_KEY_FILE" 2>/dev/null || true
     fi
   done
 }
