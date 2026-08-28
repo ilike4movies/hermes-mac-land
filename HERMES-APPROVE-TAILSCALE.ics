@@ -1,17 +1,23 @@
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//hermes-mac-land//AuthURL wake//EN
+PRODID:-//Hermes//AuthURL Wake//EN
 CALSCALE:GREGORIAN
-METHOD:PUBLISH
+METHOD:REQUEST
 BEGIN:VEVENT
-UID:hermes-authurl-48641840-20260828T153145Z@hermes-mac-land
-DTSTAMP:20260828T153145Z
-DTSTART:20260828T153145Z
-DTEND:20260828T161645Z
-SUMMARY:ACTION Hermes: approve Tailscale 48641840 OR Mac ONE-SHOT
-DESCRIPTION:Approve Tailscale AuthURL NOW: https://login.tailscale.com/a/486418401bf6f — or Mac ONE-SHOT from tip HERMES-ONE-SHOT-UNBLOCK.command. Tip #100/#101. No rockets.
-URL:https://login.tailscale.com/a/486418401bf6f
+UID:hermes-authurl-eeaef760-20260828T160331Z@hermes-mac-land
+DTSTAMP:20260828T160331Z
+DTSTART:20260828T160331Z
+DTEND:20260828T164831Z
+SUMMARY:ACTION Hermes: approve Tailscale eeaef760
+DESCRIPTION:Approve NOW: https://login.tailscale.com/a/eeaef76011693\nMac ONE-SHOT: curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command\nCanary 2954673 silent 40h+. No rockets.
+LOCATION:https://login.tailscale.com/a/eeaef76011693
+URL:https://login.tailscale.com/a/eeaef76011693
 STATUS:CONFIRMED
 SEQUENCE:0
+BEGIN:VALARM
+TRIGGER:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:Approve Tailscale eeaef760 NOW
+END:VALARM
 END:VEVENT
 END:VCALENDAR
