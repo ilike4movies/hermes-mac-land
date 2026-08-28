@@ -13,6 +13,8 @@ export HERMES_WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
 export HERMES_STALL_ZOMBIE="${HERMES_STALL_ZOMBIE:-1}"
 export HERMES_STALL_ZOMBIE_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
 export HERMES_CLOUD_APPLY_DIR="$DIR"
+# Ooterverse pods inherit COMPOSER_REPO_URL=*ooterverse*; point downstream at hermes-mac-land.
+export COMPOSER_REPO_URL="${HERMES_DOWNSTREAM_COMPOSER_REPO_URL:-github.com/ilike4movies/hermes-mac-land}"
 marker="$DIR/downstream-on-join.done"
 [[ -f "$marker" ]] && exit 0
 
@@ -25,12 +27,25 @@ _reload() {
     HERMES_HOST_SSH_PRIVATE_KEY="$(cat "$HOST_KEY_FILE")"
     export HERMES_HOST_SSH_PRIVATE_KEY
   fi
-  for _f in /tmp/cursor-secrets/HERMES_HOST_SSH_PRIVATE_KEY \
-            "$HOME/.cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY" \
-            /opt/cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY; do
+  for _f in \
+      /tmp/cursor/cloud-agent-secrets/HERMES_HOST_SSH_PRIVATE_KEY \
+      /tmp/cursor-secrets/HERMES_HOST_SSH_PRIVATE_KEY \
+      "$HOME/.cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY" \
+      /opt/cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY; do
     if [[ -z "${HERMES_HOST_SSH_PRIVATE_KEY:-}" && -f "$_f" ]]; then
       HERMES_HOST_SSH_PRIVATE_KEY="$(cat "$_f")"
       export HERMES_HOST_SSH_PRIVATE_KEY
+    fi
+  done
+  for _f in \
+      "$DIR/linear-api-key" \
+      /tmp/cursor/cloud-agent-secrets/LINEAR_API_KEY \
+      /tmp/cursor-secrets/LINEAR_API_KEY \
+      "$HOME/.cursor/secrets/LINEAR_API_KEY" \
+      /opt/cursor/secrets/LINEAR_API_KEY; do
+    if [[ -z "${LINEAR_API_KEY:-}" && -f "$_f" ]]; then
+      LINEAR_API_KEY="$(tr -d '\r\n' < "$_f")"
+      export LINEAR_API_KEY
     fi
   done
 }
