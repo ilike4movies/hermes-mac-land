@@ -3,7 +3,7 @@ name: Downstream stall recovery
 # Credentialed GitHub→.11 path that does not require Mac double-click.
 # ONE-TIME enable (API tokens often lack workflows scope):
 #   1. Copy this file to .github/workflows/downstream-stall.yml on main
-#      (GitHub web UI → Add file, or: mkdir -p .github/workflows && cp ci/downstream-stall.yml .github/workflows/)
+#      (GitHub web UI → Add file, or Mac ONE-SHOT Phase 2 / ENABLE-DOWNSTREAM-ACTIONS.command)
 #   2. Repo Settings → Secrets and variables → Actions:
 #        TS_AUTHKEY
 #        HERMES_HOST_SSH_PRIVATE_KEY
@@ -12,6 +12,7 @@ name: Downstream stall recovery
 #      or: gh workflow run downstream-stall.yml --repo ilike4movies/hermes-mac-land
 #
 # Do NOT put open canary ticket IDs in PR titles when enabling this.
+# Prefer Mac ONE-SHOT (Right-click Open) when Tailscale works.
 
 on:
   workflow_dispatch:
@@ -36,7 +37,7 @@ concurrency:
 jobs:
   downstream:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout hermes-mac-land
         uses: actions/checkout@v4
@@ -55,7 +56,7 @@ jobs:
           if [[ -n "$missing" ]]; then
             echo "::error::Missing Action secrets:$missing"
             echo "Add them under Settings → Secrets and variables → Actions, then re-run."
-            echo "Mac path remains available: HERMES-DOWNSTREAM-RAL793-STALL.command"
+            echo "Mac path remains available: HERMES-ONE-SHOT-UNBLOCK.command"
             exit 1
           fi
           echo "OK secrets present"
@@ -81,10 +82,13 @@ jobs:
           HERMES_AUTO_STACK_APPLY: ${{ inputs.stack_apply }}
           HERMES_STALL_RECOVERY: "1"
           HERMES_WAIT_INVENTORY: "1"
+          HERMES_INVENTORY_WAIT_SECS: "600"
           HERMES_AUTO_INSPECT_RAL793: "1"
+          HERMES_STALL_ZOMBIE: "1"
+          HERMES_STALL_ZOMBIE_PASSES: "3"
           COMPOSER_REPO_URL: "github.com/ilike4movies/hermes-mac-land"
         run: |
           set -euo pipefail
           echo "== GHA downstream @ $(date -u +%Y-%m-%dT%H:%M:%SZ) =="
-          echo "run_id=$HERMES_RUN_ID stack_apply=$HERMES_AUTO_STACK_APPLY"
+          echo "run_id=$HERMES_RUN_ID stack_apply=$HERMES_AUTO_STACK_APPLY zombie=$HERMES_STALL_ZOMBIE"
           bash shared-scripts/hermes-dispatcher-downstream.sh
