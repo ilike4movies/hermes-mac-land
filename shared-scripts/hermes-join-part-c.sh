@@ -32,17 +32,24 @@ _ensure_single_tailscale_up_wait() {
       if [[ -n "${pid:-}" ]]; then
         sudo kill "$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
         # Kill only interactive up waiters (avoid pkill -f self-match on wait-login).
+        # Prefer sudo kill — interactive `tailscale up` is often root-owned; os.kill fails
+        # with EPERM and leaves orphans that force a second up (AuthURL churn).
         python3 - <<'PY' 2>/dev/null || true
-import os, signal, subprocess, time
+import subprocess, time
 out = subprocess.check_output(["ps", "-eo", "pid,args"], text=True)
 for line in out.splitlines():
     args = line.split(None, 1)[1] if " " in line else ""
-    if ("up --timeout" in args) and ("tailscale" in args):
-        pid = int(line.split()[0])
-        try:
-            os.kill(pid, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
+    is_up = ("up --timeout" in args) and (
+        args.startswith("sudo tailscale")
+        or args.startswith("tailscale ")
+        or args.startswith("/usr/bin/tailscale")
+    )
+    if is_up:
+        pid = line.split()[0]
+        subprocess.run(["sudo", "kill", "-TERM", pid], check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["kill", "-TERM", pid], check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 time.sleep(1)
 PY
         sleep 1
