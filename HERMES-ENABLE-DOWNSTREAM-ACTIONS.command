@@ -35,6 +35,20 @@ if ! gh auth status >/dev/null 2>&1; then
 fi
 
 echo "OK gh auth present"
+
+# Tip #126: prefer HERMES_GH_WORKFLOW_PAT from ~/.hermes/.env when default gh token
+# lacks workflows scope (cloud/API tokens 404 on .github/workflows/).
+_hermes_env="${HERMES_ENV_FILE:-$HOME/.hermes/.env}"
+if [[ -z "${HERMES_GH_WORKFLOW_PAT:-}" && -f "$_hermes_env" ]]; then
+  # shellcheck disable=SC1090
+  set -a; source "$_hermes_env" 2>/dev/null || true; set +a
+fi
+if [[ -n "${HERMES_GH_WORKFLOW_PAT:-}" ]]; then
+  export GH_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+  export GITHUB_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+  echo "OK using HERMES_GH_WORKFLOW_PAT for workflow write (tip #126)"
+fi
+
 osascript -e 'display notification "Installing workflow via local gh…" with title "Hermes Actions enable" sound name "Glass"' 2>/dev/null || true
 
 EXISTING_SHA=""
