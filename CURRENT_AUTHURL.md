@@ -1,9 +1,13 @@
-# Live Tailscale AuthURL
+# Live cloud Tailscale AuthURL
 
-**Approve NOW:** https://login.tailscale.com/a/12e9ef58016c63
+**Last refreshed:** 2026-08-28T18:53:16Z
 
-- Generated: 2026-08-28T18:08:49Z
-- BackendState: NeedsLogin (proactive ~45m refresh; prior `184fd6d6` retired)
-- Do **not** use `184fd6d6` / `1953f34c` / `eeaef760` / older
-- Prefer Mac ONE-SHOT from tip if secrets stay unset on the cloud pod
-- After approve: Runtime Secrets `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY` (optional `TS_AUTHKEY`)
+**Approve:** https://login.tailscale.com/a/16b94d1f01ad8b
+
+Do **not** use older AuthURLs (`12e9ef58`, `184fd6d6`, `1953f34c`, `eeaef760`, `48641840`, …). Prefer Mac ONE-SHOT if Runtime Secrets stay unset.
+
+After approve, cloud still needs `HERMES_HOST_SSH_PRIVATE_KEY` (+ preferably `LINEAR_API_KEY` / `TS_AUTHKEY`) unless Mac ONE-SHOT completes Downstream DONE.
+
+Hostname to approve: `cursor-cloud-hermes`
+
+Admin: https://login.tailscale.com/admin/machines
