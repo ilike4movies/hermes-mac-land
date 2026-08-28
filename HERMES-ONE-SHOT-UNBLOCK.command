@@ -104,8 +104,13 @@ _run_enable_actions() {
   osascript -e 'display notification "Phase 2: enabling GitHub Actions path…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
   if ! command -v gh >/dev/null 2>&1; then
     echo "FAILED: gh CLI missing. Install GitHub CLI, then: gh auth login"
-    echo "Or web UI: copy ci/downstream-stall.yml → .github/workflows/downstream-stall.yml"
-    open "https://github.com/${REPO}/new/main?filename=.github/workflows/downstream-stall.yml" 2>/dev/null || true
+    echo "Or web UI: paste Raw ci/downstream-stall.yml into create-file editor"
+    WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+    WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+    echo "Web UI create: $WEBUI_NEW"
+    echo "Web UI paste source (Raw): $WEBUI_RAW"
+    open "$WEBUI_NEW" 2>/dev/null || true
+    open "$WEBUI_RAW" 2>/dev/null || true
     return 1
   fi
   if ! gh auth status >/dev/null 2>&1; then
@@ -135,8 +140,14 @@ _run_enable_actions() {
         -f branch=main >/tmp/hermes-wf-put.json 2>/tmp/hermes-wf-put.err; then
       echo "FAILED: could not write ${WF_PATH} (likely missing workflow scope)"
       echo "Fix: gh auth refresh -h github.com -s workflow"
+      echo "Or Web UI: paste Raw ci/downstream-stall.yml into create-file editor"
       cat /tmp/hermes-wf-put.err 2>/dev/null || true
-      open "https://github.com/${REPO}/new/main?filename=${WF_PATH}" 2>/dev/null || true
+      WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+      WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+      echo "Web UI create: $WEBUI_NEW"
+      echo "Web UI paste source (Raw): $WEBUI_RAW"
+      open "$WEBUI_NEW" 2>/dev/null || true
+      open "$WEBUI_RAW" 2>/dev/null || true
       return 1
     fi
     echo "OK installed ${WF_PATH}"
