@@ -19,21 +19,45 @@ _ensure_single_tailscale_up_wait() {
       age_s="$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || echo 0)"
     fi
     if [[ "${age_s:-0}" =~ ^[0-9]+$ ]] && (( age_s >= ${HERMES_TAILSCALE_AUTHURL_REFRESH_SECS:-2700} )); then
+      # Tip #125: if soft mode and status still advertises a live AuthURL, do NOT kill/re-up.
+      # Soft re-up often mints a NEW login URL and invalidates Gmail/RAL-823/Notion/tip links
+      # mid-approve (seen 1f410a53 → 7a69b1a0 @ ~21:15Z). Prefer keeping the live AuthURL
+      # until Tailscale stops advertising it (or HARD / FORCE_REFRESH).
+      _live_authurl=""
+      _live_authurl="$(sudo tailscale --socket="${SOCK:-/var/run/tailscale/tailscaled.sock}" status --json 2>/dev/null | python3 -c 'import json,sys
+try:
+  d=json.load(sys.stdin)
+  print((d.get("AuthURL") or "").strip())
+except Exception:
+  print("")' 2>/dev/null || true)"
+      if [[ "${HERMES_AUTHURL_HARD_ON_REFRESH:-0}" != "1" && "${HERMES_AUTHURL_FORCE_REFRESH:-0}" != "1" && -n "${_live_authurl}" ]]; then
+        echo "OK AuthURL refresh mode=SOFT skip — live AuthURL still advertised (age_s=${age_s}; set HERMES_AUTHURL_FORCE_REFRESH=1 or HARD=1 to remint)"
+        local every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}" stamp="$SCRIPT_DIR/LAST_UP_OK_ECHO.at" now
+        now="$(date +%s)"
+        if [[ ! -f "$stamp" ]] || (( now - $(cat "$stamp" 2>/dev/null || echo 0) >= every )); then
+          echo "OK tailscale up wait already running (pidfile=$(cat "$TS_UP_PIDFILE" 2>/dev/null || echo none) age_s=${age_s:-?} live_authurl=yes)"
+          echo "$now" >"$stamp"
+        fi
+        _refresh_authurl_file
+        return 0
+      fi
       echo "WARN proactive AuthURL refresh — up wait age=${age_s}s >= refresh threshold; restarting"
       # Soft kill+re-up often reissues the SAME AuthURL — that is desirable while an
       # operator still has Gmail/RAL-823/Notion/tip links open. Hard state wipe mints a
       # NEW AuthURL and invalidates every surface mid-approve.
       #
       # Tip #123: default SOFT keep-alive (HERMES_AUTHURL_HARD_ON_REFRESH=0).
+      # Tip #125: soft skips remint while AuthURL still advertised (above).
       # Do NOT force hard merely because GH_TOKEN_INVALID / AUTHURL_MCP_SURFACE_NEEDED —
       # those mean tip/beacon must go via MCP, not that the AuthURL is dead.
       # Opt in to hard wipe: HERMES_AUTHURL_HARD_ON_REFRESH=1 (or restart-authurl-hard.sh).
+      # Force soft remint: HERMES_AUTHURL_FORCE_REFRESH=1.
       _hard=0
       if [[ "${HERMES_AUTHURL_HARD_ON_REFRESH:-0}" == "1" ]]; then _hard=1; fi
       if [[ "$_hard" == "1" ]]; then
         echo "WARN AuthURL refresh mode=HARD (HERMES_AUTHURL_HARD_ON_REFRESH=1)"
       else
-        echo "OK AuthURL refresh mode=SOFT keep-alive (same URL preferred; set HERMES_AUTHURL_HARD_ON_REFRESH=1 to wipe)"
+        echo "OK AuthURL refresh mode=SOFT remint (no live AuthURL or FORCE_REFRESH=1; set HERMES_AUTHURL_HARD_ON_REFRESH=1 to wipe)"
       fi
       if [[ -n "${pid:-}" ]]; then
         sudo kill "$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
