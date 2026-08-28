@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# Keep wait-login alive until Tailscale Running, then auto-land.
+# Keep wait-login alive until Tailscale Running, then auto-land / downstream.
+# When HERMES_AUTO_SURGICAL_LAND=0: wait for host SSH key (mid-wait secrets) before
+# running dispatcher downstream — do not one-shot-and-exit on Running alone.
 set -euo pipefail
 DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 SOCK="${HERMES_TAILSCALE_SOCKET:-/var/run/tailscale/tailscaled.sock}"
+HOST_KEY_FILE="${HERMES_HOST_SSH_KEY_FILE:-$DIR/host-ssh-key}"
+SECRETS_ENV="${HERMES_CLOUD_SECRETS_ENV:-$DIR/secrets.env}"
 cd "$DIR"
 
 backend_state() {
@@ -27,13 +31,51 @@ _wait_login_active() {
   pgrep -f 'hermes-moltbot-cloud-tailscale-join-and-apply.sh --wait-login' >/dev/null 2>&1
 }
 
+_reload_host_secrets() {
+  if [[ -f "$SECRETS_ENV" ]]; then
+    # shellcheck disable=SC1090
+    set -a; source "$SECRETS_ENV"; set +a
+  fi
+  if [[ -z "${HERMES_HOST_SSH_PRIVATE_KEY:-}" && -s "$HOST_KEY_FILE" ]]; then
+    HERMES_HOST_SSH_PRIVATE_KEY="$(cat "$HOST_KEY_FILE")"
+    export HERMES_HOST_SSH_PRIVATE_KEY
+  fi
+  for _f in /tmp/cursor-secrets/HERMES_HOST_SSH_PRIVATE_KEY \
+            "$HOME/.cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY" \
+            /opt/cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY; do
+    if [[ -z "${HERMES_HOST_SSH_PRIVATE_KEY:-}" && -f "$_f" ]]; then
+      HERMES_HOST_SSH_PRIVATE_KEY="$(cat "$_f")"
+      export HERMES_HOST_SSH_PRIVATE_KEY
+    fi
+  done
+  if [[ -z "${LINEAR_API_KEY:-}" && -s "$DIR/linear-api-key" ]]; then
+    LINEAR_API_KEY="$(tr -d '\r\n' < "$DIR/linear-api-key")"
+    export LINEAR_API_KEY
+  fi
+  if [[ -n "${HERMES_HOST_SSH_PRIVATE_KEY:-}" && ! -s "$HOST_KEY_FILE" ]]; then
+    printf '%s' "$HERMES_HOST_SSH_PRIVATE_KEY" > "$HOST_KEY_FILE"
+    chmod 600 "$HOST_KEY_FILE" 2>/dev/null || true
+  fi
+}
+
+_host_ssh_ready() {
+  _reload_host_secrets
+  [[ -n "${HERMES_HOST_SSH_PRIVATE_KEY:-}" ]] && return 0
+  [[ -s "$HOST_KEY_FILE" ]] && return 0
+  return 1
+}
+
 while true; do
   st="$(backend_state)"
   if [[ "$st" == "Running" ]]; then
     echo "$(date -u +%FT%TZ) OK Running — Tailscale joined"
-    # Prefer downstream-only when land disabled (stalled-canary recovery path).
     if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
-      echo "$(date -u +%FT%TZ) land disabled — attempting dispatcher downstream"
+      if ! _host_ssh_ready; then
+        echo "$(date -u +%FT%TZ) Running but HERMES_HOST_SSH_PRIVATE_KEY missing — waiting for Runtime Secrets / $HOST_KEY_FILE (not exiting)"
+        sleep 30
+        continue
+      fi
+      echo "$(date -u +%FT%TZ) land disabled — host SSH ready; attempting dispatcher downstream"
       ds="$DIR/hermes-dispatcher-downstream.sh"
       [[ -x "$ds" ]] || ds="$(dirname "$0")/hermes-dispatcher-downstream.sh"
       if [[ -x "$ds" ]]; then
