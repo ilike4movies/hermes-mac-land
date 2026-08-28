@@ -101,6 +101,16 @@ _open_tailscale_approve_early() {
     osascript -e 'display notification "Approve pending Tailscale machines while STALL runs" with title "Hermes ONE-SHOT Tailscale" sound name "Glass"' 2>/dev/null || true
     open "$ADMIN" 2>/dev/null || true
   fi
+  # Calendar wake ICS (tip HERMES-APPROVE-TAILSCALE.ics). Opt out: HERMES_ONE_SHOT_OPEN_ICS=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_ICS:-1}" == "1" ]]; then
+    local ics="${HOME}/Downloads/HERMES-APPROVE-TAILSCALE.ics"
+    if curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/HERMES-APPROVE-TAILSCALE.ics" -o "$ics" 2>/dev/null; then
+      echo "Calendar ICS: $ics"
+      open "$ics" 2>/dev/null || true
+    else
+      echo "WARN tip HERMES-APPROVE-TAILSCALE.ics not available yet"
+    fi
+  fi
 }
 
 _open_operator_linear_early() {
