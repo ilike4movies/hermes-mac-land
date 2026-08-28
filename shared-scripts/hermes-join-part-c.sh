@@ -20,14 +20,20 @@ _ensure_single_tailscale_up_wait() {
     fi
     if [[ "${age_s:-0}" =~ ^[0-9]+$ ]] && (( age_s >= ${HERMES_TAILSCALE_AUTHURL_REFRESH_SECS:-2700} )); then
       echo "WARN proactive AuthURL refresh — up wait age=${age_s}s >= refresh threshold; restarting"
-      # Soft kill+re-up often reissues the SAME AuthURL. Prefer hard state wipe so
-      # operators get a fresh approve link (esp. when tip/beacon GH_TOKEN is dead).
-      # Opt out: HERMES_AUTHURL_HARD_ON_REFRESH=0. Default on when GH_TOKEN_INVALID /
-      # AUTHURL_MCP_SURFACE_NEEDED, else HERMES_AUTHURL_HARD_ON_REFRESH (default 1).
+      # Soft kill+re-up often reissues the SAME AuthURL — that is desirable while an
+      # operator still has Gmail/RAL-823/Notion/tip links open. Hard state wipe mints a
+      # NEW AuthURL and invalidates every surface mid-approve.
+      #
+      # Tip #123: default SOFT keep-alive (HERMES_AUTHURL_HARD_ON_REFRESH=0).
+      # Do NOT force hard merely because GH_TOKEN_INVALID / AUTHURL_MCP_SURFACE_NEEDED —
+      # those mean tip/beacon must go via MCP, not that the AuthURL is dead.
+      # Opt in to hard wipe: HERMES_AUTHURL_HARD_ON_REFRESH=1 (or restart-authurl-hard.sh).
       _hard=0
-      if [[ "${HERMES_AUTHURL_HARD_ON_REFRESH:-1}" == "1" ]]; then _hard=1; fi
-      if [[ -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" || -f "${SCRIPT_DIR}/AUTHURL_MCP_SURFACE_NEEDED.txt" ]]; then
-        _hard=1
+      if [[ "${HERMES_AUTHURL_HARD_ON_REFRESH:-0}" == "1" ]]; then _hard=1; fi
+      if [[ "$_hard" == "1" ]]; then
+        echo "WARN AuthURL refresh mode=HARD (HERMES_AUTHURL_HARD_ON_REFRESH=1)"
+      else
+        echo "OK AuthURL refresh mode=SOFT keep-alive (same URL preferred; set HERMES_AUTHURL_HARD_ON_REFRESH=1 to wipe)"
       fi
       if [[ -n "${pid:-}" ]]; then
         sudo kill "$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
