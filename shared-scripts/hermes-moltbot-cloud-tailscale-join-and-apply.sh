@@ -254,4 +254,142 @@ PY
         printf '%s\n' "$url" >"$lastfile"
       else
         # Throttle skip warnings (wait loop polls every ~5s).
-        local warnfile="$
+        local warnfile="${SCRIPT_DIR}/LAST_AUTHURL_BEACON_WARN.txt"
+        local now warn_age=99999
+        now="$(date +%s)"
+        if [[ -f "$warnfile" ]]; then
+          warn_age=$(( now - $(stat -c %Y "$warnfile" 2>/dev/null || echo 0) ))
+        fi
+        if (( warn_age >= ${HERMES_AUTHURL_BEACON_WARN_SECS:-60} )); then
+          echo "WARN AuthURL beacon skipped (gh/token/Linear write unavailable)"
+          printf '%s\n' "$url" >"$warnfile"
+        fi
+      fi
+    fi
+  fi
+}
+
+_ensure_single_tailscale_up_wait() {
+  local login_wait_secs="${1:-$LOGIN_WAIT_SECS}"
+  # Proactive AuthURL refresh: if interactive up has been waiting ~45m+ and still
+  # NeedsLogin, kill and restart so operators get a fresh approve URL (TTL~1h).
+  # Prefer ~45m over ~15m: frequent kills invalidate open approve links mid-click.
+  if _tailscale_up_wait_running; then
+    local age_s=0 pid
+    if [[ -f "$TS_UP_PIDFILE" ]]; then
+      pid="$(tr -d ' \r\n' < "$TS_UP_PIDFILE" 2>/dev/null || true)"
+    fi
+    # Adopt orphan up process into pidfile when missing (post-kill race).
+    if [[ -z "${pid:-}" ]] || ! kill -0 "${pid:-}" 2>/dev/null; then
+      pid="$(pgrep -f 'tailscale.* up --timeout' 2>/dev/null | head -1 || true)"
+      if [[ -n "$pid" ]]; then
+        echo "$pid" >"$TS_UP_PIDFILE"
+      fi
+    fi
+    if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
+      age_s="$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || echo 0)"
+    fi
+    if [[ "${age_s:-0}" =~ ^[0-9]+$ ]] && (( age_s >= ${HERMES_TAILSCALE_AUTHURL_REFRESH_SECS:-2700} )); then
+      echo "WARN proactive AuthURL refresh — up wait age=${age_s}s >= refresh threshold; restarting"
+      if [[ -n "${pid:-}" ]]; then
+        sudo kill "$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
+        # also kill child tailscale up if sudo wrapper
+        pkill -f "tailscale.* up --timeout" 2>/dev/null || true
+        sleep 2
+      fi
+      rm -f "$TS_UP_PIDFILE" 2>/dev/null || true
+    else
+      echo "OK tailscale up wait already running (pidfile=$(cat "$TS_UP_PIDFILE" 2>/dev/null || echo none) age_s=${age_s:-?})"
+      _refresh_authurl_file
+      return 0
+    fi
+  fi
+  exec 9>"$TS_UP_LOCK"
+  if ! flock -n 9; then
+    echo "OK another process holds tailscale-up lock"
+    _refresh_authurl_file
+    return 0
+  fi
+  if _tailscale_up_wait_running; then
+    _refresh_authurl_file
+    return 0
+  fi
+  echo "== starting single tailscale up wait (${login_wait_secs}s) =="
+  nohup sudo tailscale --socket="$SOCK" up --timeout="${login_wait_secs}s" \
+    --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true \
+    >/tmp/tailscale-up-wait.log 2>&1 &
+  echo $! >"$TS_UP_PIDFILE"
+  echo "OK started tailscale up wait pid=$(cat "$TS_UP_PIDFILE")"
+  sleep 2
+  _refresh_authurl_file
+}
+
+install_tailscale() {
+  if command -v tailscale >/dev/null 2>&1; then
+    echo "OK tailscale already installed: $(command -v tailscale)"
+    return 0
+  fi
+  echo "== installing Tailscale =="
+  if [[ "$(uname -s)" != "Linux" ]]; then
+    echo "ERROR: auto-install only implemented for Linux cloud agents" >&2
+    exit 1
+  fi
+  curl -fsSL https://tailscale.com/install.sh | sh
+  command -v tailscale >/dev/null 2>&1
+}
+
+ensure_daemon() {
+  if pgrep -x tailscaled >/dev/null 2>&1; then
+    return 0
+  fi
+  sudo mkdir -p /var/run/tailscale /var/lib/tailscale /var/cache/tailscale
+  if [[ -e /dev/net/tun ]]; then
+    sudo tailscaled --state=/var/lib/tailscale/tailscaled.state --socket="$SOCK" --port=41641 >/tmp/tailscaled.log 2>&1 &
+  else
+    echo "WARN: /dev/net/tun missing — userspace networking"
+    sudo tailscaled --tun=userspace-networking --state=/var/lib/tailscale/tailscaled.state --socket="$SOCK" >/tmp/tailscaled-userspace.log 2>&1 &
+  fi
+  sleep 2
+}
+
+join_tailscale_authkey() {
+  echo "== joining Tailscale mesh with TS_AUTHKEY =="
+  ts up --authkey="$TS_AUTHKEY" --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true
+  ts status || true
+}
+
+wait_for_running() {
+  local max="$1" i=0 st
+  echo "== waiting up to ${max}s for BackendState=Running =="
+  while (( i < max )); do
+    reload_cloud_secrets
+    st="$(backend_state)"
+    echo "  t=${i}s BackendState=${st:-unknown} authkey=${TS_AUTHKEY:+set}"
+    if [[ "$st" == "Running" ]]; then
+      return 0
+    fi
+    if [[ -n "${TS_AUTHKEY:-}" && "$st" != "Running" ]]; then
+      echo "  mid-wait TS_AUTHKEY present — joining"
+      join_tailscale_authkey || true
+    fi
+    if [[ "$st" == "NeedsLogin" || "$st" == "NoState" || -z "$st" ]]; then
+      _ensure_single_tailscale_up_wait "$max" || true
+      _refresh_authurl_file || true
+      ts status 2>&1 | sed -n '1,8p' || true
+    fi
+    sleep 5
+    i=$((i + 5))
+  done
+  echo "ERROR: Tailscale not Running after ${max}s" >&2
+  return 1
+}
+
+wait_for_jump() {
+  local i
+  echo "== waiting up to ${WAIT_SECS}s for jump $JUMP_HOST =="
+  for ((i=0; i<WAIT_SECS; i+=3)); do
+    if ping -c 1 -W 2 "$JUMP_HOST" >/dev/null 2>&1; then
+      echo "OK ping $JUMP_HOST after ${i}s"
+      return 0
+    fi
+    if timeout 2 b
