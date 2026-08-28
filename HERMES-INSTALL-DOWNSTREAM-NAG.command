@@ -1,7 +1,7 @@
 #!/bin/bash
 # HERMES-INSTALL-DOWNSTREAM-NAG.command — Right-click → Open (not double-click)
 # Installs a LaunchAgent that nags every 10 min until issue #1 shows "## Downstream DONE".
-# Opens issue #1 + ONE-SHOT URL + Web UI; offers a confirm dialog to download+open ONE-SHOT (no unattended DISPATCH).
+# Opens issue #1 + ONE-SHOT URL + Web UI + Tailscale admin/AuthURL; offers confirm to download+open ONE-SHOT (no unattended DISPATCH).
 # Uninstall: launchctl unload ~/Library/LaunchAgents/com.hermes.downstream-nag.plist
 #            rm ~/Library/LaunchAgents/com.hermes.downstream-nag.plist ~/.hermes/bin/hermes-downstream-nag.sh
 set -euo pipefail
@@ -46,10 +46,24 @@ if printf '%s' "$comments" | grep -qF "$MARKER"; then
   exit 0
 fi
 
-osascript -e 'display notification "Still blocked — ONE-SHOT or Web UI workflow enable" with title "Hermes Downstream" sound name "Basso"' 2>/dev/null || true
+osascript -e 'display notification "Still blocked — ONE-SHOT / Tailscale approve / Web UI" with title "Hermes Downstream" sound name "Basso"' 2>/dev/null || true
 open "$ISSUE_URL" 2>/dev/null || true
 open "$ONESHOT_URL" 2>/dev/null || true
 open "$WEBUI_WORKFLOW_URL" 2>/dev/null || true
+# Also surface cloud Tailscale approve (admin + tip CURRENT_AUTHURL.md).
+# Opt out: HERMES_NAG_OPEN_TAILSCALE=0
+if [[ "${HERMES_NAG_OPEN_TAILSCALE:-1}" == "1" ]]; then
+  open "https://login.tailscale.com/admin/machines" 2>/dev/null || true
+  auth=""
+  f="/tmp/hermes-nag-current-authurl-$$.md"
+  if curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/CURRENT_AUTHURL.md" -o "$f" 2>/dev/null; then
+    auth=$(grep -Eo 'https://login\.tailscale\.com/a/[A-Za-z0-9]+' "$f" | head -1 || true)
+  fi
+  rm -f "$f"
+  if [[ -n "$auth" ]]; then
+    open "$auth" 2>/dev/null || true
+  fi
+fi
 # Optional confirm: download + open ONE-SHOT (attended only)
 ans="$(osascript -e 'button returned of (display dialog "Hermes downstream still blocked. Run ONE-SHOT now?" buttons {"Not now", "Run ONE-SHOT"} default button "Run ONE-SHOT" with title "Hermes Downstream")' 2>/dev/null || true)"
 if [[ "$ans" == "Run ONE-SHOT" ]]; then
