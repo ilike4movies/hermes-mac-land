@@ -14,11 +14,11 @@
 
 ### Fastest now — stalled media-studio canary run (Mac)
 
-1. Confirm **`LINEAR_API_KEY` in `~/.hermes/.env`** (required post-#59 — downstream fails closed without it)
+1. Confirm **`LINEAR_API_KEY` in `~/.hermes/.env`** (required post-#59 — downstream fails closed without it; post-#65 STALL.command fail-fast before SSH)
 2. Download **fresh** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command)
 3. **Right-click → Open** on Mac Hermes (Tailscale or LAN to `.11`)
 
-Pins run `20260826T232521106484Z-2954673` and runs: inspect → contract install → (stack-apply **skipped** by default; `.11` already at `6ce15a8`) → **two** `DISPATCH-NOW` passes (~90s; SLA-stale CLAIM recovery) → RAL-634 verify → inventory wait (~3 min). Defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` + `HERMES_WAIT_INVENTORY=1` (#42/#44/#52/#59/#62).
+Pins run `20260826T232521106484Z-2954673` and runs: inspect → contract install → (stack-apply **skipped** by default; `.11` already at `6ce15a8`) → **two** `DISPATCH-NOW` passes (~90s; SLA-stale CLAIM recovery) → RAL-634 verify → inventory wait (~3 min). Defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` + `HERMES_WAIT_INVENTORY=1` (#42/#44/#52/#59/#62/#65).
 
 **Runtime ~3–5 min.** Watch [GitHub issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) for `## Downstream STARTED` → `DONE`.
 
@@ -167,7 +167,7 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 
 **Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **LEGACY Hermes .11 — do not use for Ooterverse**, never the Ooterverse game environment.
 
-For downstream-only boot on a credentialed cloud agent: set `HERMES_AUTO_SURGICAL_LAND=0` only (`HERMES_AUTO_DOWNSTREAM=1` default). Since **#36**, stall run auto-pins when unset. Since **#44**, also defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` (parity with stall launcher). Since **#47** (2026-08-27): bare `curl | bash` downstream applies the same stall defaults when run ID matches or is auto-pinned. Since **#52**: stall recovery posts two `DISPATCH-NOW` passes (~90s) so SLA-stale CLAIMs reopen after fail. Since **#59**: fail-closed if Linear key missing + inventory wait (~3 min). Since **#62**: Right-click → Open wording in downstream preflight + stall `.command` header.
+For downstream-only boot on a credentialed cloud agent: set `HERMES_AUTO_SURGICAL_LAND=0` only (`HERMES_AUTO_DOWNSTREAM=1` default). Since **#36**, stall run auto-pins when unset. Since **#44**, also defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` (parity with stall launcher). Since **#47** (2026-08-27): bare `curl | bash` downstream applies the same stall defaults when run ID matches or is auto-pinned. Since **#52**: stall recovery posts two `DISPATCH-NOW` passes (~90s) so SLA-stale CLAIMs reopen after fail. Since **#59**: fail-closed if Linear key missing + inventory wait (~3 min). Since **#62**: Right-click → Open wording in downstream preflight + stall `.command` header. Since **#65**: STALL.command fail-fast LINEAR preflight before SSH.
 
 `hermes-dispatcher-downstream.sh` fail-fast preflights missing secrets / wrong repo in <1s (`60cf813`) — see [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md).
 
