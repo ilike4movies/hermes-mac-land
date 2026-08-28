@@ -70,11 +70,11 @@ chmod +x "$0" 2>/dev/null || true
 SCRIPT="/tmp/hermes-dispatcher-downstream-fetched-$$.sh"
 rm -f "$SCRIPT"
 FETCHED=""
-# Prefer known-good tip commit (raw CDN for main can lag); accept self-healing entrypoint (#118+)
-DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-dc1980b03069724b5fa96724a92fb9d348ecd1dd}"
+# Prefer known-good tip commit (raw CDN for main can lag); prefer #120 pin-fallback entrypoint (CDN lag safe)
+DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-a657c617857f2ff5ffd3abc7d9c794f5e9959752}"
 _is_good_downstream() {
   local f="$1"
-  # Self-healing curl|bash / ONE-SHOT entrypoint (tip #118+)
+  # Self-healing curl|bash / ONE-SHOT entrypoint (tip #118+#120)
   if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
      && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
      && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null; then

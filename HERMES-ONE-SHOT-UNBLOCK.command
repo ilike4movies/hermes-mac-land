@@ -191,8 +191,8 @@ _run_stall() {
   rm -f "$SCRIPT"
   local FETCHED=""
   local url
-  # Prefer known-good tip commit (raw CDN for main can lag); accept self-healing entrypoint (#118+)
-  local DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-dc1980b03069724b5fa96724a92fb9d348ecd1dd}"
+  # Prefer known-good tip commit (raw CDN for main can lag); prefer #120 pin-fallback entrypoint (CDN lag safe)
+  local DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-a657c617857f2ff5ffd3abc7d9c794f5e9959752}"
   _is_good_downstream() {
     local f="$1"
     if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
