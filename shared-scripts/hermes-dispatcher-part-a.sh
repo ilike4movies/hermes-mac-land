@@ -115,6 +115,17 @@ _has_linear_key() {
   return 1
 }
 
+_ts_running() {
+  command -v tailscale >/dev/null 2>&1 || return 1
+  local st
+  st="$(tailscale status --json 2>/dev/null | python3 -c 'import json,sys
+try:
+  print(json.load(sys.stdin).get("BackendState") or "")
+except Exception:
+  print("")' 2>/dev/null || true)"
+  [[ "$st" == "Running" ]]
+}
+
 _preflight_env() {
   local reason=""
   local oot=0
@@ -122,8 +133,8 @@ _preflight_env() {
     oot=1
   fi
   # Fail-fast only when the credentialed path is impossible.
-  # Ooterverse COMPOSER_REPO_URL alone must NOT block: this override pod can still
-  # reach .11 after Tailscale approve + HERMES_HOST_SSH_PRIVATE_KEY (wait-login path).
+  # Ooterverse COMPOSER_REPO_URL alone must NOT block once Tailscale is Running
+  # (or TS_AUTHKEY) AND host SSH key is present — wait-login path on this override pod.
   if [[ -z "${TS_AUTHKEY:-}" ]] && ! _has_ssh_key; then
     if [[ "$oot" -eq 1 ]]; then
       reason="wrong_repo=Ooterverse + missing_secrets=TS_AUTHKEY+HERMES_HOST_SSH_PRIVATE_KEY"
@@ -133,7 +144,11 @@ _preflight_env() {
   elif [[ -z "${TS_AUTHKEY:-}" ]] && ! command -v tailscale >/dev/null 2>&1; then
     reason="missing_tailscale=TS_AUTHKEY unset and tailscale not installed"
   elif [[ "$oot" -eq 1 ]]; then
-    echo "WARN preflight: COMPOSER_REPO_URL is Ooterverse; credentials present — allowing downstream" >&2
+    if [[ -n "${TS_AUTHKEY:-}" ]] || _ts_running; then
+      echo "WARN preflight: COMPOSER_REPO_URL is Ooterverse; mesh+creds present — allowing downstream" >&2
+    else
+      reason="wrong_repo=Ooterverse + Tailscale not Running (approve AuthURL first, then SSH key)"
+    fi
   fi
   if [[ -n "$reason" ]]; then
     echo "FAIL preflight: $reason" >&2
