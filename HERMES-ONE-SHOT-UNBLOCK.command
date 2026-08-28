@@ -1,8 +1,9 @@
 #!/bin/bash
 # HERMES-ONE-SHOT-UNBLOCK.command — Right-click → Open on Mac Hermes (not double-click)
 # Single click critical path for stalled canary recovery:
-#   0) Open Web UI workflow create + Raw paste tabs early (parallel with STALL)
-#   0b) Install 10-min Downstream nag LaunchAgent (until issue #1 shows Downstream DONE)
+#   0) Open Tailscale admin + tip CURRENT_AUTHURL (approve cloud waiter) early
+#   0b) Open Web UI workflow create + Raw paste tabs early (parallel with STALL)
+#   0c) Install 10-min Downstream nag LaunchAgent (until issue #1 shows Downstream DONE)
 #   1) Try STALL downstream (SSH/Tailscale to .11) — fastest when mesh works
 #   2) On STALL fail → auto ENABLE-DOWNSTREAM-ACTIONS (install workflow + gh workflow run)
 # Requires ~/.hermes/.env LINEAR_API_KEY. Prefer this over picking between STALL vs ENABLE.
@@ -58,6 +59,44 @@ _preflight_mac_secrets() {
   fi
 }
 
+
+_open_tailscale_approve_early() {
+  # Open Tailscale admin (pending machines) + tip CURRENT_AUTHURL so Mac ONE-SHOT
+  # can also approve the cloud waiter node as a parallel path.
+  # Opt out: HERMES_ONE_SHOT_OPEN_TAILSCALE=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_TAILSCALE:-1}" != "1" ]]; then
+    echo "SKIP early Tailscale approve tabs (HERMES_ONE_SHOT_OPEN_TAILSCALE=0)"
+    return 0
+  fi
+  local ADMIN="https://login.tailscale.com/admin/machines"
+  local AUTH=""
+  local url f="/tmp/hermes-current-authurl-$$.txt"
+  echo ""
+  echo "=== Parallel: Tailscale approve (cloud waiter / pending machines) ==="
+  echo "Admin (approve pending): $ADMIN"
+  rm -f "$f"
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/CURRENT_AUTHURL.md" \
+    "https://raw.githubusercontent.com/${REPO}/main/CURRENT_AUTHURL.md"
+  do
+    if curl -fsSL "$url" -o "$f" 2>/dev/null; then
+      AUTH=$(grep -Eo 'https://login\.tailscale\.com/a/[A-Za-z0-9]+' "$f" | head -1 || true)
+      [[ -n "$AUTH" ]] && break
+    fi
+    rm -f "$f"
+  done
+  rm -f "$f"
+  if [[ -n "$AUTH" ]]; then
+    echo "Live AuthURL: $AUTH"
+    osascript -e 'display notification "Approve Tailscale pending + AuthURL while STALL runs" with title "Hermes ONE-SHOT Tailscale" sound name "Glass"' 2>/dev/null || true
+    open "$ADMIN" 2>/dev/null || true
+    open "$AUTH" 2>/dev/null || true
+  else
+    echo "WARN no tip CURRENT_AUTHURL.md — opening admin machines only"
+    osascript -e 'display notification "Approve pending Tailscale machines while STALL runs" with title "Hermes ONE-SHOT Tailscale" sound name "Glass"' 2>/dev/null || true
+    open "$ADMIN" 2>/dev/null || true
+  fi
+}
 
 _open_webui_workflow_early() {
   # Open create-file + Raw paste tabs while Phase 1 STALL runs so the operator can
@@ -230,6 +269,7 @@ xattr -d com.apple.quarantine "$0" 2>/dev/null || true
 chmod +x "$0" 2>/dev/null || true
 _preflight_mac_secrets
 
+_open_tailscale_approve_early
 _open_webui_workflow_early
 _install_downstream_nag
 
