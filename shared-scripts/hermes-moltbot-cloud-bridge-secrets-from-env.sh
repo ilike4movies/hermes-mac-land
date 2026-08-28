@@ -4,7 +4,7 @@
 set -euo pipefail
 DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 ENV_OUT="$DIR/secrets.env"
-SECRET_DIRS=( /tmp/cursor-secrets "$HOME/.cursor/secrets" /opt/cursor/secrets )
+SECRET_DIRS=( /tmp/cursor/cloud-agent-secrets /tmp/cursor-secrets "$HOME/.cursor/secrets" /opt/cursor/secrets )
 mkdir -p "$DIR"
 changed=0
 : > "$ENV_OUT.tmp"
