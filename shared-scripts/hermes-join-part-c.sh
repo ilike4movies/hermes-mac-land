@@ -52,6 +52,28 @@ _ensure_single_tailscale_up_wait() {
       if (( _remain <= lead )); then _trigger=1; fi
       # Finite→finite upgrades may also use the ~45m refresh age (legacy #130).
       if (( desired_up_timeout > 0 )) && (( age_s >= refresh )); then _trigger=1; fi
+      # Tip #132: finite→forever soft upgrade remints AuthURL (proven tip#130
+      # 80d5b860→184ff33a). While status still advertises a live AuthURL, hold it —
+      # do not kill+re-up early. Start forever only after AuthURL is gone / FORCE.
+      if (( _trigger == 1 )) && (( desired_up_timeout == 0 )) \
+        && [[ "${HERMES_AUTHURL_FORCE_REFRESH:-0}" != "1" ]]; then
+        _live_for_upgrade=""
+        _live_for_upgrade="$(sudo tailscale --socket="${SOCK:-/var/run/tailscale/tailscaled.sock}" status --json 2>/dev/null | python3 -c 'import json,sys
+try:
+  d=json.load(sys.stdin)
+  print((d.get("AuthURL") or "").strip())
+except Exception:
+  print("")' 2>/dev/null || true)"
+        if [[ -n "${_live_for_upgrade}" ]]; then
+          local every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}" stamp="$SCRIPT_DIR/LAST_UP_OK_ECHO.at" now
+          now="$(date +%s)"
+          if [[ ! -f "$stamp" ]] || (( now - $(cat "$stamp" 2>/dev/null || echo 0) >= every )); then
+            echo "OK tip#132 skip finite→forever upgrade — live AuthURL still advertised (timeout=${_up_timeout}s remain_s=${_remain}; hold until AuthURL gone)"
+            echo "$now" >"$stamp"
+          fi
+          _trigger=0
+        fi
+      fi
       if (( _trigger == 1 )); then
         _do_restart=1
         _upgrade_short=1
@@ -59,7 +81,7 @@ _ensure_single_tailscale_up_wait() {
         echo "upgrade=$(date -u +%FT%TZ) from=${_up_timeout} to=${desired_up_timeout} age_s=${age_s} remain_s=${_remain}" \
           >>"${SCRIPT_DIR}/LAST_UP_TIMEOUT_UPGRADE.txt" 2>/dev/null || true
         # Soft remint may keep or change AuthURL — flag MCP surface so agents re-check.
-        echo "tip131_upgrade=$(date -u +%FT%TZ) from=${_up_timeout} to=${desired_up_timeout}" \
+        echo "tip132_upgrade=$(date -u +%FT%TZ) from=${_up_timeout} to=${desired_up_timeout}" \
           >"${SCRIPT_DIR}/AUTHURL_MCP_SURFACE_NEEDED.txt" 2>/dev/null || true
       fi
     fi
@@ -153,7 +175,7 @@ PY
       now="$(date +%s)"
       if [[ ! -f "$stamp" ]] || (( now - $(cat "$stamp" 2>/dev/null || echo 0) >= every )); then
         if [[ -n "${_up_timeout}" ]] && { (( desired_up_timeout == 0 && _up_timeout > 0 )) || (( desired_up_timeout > 0 && _up_timeout < desired_up_timeout )); }; then
-          echo "OK tip#130/#131 short up still young (timeout=${_up_timeout}s desired=${desired_up_timeout}s age_s=${age_s:-?} remain_s=$((_up_timeout - age_s)); upgrade near expiry; 0=forever)"
+          echo "OK tip#130/#131/#132 short up still young (timeout=${_up_timeout}s desired=${desired_up_timeout}s age_s=${age_s:-?} remain_s=$((_up_timeout - age_s)); forever-upgrade only after AuthURL gone; 0=forever)"
         fi
         echo "OK tailscale up wait already running (pidfile=$(cat "$TS_UP_PIDFILE" 2>/dev/null || echo none) age_s=${age_s:-?})"
         echo "$now" >"$stamp"
