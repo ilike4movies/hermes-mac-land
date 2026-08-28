@@ -2,7 +2,7 @@
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T01:57Z
+**Updated:** 2026-08-28T02:05Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -32,17 +32,16 @@
 
 ### Enable GitHub Actions path (one-time, ~2 min)
 
-API tokens often cannot write `.github/workflows/` (missing `workflows` scope). Do this in the GitHub UI:
+API tokens often cannot write `.github/workflows/` (missing `workflows` scope). Prefer Mac local `gh`:
 
-1. **Copy workflow into place:** open [`ci/downstream-stall.yml`](ci/downstream-stall.yml) → create `.github/workflows/downstream-stall.yml` with the same contents (Add file on `main`).
-2. **Add Action secrets** (Settings → Secrets and variables → Actions):
-   - `TS_AUTHKEY`
-   - `HERMES_HOST_SSH_PRIVATE_KEY`
-   - `LINEAR_API_KEY`
-3. **Run:** Actions → **Downstream stall recovery** → Run workflow  
-   or: `gh workflow run downstream-stall.yml --repo ilike4movies/hermes-mac-land`
+1. **Right-click → Open** [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command)
+   - Installs `ci/downstream-stall.yml` → `.github/workflows/downstream-stall.yml` on main
+   - Runs `gh workflow run downstream-stall.yml`
+   - If scope error: `gh auth refresh -h github.com -s workflow` then re-open
+2. **Action secrets** (if not already set): Settings → Secrets and variables → Actions → `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`
+3. Or web UI: copy [`ci/downstream-stall.yml`](ci/downstream-stall.yml) → `.github/workflows/downstream-stall.yml` on main, then Run workflow
 
-Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1). Mac path remains valid until this is enabled.
+Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1). Mac STALL.command remains valid (and is faster tonight if Tailscale+SSH already work).
 
 ## Linear issue UUIDs (MCP / API comment posting)
 
@@ -62,7 +61,9 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 | Contract / inventory / Downstream DONE | **MISSING** |
 | False Done @ 00:17Z | **REVERTED** — still open |
 
-**Fastest:** Mac Right-click → Open STALL.command **or** enable Actions path above (one-time), then `gh workflow run downstream-stall.yml`.
+**Fastest tonight:** Mac Right-click → Open STALL.command.
+
+**Durable:** Mac Right-click → Open ENABLE-DOWNSTREAM-ACTIONS.command (or web UI enable), then watch Actions + issue #1.
 
 Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait (~3 min)**. Runtime ~3–5 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
@@ -72,6 +73,6 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — #59–#65 (+ CI downstream draft) |
+| 6 | Operator docs | **DONE** — #59–#68 (+ Mac enable-Actions launcher) |
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
