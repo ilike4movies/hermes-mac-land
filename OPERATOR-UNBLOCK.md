@@ -2,7 +2,7 @@
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T01:02Z
+**Updated:** 2026-08-28T01:15Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -26,7 +26,7 @@
 **Do not spawn Hermes subagents from Ooterverse-Saturns-Quest** — they inherit the wrong repo/env and cannot receive `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` at boot.
 
 **Only these paths work for live gates:**
-1. **Mac Hermes** — **Right-click → Open** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) (not double-click — Gatekeeper)
+1. **Mac Hermes** — **Right-click → Open** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) (not double-click — Gatekeeper). Post-#65: loads `~/.hermes/.env` and **fail-fast** if `LINEAR_API_KEY` missing.
 2. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11**, secrets at boot (`TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`)
 
 ## Linear issue UUIDs (MCP / API comment posting)
@@ -57,6 +57,6 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — #59–#63 (fail-closed, README/issue #1, OPERATOR-UNBLOCK, preflight Right-click, README #62 note) |
+| 6 | Operator docs | **DONE** — #59–#65 (fail-closed, README/issue #1, OPERATOR-UNBLOCK, preflight Right-click, README #62 note, stall LINEAR preflight) |
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
