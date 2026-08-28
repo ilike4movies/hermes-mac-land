@@ -59,7 +59,7 @@ _host_ready() {
 _beacon_secrets_ready_once() {
   local mark="$DIR/secrets-ready.beacon"
   [[ -f "$mark" ]] && return 0
-  local authurl=""
+  local authurl="" posted=0
   authurl="$(head -1 "$DIR/CURRENT_AUTHURL.txt" 2>/dev/null || true)"
   local body
   body=$(cat <<EOF
@@ -75,12 +75,77 @@ ${authurl:-see tip CURRENT_AUTHURL.md}
 Or Mac ONE-SHOT from tip. Expect \`## Downstream STARTED\` → \`DONE\` next.
 EOF
 )
+  # GitHub #1 (gh → token curl). Often 403 on Ooterverse pods.
   if command -v gh >/dev/null 2>&1; then
-    gh issue comment 1 --repo ilike4movies/hermes-mac-land --body "$body" >/dev/null 2>&1 || true
+    if gh issue comment 1 --repo ilike4movies/hermes-mac-land --body "$body" >/dev/null 2>&1; then
+      posted=1
+    fi
+  fi
+  if [[ "$posted" != "1" ]]; then
+    local tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+    if [[ -n "$tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+      local payload
+      payload="$(SECRETS_BEACON_BODY="$body" python3 -c 'import json,os; print(json.dumps({"body": os.environ["SECRETS_BEACON_BODY"]}))')"
+      if curl -fsS -X POST \
+        -H "Authorization: Bearer ${tok}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "Content-Type: application/json" \
+        --data "$payload" \
+        "https://api.github.com/repos/ilike4movies/hermes-mac-land/issues/1/comments" >/dev/null 2>&1; then
+        posted=1
+      fi
+    fi
+  fi
+  # Linear RAL-823 when gh unavailable — secrets imply LINEAR_API_KEY may be present.
+  if [[ "$posted" != "1" && "${HERMES_SECRETS_READY_LINEAR_BEACON:-1}" == "1" ]]; then
+    local lkey="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
+    local linear_ticket="${HERMES_SECRETS_READY_LINEAR_ISSUE:-RAL-823}"
+    if [[ -n "$lkey" ]] && command -v python3 >/dev/null 2>&1; then
+      if LINEAR_KEY="$lkey" LINEAR_TICKET="$linear_ticket" SECRETS_BEACON_BODY="$body" python3 - <<'PY' >/dev/null 2>&1
+import json, os, urllib.request
+key = os.environ["LINEAR_KEY"]
+ticket = os.environ["LINEAR_TICKET"]
+body = os.environ["SECRETS_BEACON_BODY"]
+q1 = {
+    "query": "query($q:String!){issueSearch(query:$q,first:1){nodes{id identifier}}}",
+    "variables": {"q": ticket},
+}
+req = urllib.request.Request(
+    "https://api.linear.app/graphql",
+    data=json.dumps(q1).encode(),
+    headers={"Content-Type": "application/json", "Authorization": key},
+)
+with urllib.request.urlopen(req, timeout=8) as r:
+    nodes = (json.load(r).get("data") or {}).get("issueSearch", {}).get("nodes") or []
+if not nodes:
+    raise SystemExit(1)
+iid = nodes[0]["id"]
+q2 = {
+    "query": "mutation($id:String!,$b:String!){commentCreate(input:{issueId:$id,body:$b}){success}}",
+    "variables": {"id": iid, "b": body},
+}
+req2 = urllib.request.Request(
+    "https://api.linear.app/graphql",
+    data=json.dumps(q2).encode(),
+    headers={"Content-Type": "application/json", "Authorization": key},
+)
+urllib.request.urlopen(req2, timeout=8).read()
+print("ok")
+PY
+      then
+        posted=1
+        echo "$(date -u +%FT%TZ) watcher: secrets-ready Linear beacon → ${linear_ticket}" | tee -a "$DIR/wait-login.log"
+      fi
+    fi
   fi
   date -u +%FT%TZ > "$mark"
-  echo "$(date -u +%FT%TZ) watcher: posted secrets-ready beacon" | tee -a "$DIR/wait-login.log"
+  if [[ "$posted" == "1" ]]; then
+    echo "$(date -u +%FT%TZ) watcher: posted secrets-ready beacon" | tee -a "$DIR/wait-login.log"
+  else
+    echo "$(date -u +%FT%TZ) watcher: secrets-ready beacon skipped (gh/token/Linear write unavailable)" | tee -a "$DIR/wait-login.log"
+  fi
 }
+
 
 while true; do
   st=$(sudo tailscale --socket="$SOCK" status --json 2>/dev/null | python3 -c 'import json,sys
