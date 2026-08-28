@@ -25,6 +25,7 @@ _fetch() {
   return 1
 }
 _fetch shared-scripts/hermes-moltbot-cloud-bridge-secrets-from-env.sh bridge-secrets-from-env.sh
+_fetch shared-scripts/hermes-cloud-secrets-bridge-poller.sh hermes-cloud-secrets-bridge-poller.sh
 _fetch shared-scripts/hermes-moltbot-cloud-wait-join-then-apply.sh wait-join-then-apply.sh
 _fetch shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh hermes-moltbot-cloud-apply-install-via-ssh.sh
 _fetch shared-scripts/hermes-moltbot-land-beacon.sh hermes-moltbot-land-beacon.sh
@@ -46,6 +47,14 @@ if ! pgrep -f 'hermes-cloud-wait-login-supervisor.sh' >/dev/null 2>&1; then
   echo "OK started wait-login supervisor pid=$(cat "$DIR/supervisor.pid") log=$DIR/supervisor.log"
 else
   echo "OK wait-login supervisor already running"
+fi
+if ! pgrep -f 'hermes-cloud-secrets-bridge-poller.sh' >/dev/null 2>&1; then
+  if [[ -x "$DIR/hermes-cloud-secrets-bridge-poller.sh" ]]; then
+    nohup bash "$DIR/hermes-cloud-secrets-bridge-poller.sh" >/dev/null 2>&1 &
+    echo "OK started secrets-bridge-poller"
+  fi
+else
+  echo "OK secrets-bridge-poller already running"
 fi
 echo "Inject TS_AUTHKEY / SSH keys via Cursor env secrets; waiters reload every 15s."
 echo "If NeedsLogin: approve URL from $DIR/CURRENT_AUTHURL.txt or tailscale status"
