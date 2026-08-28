@@ -164,11 +164,22 @@ except Exception:
       sleep 30
       continue
     fi
-    echo "$(date -u +%FT%TZ) watcher: Running + host SSH — launching downstream" | tee -a "$DIR/wait-login.log"
-    bash "$DIR/hermes-dispatcher-downstream.sh" >>"$DIR/wait-login.log" 2>&1 || true
-    date -u +%FT%TZ > "$marker"
-    echo "$(date -u +%FT%TZ) watcher: downstream finished" | tee -a "$DIR/wait-login.log"
-    exit 0
+    echo "$(date -u +%FT%TZ) watcher: Running + host SSH — tip#133 single-flight downstream" | tee -a "$DIR/wait-login.log"
+    once="$DIR/hermes-cloud-run-downstream-once.sh"
+    [[ -x "$once" ]] || once="$(dirname "$0")/hermes-cloud-run-downstream-once.sh"
+    if [[ -x "$once" ]]; then
+      export HERMES_CLOUD_APPLY_DIR="$DIR"
+      if bash "$once"; then
+        echo "$(date -u +%FT%TZ) watcher: tip#133 downstream SUCCESS" | tee -a "$DIR/wait-login.log"
+        exit 0
+      fi
+      echo "$(date -u +%FT%TZ) watcher: tip#133 downstream FAIL — retry (no success marker)" | tee -a "$DIR/wait-login.log"
+      sleep 60
+      continue
+    fi
+    echo "$(date -u +%FT%TZ) watcher: ERROR missing hermes-cloud-run-downstream-once.sh" | tee -a "$DIR/wait-login.log"
+    sleep 60
+    continue
   fi
   sleep 30
 done

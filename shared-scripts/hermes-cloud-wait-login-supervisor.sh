@@ -134,21 +134,23 @@ while true; do
         sleep 30
         continue
       fi
-      echo "$(date -u +%FT%TZ) land disabled — host SSH ready; attempting dispatcher downstream"
-      ds="$DIR/hermes-dispatcher-downstream.sh"
-      [[ -x "$ds" ]] || ds="$(dirname "$0")/hermes-dispatcher-downstream.sh"
-      if [[ -x "$ds" ]]; then
-        export HERMES_RUN_ID="${HERMES_RUN_ID:-20260826T232521106484Z-2954673}"
-        export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
-        export HERMES_WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
-        export HERMES_STALL_ZOMBIE="${HERMES_STALL_ZOMBIE:-1}"
-        export HERMES_STALL_ZOMBIE_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
-        bash "$ds" >>"$DIR/wait-login.log" 2>&1 || true
-        echo "$(date -u +%FT%TZ) downstream attempt finished rc=$?"
+      echo "$(date -u +%FT%TZ) land disabled — host SSH ready; tip#133 single-flight downstream"
+      once="$DIR/hermes-cloud-run-downstream-once.sh"
+      [[ -x "$once" ]] || once="$(dirname "$0")/hermes-cloud-run-downstream-once.sh"
+      if [[ -x "$once" ]]; then
+        export HERMES_CLOUD_APPLY_DIR="$DIR"
+        if bash "$once"; then
+          echo "$(date -u +%FT%TZ) tip#133 downstream SUCCESS — supervisor exiting"
+          exit 0
+        fi
+        echo "$(date -u +%FT%TZ) tip#133 downstream FAIL — will retry (not exiting)"
+        sleep 60
+        continue
       else
-        echo "$(date -u +%FT%TZ) WARN: hermes-dispatcher-downstream.sh missing"
+        echo "$(date -u +%FT%TZ) WARN: hermes-cloud-run-downstream-once.sh missing"
+        sleep 60
+        continue
       fi
-      exit 0
     fi
     echo "$(date -u +%FT%TZ) OK Running — landing tip"
     bash "$DIR/hermes-moltbot-cloud-tailscale-join-and-apply.sh" --already-up >>"$DIR/wait-login.log" 2>&1 || true

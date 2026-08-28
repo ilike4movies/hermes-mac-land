@@ -329,19 +329,14 @@ if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
     echo "ERROR: cannot run downstream without HERMES_HOST_SSH_PRIVATE_KEY" >&2
     exit 1
   }
-  ds="$SCRIPT_DIR/hermes-dispatcher-downstream.sh"
-  if [[ ! -x "$ds" ]]; then
-    echo "ERROR: missing $ds" >&2
+  # Tip #133: single-flight downstream (flock + success-only marker).
+  once="$SCRIPT_DIR/hermes-cloud-run-downstream-once.sh"
+  if [[ ! -x "$once" ]]; then
+    echo "ERROR: missing $once" >&2
     exit 1
   fi
-  export HERMES_RUN_ID="${HERMES_RUN_ID:-20260826T232521106484Z-2954673}"
-  export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
-  export HERMES_WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
-  export HERMES_STALL_ZOMBIE="${HERMES_STALL_ZOMBIE:-1}"
-  export HERMES_STALL_ZOMBIE_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
-  # Ooterverse override env must not poison downstream preflight once TS+SSH ready.
-  export COMPOSER_REPO_URL="${HERMES_DOWNSTREAM_COMPOSER_REPO_URL:-github.com/ilike4movies/hermes-mac-land}"
-  bash "$ds"
+  export HERMES_CLOUD_APPLY_DIR="${HERMES_CLOUD_APPLY_DIR:-$SCRIPT_DIR}"
+  bash "$once"
   echo "OK cloud-tailscale-join-and-apply finished (downstream-only)"
   exit 0
 fi
