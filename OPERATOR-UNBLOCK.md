@@ -13,7 +13,7 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T11:00Z
+**Updated:** 2026-08-28T11:27Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -39,7 +39,7 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 **Paths that work for live gates:**
 1. **Mac Hermes ONE-SHOT (preferred)** — **Right-click → Open** [`HERMES-ONE-SHOT-UNBLOCK.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command) (not double-click — Gatekeeper). Tries STALL downstream first; on fail auto-runs ENABLE-DOWNSTREAM-ACTIONS. Needs `LINEAR_API_KEY` in `~/.hermes/.env`.
 
-ONE-SHOT opens the GitHub Web UI workflow create + Raw paste tabs **in parallel with Phase 1 STALL** so Actions can be enabled while `.11` work runs (`HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0` to skip). Inventory wait default is **900s** for ultra-stale canaries.
+ONE-SHOT opens the GitHub Web UI workflow create + Raw paste tabs **in parallel with Phase 1 STALL** so Actions can be enabled while `.11` work runs (`HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0` to skip). It also **auto-installs** the 10-min Downstream nag LaunchAgent (`HERMES_ONE_SHOT_INSTALL_NAG=0` to skip) so the Mac keeps reminding until issue #1 shows `## Downstream DONE`. Inventory wait default is **900s** for ultra-stale canaries.
 
 2. **Mac Terminal paste (same ONE-SHOT)** — when Finder Right-click is awkward:
    ```bash
@@ -48,7 +48,7 @@ ONE-SHOT opens the GitHub Web UI workflow create + Raw paste tabs **in parallel 
      ; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
    ```
 3. **Mac STALL only** — [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) when Tailscale+SSH already known-good.
-4. **Mac downstream nag (optional)** — **Right-click → Open** [`HERMES-INSTALL-DOWNSTREAM-NAG.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-INSTALL-DOWNSTREAM-NAG.command). LaunchAgent every 10 min: checks [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) for `## Downstream DONE`; if missing, macOS notification + opens issue #1 / ONE-SHOT / Web UI, plus a confirm dialog to download+open ONE-SHOT (never unattended). Auto-unloads on DONE. Uninstall: `launchctl unload ~/Library/LaunchAgents/com.hermes.downstream-nag.plist` then remove the plist and `~/.hermes/bin/hermes-downstream-nag.sh`.
+4. **Mac downstream nag** — installed automatically by ONE-SHOT (above). Standalone: **Right-click → Open** [`HERMES-INSTALL-DOWNSTREAM-NAG.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-INSTALL-DOWNSTREAM-NAG.command). LaunchAgent every 10 min: checks [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) for `## Downstream DONE`; if missing, macOS notification + opens issue #1 / ONE-SHOT / Web UI, plus a confirm dialog to download+open ONE-SHOT (never unattended). Auto-unloads on DONE. Uninstall: `launchctl unload ~/Library/LaunchAgents/com.hermes.downstream-nag.plist` then remove the plist and `~/.hermes/bin/hermes-downstream-nag.sh`.
 5. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11**, secrets at boot (`TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`)
 6. **GitHub Actions** (durable; once enabled) — see [docs/CI-DOWNSTREAM-STALL.md](docs/CI-DOWNSTREAM-STALL.md) / [`ci/downstream-stall.yml`](ci/downstream-stall.yml)
 
