@@ -187,7 +187,7 @@ mkdir -p "$CANARY_ROOT/evidence" /opt/moltbot/data/cos-hermes/deploy-backups
 pending
 # SEED — stale archaeology (NOT live inventory). Hermes must REPLACE this file.
 # First line stays `pending` until live host verify so inventory-wait cannot false-pass.
-# Sources: RAL-456 (2026-07-19), Notion Episode Production Process (2026-02), RAL-70.
+# Sources: RAL-456 (2026-07-19), Notion Episode Queue live query (2026-08-28), Episode Production Process, RAL-70.
 #
 # Expected workspace roots to probe on .11 (confirm; do not assume):
 # - /opt/moltbot/workspace-bullpenbedtime/ (or Hermes COS home equivalent)
@@ -197,16 +197,29 @@ pending
 # - work/epXX/ for EP04–EP14: script, narration.wav, captions.srt, images/, video.mp4, metadata.json
 # - Remotion: remotion-server / HeadlessChannel; Whisper captions historically CUDA-OOM on 8GB 2080
 #
-## EP map seed (RAL-456 readback — VERIFY LIVE)
-| EP | Seed note (2026-07-19) | Verify on host |
-|----|------------------------|----------------|
-| EP01 | Published historically (YouTube) | confirm assets + Studio URL |
-| EP02–EP03 | Channel had 2 public videos @ review | confirm which IDs |
-| EP04 | script+TTS+captions present; only 1 image; NO completed render | map work/ep04 |
-| EP05–EP14 | Held at Content Portal (RAL-70); scripts/audio/images claimed generated | per-ep completeness |
+## EP map seed (RAL-456 + Notion Episode Queue @ 2026-08-28 — VERIFY LIVE ON .11)
+# Notion IDs use BP0NN; host dirs historically work/epNN (EP04↔BP004).
+| EP/BP | Notion Status @ 2026-08-28 | Title | Seed note | Verify on host |
+|-------|----------------------------|-------|-----------|----------------|
+| EP01/BP001 | PUBLISHED | Ten-Cent Beer Night | historical YouTube | assets + Studio URL |
+| EP02/BP002 | PUBLISHED | Disco Demolition Night | historical YouTube | assets + Studio URL |
+| EP03/BP003 | METADATA_READY | The Pine Tar Game | Notion files null | work/ep03 completeness |
+| EP04/BP004 | SCRIPTED | The Ballpark That Flooded | RAL-456: script+TTS+captions; 1 image; NO render | work/ep04 + Drive script folder |
+| EP05/BP005 | SCRIPTED | The LSD No-Hitter | portal-held historically | work/ep05 |
+| EP06/BP006 | SCRIPTED | The 33-Inning Game | portal-held historically | work/ep06 |
+| EP07/BP007 | SCRIPTED | Babe Ruth's Called Shot | portal-held historically | work/ep07 |
+| EP08/BP008 | SCRIPTED | Morganna the Kissing Bandit | portal-held historically | work/ep08 |
+| EP09/BP009 | SCRIPTED | The Black Sox Scandal | portal-held historically | work/ep09 |
+| EP10/BP010 | SCRIPTED | The Merkle Boner | portal-held historically | work/ep10 |
+| EP11/BP011 | SCRIPTED | Randy Johnson and the Bird | portal-held historically | work/ep11 |
+| EP12/BP012 | SCRIPTED | Bill Veeck's Exploding Scoreboard | portal-held historically | work/ep12 |
+| EP13/BP013 | SCRIPTED | The Bartman Incident | portal-held historically | work/ep13 |
+| EP14/BP014 | SCRIPTED | Curse of the Billy Goat | portal-held historically | work/ep14 |
 #
-# Channel seed: @bullpenbedtime; selfDeclaredMadeForKids=false; portal :9090 DEAD — do not restart.
-# Replace this whole file with dated live inventory including hashes/paths. EP04 must appear.
+# Notion Script File links (BP004–BP014) point at shared Drive folder
+# https://drive.google.com/drive/folders/1jjHMewYin1gCeFXzjTBKQV1sFRuZvC95 — Narration/Final/Metadata null in Notion.
+# Channel seed: @bullpenbedtime; portal :9090 DEAD — do not restart.
+# Replace this whole file with dated LIVE inventory (hashes/paths). EP04 must appear. Seed ≠ Done.
 SEED
 printf 'pre_sha=%s\n' "\$(sha256sum "\$REG" | awk '{print \$1}')"
 REMOTE
