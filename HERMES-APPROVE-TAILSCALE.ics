@@ -1,16 +1,16 @@
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Hermes//AuthURL//EN
+PRODID:-//Hermes//AuthURL Approve//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 BEGIN:VEVENT
-UID:hermes-authurl-7a69b1a0-20260828T211932Z@hermes
-DTSTAMP:20260828T211932Z
-DTSTART:20260828T211932Z
-DTEND:20260828T220432Z
-SUMMARY:ACTION: Approve Hermes Tailscale 7a69b1a0 NOW
-DESCRIPTION:Approve https://login.tailscale.com/a/7a69b1a01e964 — ignore retired 1f410a53/1bcf51f9/…. Soft #123/#124 refresh minted new URL. Prefer Mac ONE-SHOT tip #124. Success: Downstream DONE + inventory. No Slack rockets.
-URL:https://login.tailscale.com/a/7a69b1a01e964
+UID:hermes-authurl-80d5b860@20260828T221909Z
+DTSTAMP:20260828T221909Z
+DTSTART:20260828T221909Z
+DTEND:20260828T230409Z
+SUMMARY:ACTION: Approve Hermes Tailscale 80d5b860
+DESCRIPTION:Approve NOW: https://login.tailscale.com/a/80d5b86015c32\nMac ONE-SHOT from hermes-mac-land tip if secrets unset.\nRetired: 7a69b1a0
+URL:https://login.tailscale.com/a/80d5b86015c32
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR
