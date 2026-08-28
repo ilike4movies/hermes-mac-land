@@ -80,6 +80,13 @@ if [[ "${HERMES_NAG_OPEN_TAILSCALE:-1}" == "1" ]]; then
   if [[ -n "$auth" ]]; then
     open "$auth" 2>/dev/null || true
   fi
+  # Calendar wake ICS (tip). Opt out: HERMES_NAG_OPEN_ICS=0
+  if [[ "${HERMES_NAG_OPEN_ICS:-1}" == "1" ]]; then
+    ics="${HOME}/Downloads/HERMES-APPROVE-TAILSCALE.ics"
+    if curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/HERMES-APPROVE-TAILSCALE.ics" -o "$ics" 2>/dev/null; then
+      open "$ics" 2>/dev/null || true
+    fi
+  fi
 fi
 # Default: auto download+open ONE-SHOT (attended). Opt out → confirm dialog: HERMES_NAG_AUTO_ONESHOT=0
 if [[ "${HERMES_NAG_AUTO_ONESHOT:-1}" == "1" ]]; then
