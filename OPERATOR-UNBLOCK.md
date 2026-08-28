@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T10:25Z
+**Updated:** 2026-08-27T23:56Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -18,6 +18,7 @@
 | 01:04Z | Cloud subagent `bc-3914e61d` booted on **Ooterverse** (not hermes-mac-land) | Downstream FAILED pre-SSH; use Mac or web-UI LEGACY `.11` agent |
 | 03:49Z | #40 auto-attached to RAL-634 (Done) | Detach if needed; do not re-open RAL-634 for doc-only merges |
 | 04:22Z | Cloud subagent `bc-cf21d38f` spawned from Ooterverse | Skipped downstream to avoid FAILED spam; use Mac or web-UI `hermes-mac-land` + LEGACY `.11` |
+| 23:45Z | OPERATOR UUID table had RAL-799/RAL-820 swapped; RAL-798 missing | Corrected: RAL-798=`52e94e17…`, RAL-799=`0d76e06f…`, RAL-820=`144b087c…` |
 
 ## ⚠️ Ooterverse cloud agents cannot run downstream
 
@@ -37,9 +38,10 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 |--------|------|--------|
 | **RAL-793** | `963472c8-cc84-426a-9ed6-79e08566353a` | In Progress — canary open |
 | **RAL-634** | `1b5a7e86-1d14-456f-b0d1-39a02df243c2` | **Done** — live #103 transition dedupe proof @ 03:35–03:45Z |
+| **RAL-798** | `52e94e17-69e6-4688-a60e-aea25b090ebf` | In Progress — WIP-park **#110 MERGED** `main` @ `a535cb7` / tip `c753da8a`; `.11` apply + runtime canary still required |
+| **RAL-799** | `0d76e06f-bf49-4587-a733-1b6f397f1392` | **Done** — GitHub→host apply + drift |
 | **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** — host-land only |
-| **RAL-799** | `52e94e17-69e6-4688-a60e-aea25b090ebf` | Done |
-| **RAL-820** | `0d76e06f-bf49-4587-a733-1b6f397f1392` | Done |
+| **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** — interrupt→executor canary |
 
 **Scripts on main (#27):** downstream + contract-install default `HERMES_RAL793_LINEAR_ISSUE_ID`; RAL-634 verify defaults `HERMES_RAL634_LINEAR_ISSUE_ID`.
 
@@ -49,7 +51,7 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 
 [hermes-mac-land issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) receives machine posts when Mac/credentialed runs execute (land DIAG + downstream STARTED/DONE/FAILED). Cloud agents without SSH can watch this inbox for credentialed-run receipts.
 
-## Live stall — RAL-793 run `2954673` (CLAIMED @ 23:25Z, silent ~10.9h+)
+## Live stall — RAL-793 run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~24h+)
 
 | Item | Status |
 |------|--------|
@@ -60,8 +62,8 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 | RAL-634 verify PASS (downstream) | **NOT RUN** — live proof already Done separately |
 | Ooterverse cloud SSH | **BLOCKED** (no secrets) |
 | Latest downstream attempt | FAILED @ 01:04Z (`bc-3914e61d`, wrong env) |
-| `## Downstream STARTED` / `DONE` | **NO** credentialed success yet |
-| Operator wake | **Gmail ACTION** @ 10:05Z to `ilike4@gmail.com` (`HERMES-DOWNSTREAM-RAL793-STALL.command` attached; msg `1a042b03d5053dae`) |
+| `## Downstream STARTED` / `DONE` | **NO** credentialed success yet (0 real beacons) |
+| Operator wake | **Gmail ACTION** `1a042b03d5053dae` (still UNREAD) + **URGENT** `1a0458a5cef8d952` @ 23:24Z (still UNREAD) — attachment `HERMES-DOWNSTREAM-RAL793-STALL.command` |
 
 ### Fastest unblock (Mac Hermes, Tailscale up)
 
@@ -97,13 +99,14 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | 2 | GitHub→`.11` auto-apply + drift | **DONE** (RAL-799) |
 | 3 | RAL-634 starvation / transition dedupe | **DONE** — moltbot #103 + live enter/suppress @ 03:35–03:45Z |
 | 4 | Miss/idle alarms | **DONE** |
-| 5 | RAL-793 canary + inventory | **OPEN** — sole program blocker |
-| 6 | Operator docs | **Done** (#41 + #42 + #44 + #47–#50; #52 dual-dispatch) |
+| 5 | RAL-793 canary + inventory | **OPEN** — sole program blocker (~24h+ silent CLAIM) |
+| 6 | Operator docs | **Sync** — stall age + UUID table + #110 merge note (this PR) |
 
 ### Source follow-ups (recent)
 
 | PR | Status |
 |----|--------|
+| moltbot [#110](https://github.com/ilike4movies/moltbot/pull/110) | **MERGED** @ `a535cb7` (tip `c753da8a`) — WIP-park material-evidence; **`.11` apply pending** |
 | moltbot [#103](https://github.com/ilike4movies/moltbot/pull/103) | **merged + live** @ `6ce15a8` — transition-aware watchdog dedupe |
 | hermes-mac-land [#39](https://github.com/ilike4movies/hermes-mac-land/pull/39) | **merged** — verify gates on #103 artifacts |
 | hermes-mac-land [#40](https://github.com/ilike4movies/hermes-mac-land/pull/40) | **merged** @ `0ba45ea` — downstream stack-apply step before verify |
@@ -124,6 +127,7 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 2. ~~RAL-634 live prove-out~~ **DONE** (natural watchdog + transition dedupe)
 3. **Credentialed downstream** → contract readback on RAL-793 → inventory evidence
 4. RAL-794 handoff comment (blocked on #3)
+5. **WIP-park #110 on `.11`** — confirm RAL-799 auto-apply landed `c753da8a` / `a535cb7`, or `HERMES_AUTO_STACK_APPLY=1` once; keep RAL-798 In Progress until apply + runtime canary
 
 ## Gate table
 
@@ -139,6 +143,8 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | PR attachments detached from RAL-793 | **Done** |
 | RAL-793 contract pinned | **OPEN** — run credentialed script |
 | RAL-793 inventory evidence | **OPEN** — run `2954673` stalled |
+| moltbot #110 on GitHub main | **MERGED** @ `a535cb7` / tip `c753da8a` |
+| moltbot #110 on `/opt/moltbot` | **OPEN** — await auto-apply or stack-apply readback |
 
 ## Credentialed run commands (Mac / cloud agent with SSH secrets)
 
