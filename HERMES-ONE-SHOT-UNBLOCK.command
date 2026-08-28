@@ -191,16 +191,31 @@ _run_stall() {
   rm -f "$SCRIPT"
   local FETCHED=""
   local url
+  # Prefer known-good tip commit (raw CDN for main can lag); accept self-healing entrypoint (#118+)
+  local DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-dc1980b03069724b5fa96724a92fb9d348ecd1dd}"
+  _is_good_downstream() {
+    local f="$1"
+    if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
+       && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
+       && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null; then
+      return 0
+    fi
+    if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
+       && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null \
+       && grep -q 'WAIT_INVENTORY' "$f" 2>/dev/null \
+       && grep -q 'fail-closed' "$f" 2>/dev/null; then
+      return 0
+    fi
+    return 1
+  }
   for url in \
+    "https://raw.githubusercontent.com/${REPO}/${DOWNSTREAM_PIN}/shared-scripts/hermes-dispatcher-downstream.sh" \
     "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-dispatcher-downstream.sh" \
     "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-dispatcher-downstream.sh"
   do
     echo "Trying fetch: $url"
     if curl -fsSL "$url" -o "$SCRIPT"; then
-      if grep -q 'RAL-793 run inspect' "$SCRIPT" 2>/dev/null \
-         && grep -q 'DISPATCH-NOW' "$SCRIPT" 2>/dev/null \
-         && grep -q 'WAIT_INVENTORY' "$SCRIPT" 2>/dev/null \
-         && grep -q 'fail-closed' "$SCRIPT" 2>/dev/null; then
+      if _is_good_downstream "$SCRIPT"; then
         FETCHED="$url"
         break
       fi
