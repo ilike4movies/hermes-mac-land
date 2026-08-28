@@ -13,7 +13,7 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~15m while still NeedsLogin (`
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T10:24Z
+**Updated:** 2026-08-28T10:40Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -38,6 +38,9 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~15m while still NeedsLogin (`
 
 **Paths that work for live gates:**
 1. **Mac Hermes ONE-SHOT (preferred)** — **Right-click → Open** [`HERMES-ONE-SHOT-UNBLOCK.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command) (not double-click — Gatekeeper). Tries STALL downstream first; on fail auto-runs ENABLE-DOWNSTREAM-ACTIONS. Needs `LINEAR_API_KEY` in `~/.hermes/.env`.
+
+ONE-SHOT opens the GitHub Web UI workflow create + Raw paste tabs **in parallel with Phase 1 STALL** so Actions can be enabled while `.11` work runs (`HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0` to skip). Inventory wait default is **900s** for ultra-stale canaries.
+
 2. **Mac Terminal paste (same ONE-SHOT)** — when Finder Right-click is awkward:
    ```bash
    curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command \

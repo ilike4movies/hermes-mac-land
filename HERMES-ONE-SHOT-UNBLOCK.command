@@ -1,6 +1,7 @@
 #!/bin/bash
 # HERMES-ONE-SHOT-UNBLOCK.command — Right-click → Open on Mac Hermes (not double-click)
 # Single click critical path for stalled canary recovery:
+#   0) Open Web UI workflow create + Raw paste tabs early (parallel with STALL)
 #   1) Try STALL downstream (SSH/Tailscale to .11) — fastest when mesh works
 #   2) On STALL fail → auto ENABLE-DOWNSTREAM-ACTIONS (install workflow + gh workflow run)
 # Requires ~/.hermes/.env LINEAR_API_KEY. Prefer this over picking between STALL vs ENABLE.
@@ -13,7 +14,7 @@ export HERMES_AUTO_INSPECT_RAL793=1
 export HERMES_AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-0}"
 export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
 export HERMES_WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
-export HERMES_INVENTORY_WAIT_SECS="${HERMES_INVENTORY_WAIT_SECS:-600}"
+export HERMES_INVENTORY_WAIT_SECS="${HERMES_INVENTORY_WAIT_SECS:-900}"
 export HERMES_STALL_ZOMBIE="${HERMES_STALL_ZOMBIE:-1}"
 export HERMES_STALL_ZOMBIE_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
 REPO="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
@@ -24,7 +25,7 @@ echo "=== Hermes ONE-SHOT UNBLOCK (run=$HERMES_RUN_ID) pin=$PIN ==="
 echo "zombie=$HERMES_STALL_ZOMBIE zombie_passes=$HERMES_STALL_ZOMBIE_PASSES stall_recovery=$HERMES_STALL_RECOVERY"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/${REPO}/issues/1"
-echo "Path: STALL first; on fail → ENABLE-ACTIONS (fallback=$FALLBACK_ACTIONS)"
+echo "Path: Web UI early + STALL first; on fail → ENABLE-ACTIONS (fallback=$FALLBACK_ACTIONS)"
 
 _load_mac_hermes_env() {
   local f="${HOME}/.hermes/.env"
@@ -54,6 +55,27 @@ _preflight_mac_secrets() {
     read -r -p "Press Enter to close…" _
     exit 1
   fi
+}
+
+
+_open_webui_workflow_early() {
+  # Open create-file + Raw paste tabs while Phase 1 STALL runs so the operator can
+  # enable Actions in parallel (cloud API tokens cannot write .github/workflows/).
+  # Opt out: HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_WEBUI_EARLY:-1}" != "1" ]]; then
+    echo "SKIP early Web UI (HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0)"
+    return 0
+  fi
+  local WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+  local WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+  echo ""
+  echo "=== Parallel: Web UI workflow enable (paste Raw while STALL runs) ==="
+  echo "Create file: $WEBUI_NEW"
+  echo "Paste source (Raw): $WEBUI_RAW"
+  echo "Action secrets (if needed): https://github.com/${REPO}/settings/secrets/actions"
+  osascript -e 'display notification "Browser: paste Raw into workflow create tab while STALL runs" with title "Hermes ONE-SHOT Web UI" sound name "Glass"' 2>/dev/null || true
+  open "$WEBUI_NEW" 2>/dev/null || true
+  open "$WEBUI_RAW" 2>/dev/null || true
 }
 
 _run_stall() {
@@ -170,6 +192,8 @@ _run_enable_actions() {
 xattr -d com.apple.quarantine "$0" 2>/dev/null || true
 chmod +x "$0" 2>/dev/null || true
 _preflight_mac_secrets
+
+_open_webui_workflow_early
 
 STALL_RC=0
 _run_stall || STALL_RC=$?

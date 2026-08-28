@@ -2,7 +2,7 @@
 # HERMES-DOWNSTREAM-RAL793-STALL.command — Right-click → Open on Mac Hermes (not double-click)
 # Pins stalled run 20260826T232521106484Z-2954673 and runs full downstream chain:
 # inspect → contract install → (stack-apply skipped — .11 at #110 tip) → zombie triple DISPATCH-NOW
-# → RAL-634 verify → inventory wait (~10 min, fail-closed if DISPATCH/Linear key missing).
+# → RAL-634 verify → inventory wait (~15 min, fail-closed if DISPATCH/Linear key missing).
 # Fetches hermes-dispatcher-downstream.sh from main at runtime.
 # Posts machine status to GitHub issue #1 when gh is available.
 # Requires: Tailscale up + SSH to .11 + LINEAR_API_KEY in ~/.hermes/.env (for DISPATCH-NOW).
@@ -16,6 +16,7 @@ export HERMES_AUTO_INSPECT_RAL793=1
 export HERMES_AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-0}"
 export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
 export HERMES_WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
+export HERMES_INVENTORY_WAIT_SECS="${HERMES_INVENTORY_WAIT_SECS:-900}"
 export HERMES_STALL_ZOMBIE="${HERMES_STALL_ZOMBIE:-1}"
 export HERMES_STALL_ZOMBIE_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
 PIN="${HERMES_MAC_LAND_PIN:-main}"
