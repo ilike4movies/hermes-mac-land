@@ -4,7 +4,7 @@
 
 **Approve:** https://login.tailscale.com/a/80d5b86015c32
 
-`tailscale up --timeout=3600s` expired (~1h) → new AuthURL **80d5b860** (retired `7a69b1a0`). Tip **#125** soft-skip held the prior URL until the up process itself timed out — tip **#129** lengthens up timeout so soft-skip can hold approve links longer. Tip through **#129**.
+`tailscale up --timeout=3600s` expired (~1h) → new AuthURL **80d5b860** (retired `7a69b1a0`). Tip **#125** soft-skip held the prior URL until the up process itself timed out — tip **#129** lengthens up timeout so soft-skip can hold approve links longer. Tip through **#130** (pre-expiry short→4h up upgrade when leftover 3600s up nears expiry).
 
 **Ignore retired AuthURLs:** `7a69b1a0`, `1f410a53`, `1bcf51f9`, `11789ce2`, `1a1dd33b`, `16b94d1f`, `12e9ef58`, `184fd6d6`, …
 
