@@ -31,10 +31,11 @@ try:
 except Exception:
   print("")' 2>/dev/null || true)"
       if [[ "${HERMES_AUTHURL_HARD_ON_REFRESH:-0}" != "1" && "${HERMES_AUTHURL_FORCE_REFRESH:-0}" != "1" && -n "${_live_authurl}" ]]; then
-        echo "OK AuthURL refresh mode=SOFT skip — live AuthURL still advertised (age_s=${age_s}; set HERMES_AUTHURL_FORCE_REFRESH=1 or HARD=1 to remint)"
+        # Tip #128: throttle soft-skip OK echo (was every wait-login poll ~5–8s → log spam).
         local every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}" stamp="$SCRIPT_DIR/LAST_UP_OK_ECHO.at" now
         now="$(date +%s)"
         if [[ ! -f "$stamp" ]] || (( now - $(cat "$stamp" 2>/dev/null || echo 0) >= every )); then
+          echo "OK AuthURL refresh mode=SOFT skip — live AuthURL still advertised (age_s=${age_s}; set HERMES_AUTHURL_FORCE_REFRESH=1 or HARD=1 to remint)"
           echo "OK tailscale up wait already running (pidfile=$(cat "$TS_UP_PIDFILE" 2>/dev/null || echo none) age_s=${age_s:-?} live_authurl=yes)"
           echo "$now" >"$stamp"
         fi
