@@ -1,7 +1,7 @@
 #!/bin/bash
 # HERMES-INSTALL-DOWNSTREAM-NAG.command — Right-click → Open (not double-click)
-# Installs a LaunchAgent that nags every 30 min until issue #1 shows "## Downstream DONE".
-# Does NOT auto-run ONE-SHOT (avoids unattended DISPATCH spam) — opens issue #1 + ONE-SHOT + Web UI workflow editor.
+# Installs a LaunchAgent that nags every 10 min until issue #1 shows "## Downstream DONE".
+# Opens issue #1 + ONE-SHOT URL + Web UI; offers a confirm dialog to download+open ONE-SHOT (no unattended DISPATCH).
 # Uninstall: launchctl unload ~/Library/LaunchAgents/com.hermes.downstream-nag.plist
 #            rm ~/Library/LaunchAgents/com.hermes.downstream-nag.plist ~/.hermes/bin/hermes-downstream-nag.sh
 set -euo pipefail
@@ -20,8 +20,8 @@ mkdir -p "${HOME}/.hermes/bin" "${HOME}/Library/LaunchAgents"
 
 cat > "$NAG_BIN" <<'NAG_EOF'
 #!/bin/bash
-# Hermes downstream nag — checks issue #1 for Downstream DONE every 30 min.
-# Notification-only + opens status inbox (does not execute ONE-SHOT).
+# Hermes downstream nag — checks issue #1 for Downstream DONE every 10 min.
+# Opens status inbox; optional confirm dialog can download+open ONE-SHOT.
 set -uo pipefail
 REPO="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
 PLIST="${HOME}/Library/LaunchAgents/com.hermes.downstream-nag.plist"
@@ -48,9 +48,18 @@ fi
 
 osascript -e 'display notification "Still blocked — ONE-SHOT or Web UI workflow enable" with title "Hermes Downstream" sound name "Basso"' 2>/dev/null || true
 open "$ISSUE_URL" 2>/dev/null || true
-# Surface ONE-SHOT download + Web UI create-file editor (API cannot write workflows)
 open "$ONESHOT_URL" 2>/dev/null || true
 open "$WEBUI_WORKFLOW_URL" 2>/dev/null || true
+# Optional confirm: download + open ONE-SHOT (attended only)
+ans="$(osascript -e 'button returned of (display dialog "Hermes downstream still blocked. Run ONE-SHOT now?" buttons {"Not now", "Run ONE-SHOT"} default button "Run ONE-SHOT" with title "Hermes Downstream")' 2>/dev/null || true)"
+if [[ "$ans" == "Run ONE-SHOT" ]]; then
+  dest="${HOME}/Downloads/HERMES-ONE-SHOT-UNBLOCK.command"
+  if curl -fsSL "$ONESHOT_URL" -o "$dest"; then
+    xattr -d com.apple.quarantine "$dest" 2>/dev/null || true
+    chmod +x "$dest" 2>/dev/null || true
+    open "$dest" 2>/dev/null || true
+  fi
+fi
 NAG_EOF
 
 chmod +x "$NAG_BIN"
@@ -67,7 +76,7 @@ cat > "$PLIST" <<PLIST_EOF
     <string>${NAG_BIN}</string>
   </array>
   <key>StartInterval</key>
-  <integer>1800</integer>
+  <integer>600</integer>
   <key>RunAtLoad</key>
   <true/>
   <key>StandardOutPath</key>
@@ -85,9 +94,9 @@ launchctl load "$PLIST"
 echo "OK installed downstream nag LaunchAgent"
 echo "  plist: $PLIST"
 echo "  script: $NAG_BIN"
-echo "  interval: 30 min — notifies until issue #1 has '## Downstream DONE'"
-echo "  note: does NOT auto-run ONE-SHOT (opens issue #1 + ONE-SHOT URL + Web UI workflow editor)"
+echo "  interval: 10 min — notifies until issue #1 has '## Downstream DONE'"
+echo "  note: confirm dialog can download+open ONE-SHOT; never auto-runs unattended"
 echo "Uninstall: launchctl unload $PLIST && rm $PLIST $NAG_BIN"
 
-osascript -e 'display notification "Downstream nag installed (30 min)" with title "Hermes" sound name "Glass"' 2>/dev/null || true
+osascript -e 'display notification "Downstream nag installed (10 min)" with title "Hermes" sound name "Glass"' 2>/dev/null || true
 read -r -p "Press Enter to close…" _
