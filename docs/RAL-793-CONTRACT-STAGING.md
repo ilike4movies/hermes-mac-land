@@ -53,6 +53,10 @@ mutation beyond read-only inventory.
 The install script creates evidence home if missing:
 `/opt/moltbot/data/cos-hermes/canaries/ral793-inventory/evidence/RAL-793-inventory.md`
 
+If the file is absent, install seeds a **`pending`** first-line template plus RAL-456/Notion
+archaeology hints (workspace paths, EP04–EP14 seed table). Hermes must **replace** the file
+with live host inventory; inventory-wait treats first-line `pending` as not-ready.
+
 Draft registry entry key `RAL-793` (staged by cos-local #125 stager):
 
 ```json
