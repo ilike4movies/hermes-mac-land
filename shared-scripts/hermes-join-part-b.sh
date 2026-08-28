@@ -91,6 +91,14 @@ Or Mac ONE-SHOT: \`curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command htt
           owner="${gh_repo%%/*}"
           name="${gh_repo#*/}"
           api_url="https://api.github.com/repos/${owner}/${name}/issues/${gh_issue}/comments"
+          if [[ -n "$tok" && ! -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+            _code="$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tok}" -H "Accept: application/vnd.github+json" https://api.github.com/rate_limit 2>/dev/null || echo 000)"
+            if [[ "$_code" == "401" || "$_code" == "403" ]]; then
+              echo "$_code $(date -u +%FT%TZ)" >"${SCRIPT_DIR}/GH_TOKEN_INVALID.flag"
+              echo "WARN GH_TOKEN unusable (HTTP ${_code}) — skip curl beacon"
+              tok=""
+            fi
+          fi
           if [[ -n "$tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
             payload="$(AUTHURL_BEACON_BODY="$body" python3 -c 'import json,os; print(json.dumps({"body": os.environ["AUTHURL_BEACON_BODY"]}))')"
             if curl -fsS -X POST \
@@ -127,6 +135,16 @@ Admin: https://login.tailscale.com/admin/machines
           tip_tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
           tip_owner="${gh_repo%%/*}"
           tip_name="${gh_repo#*/}"
+          if [[ -n "$tip_tok" && -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]]; then
+            tip_tok=""
+          elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
+            _code="$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json" https://api.github.com/rate_limit 2>/dev/null || echo 000)"
+            if [[ "$_code" == "401" || "$_code" == "403" ]]; then
+              echo "$_code $(date -u +%FT%TZ)" >"${SCRIPT_DIR}/GH_TOKEN_INVALID.flag"
+              echo "WARN GH_TOKEN unusable (HTTP ${_code}) — skip tip curl path"
+              tip_tok=""
+            fi
+          fi
           tip_sha=""
           if command -v gh >/dev/null 2>&1; then
             tip_sha="$(gh api "repos/${gh_repo}/contents/${tip_path}" --jq .sha 2>/dev/null || true)"
@@ -271,6 +289,11 @@ PY
         fi
         if (( warn_age >= ${HERMES_AUTHURL_BEACON_WARN_SECS:-60} )); then
           echo "WARN AuthURL beacon skipped (gh/token/Linear write unavailable)"
+          {
+            printf '%s\n' "$url"
+            printf 'needs_mcp_surface=%s\n' "$(date -u +%FT%TZ)"
+            echo 'Cloud GH_TOKEN often expired (ghs_ → 401). Agent: GitHub MCP tip CURRENT_AUTHURL.md + ICS + #1 + RAL-823.'
+          } >"${SCRIPT_DIR}/AUTHURL_MCP_SURFACE_NEEDED.txt"
           printf '%s\n' "$url" >"$warnfile"
         fi
       fi
