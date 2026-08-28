@@ -2,6 +2,7 @@
 # HERMES-ONE-SHOT-UNBLOCK.command — Right-click → Open on Mac Hermes (not double-click)
 # Single click critical path for stalled canary recovery:
 #   0) Open Web UI workflow create + Raw paste tabs early (parallel with STALL)
+#   0b) Install 10-min Downstream nag LaunchAgent (until issue #1 shows Downstream DONE)
 #   1) Try STALL downstream (SSH/Tailscale to .11) — fastest when mesh works
 #   2) On STALL fail → auto ENABLE-DOWNSTREAM-ACTIONS (install workflow + gh workflow run)
 # Requires ~/.hermes/.env LINEAR_API_KEY. Prefer this over picking between STALL vs ENABLE.
@@ -76,6 +77,42 @@ _open_webui_workflow_early() {
   osascript -e 'display notification "Browser: paste Raw into workflow create tab while STALL runs" with title "Hermes ONE-SHOT Web UI" sound name "Glass"' 2>/dev/null || true
   open "$WEBUI_NEW" 2>/dev/null || true
   open "$WEBUI_RAW" 2>/dev/null || true
+}
+
+_install_downstream_nag() {
+  # Keep Mac reminding every 10 min until "## Downstream DONE" posts on issue #1.
+  # Opt out: HERMES_ONE_SHOT_INSTALL_NAG=0
+  if [[ "${HERMES_ONE_SHOT_INSTALL_NAG:-1}" != "1" ]]; then
+    echo "SKIP downstream nag install (HERMES_ONE_SHOT_INSTALL_NAG=0)"
+    return 0
+  fi
+  echo ""
+  echo "=== Install Downstream nag LaunchAgent (10 min until DONE) ==="
+  local NAG="/tmp/hermes-install-downstream-nag-oneshot-$$.command"
+  local url
+  rm -f "$NAG"
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/HERMES-INSTALL-DOWNSTREAM-NAG.command" \
+    "https://raw.githubusercontent.com/${REPO}/main/HERMES-INSTALL-DOWNSTREAM-NAG.command"
+  do
+    if curl -fsSL "$url" -o "$NAG" \
+      && grep -q 'com.hermes.downstream-nag' "$NAG" 2>/dev/null \
+      && grep -q 'Downstream DONE' "$NAG" 2>/dev/null; then
+      chmod +x "$NAG"
+      # Noninteractive: skip "Press Enter" (needs tip with HERMES_NAG_NONINTERACTIVE support).
+      if HERMES_NAG_NONINTERACTIVE=1 bash "$NAG"; then
+        echo "OK downstream nag installed/refreshed"
+        rm -f "$NAG"
+        return 0
+      fi
+      echo "WARN nag installer exited non-zero — continuing ONE-SHOT"
+      rm -f "$NAG"
+      return 0
+    fi
+    rm -f "$NAG"
+  done
+  echo "WARN could not fetch HERMES-INSTALL-DOWNSTREAM-NAG.command — continuing"
+  return 0
 }
 
 _run_stall() {
@@ -194,6 +231,7 @@ chmod +x "$0" 2>/dev/null || true
 _preflight_mac_secrets
 
 _open_webui_workflow_early
+_install_downstream_nag
 
 STALL_RC=0
 _run_stall || STALL_RC=$?

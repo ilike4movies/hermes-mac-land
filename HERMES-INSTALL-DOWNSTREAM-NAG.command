@@ -99,4 +99,7 @@ echo "  note: confirm dialog can download+open ONE-SHOT; never auto-runs unatten
 echo "Uninstall: launchctl unload $PLIST && rm $PLIST $NAG_BIN"
 
 osascript -e 'display notification "Downstream nag installed (10 min)" with title "Hermes" sound name "Glass"' 2>/dev/null || true
+if [[ "${HERMES_NAG_NONINTERACTIVE:-0}" == "1" ]]; then
+  exit 0
+fi
 read -r -p "Press Enter to close…" _
