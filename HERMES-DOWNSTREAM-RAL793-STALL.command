@@ -22,6 +22,43 @@ echo "=== Hermes DOWNSTREAM RAL-793 STALL (run=$HERMES_RUN_ID) pin=$PIN ==="
 echo "stack-apply=$HERMES_AUTO_STACK_APPLY stall_recovery=$HERMES_STALL_RECOVERY wait_inventory=$HERMES_WAIT_INVENTORY"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/ilike4movies/hermes-mac-land/issues/1"
+
+_load_mac_hermes_env() {
+  local f="${HOME}/.hermes/.env"
+  [[ -f "$f" ]] || return 0
+  local key val
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    case "$line" in
+      ''|\#*) continue ;;
+      LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|HERMES_HOST_SSH_PRIVATE_KEY=*|GH_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*)
+        key="${line%%=*}"
+        val="${line#*=}"
+        val="${val%\"}"; val="${val#\"}"
+        val="${val%\'}"; val="${val#\'}"
+        [[ -z "${!key:-}" ]] && export "$key=$val"
+        ;;
+    esac
+  done < "$f"
+}
+
+_preflight_mac_secrets() {
+  _load_mac_hermes_env || true
+  if [[ -z "${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}" ]]; then
+    echo ""
+    echo "FAILED: LINEAR_API_KEY (or LINEAR_API_TOKEN) missing — required for fail-closed DISPATCH-NOW (post-#59)."
+    echo " fix: add LINEAR_API_KEY=... to ~/.hermes/.env, then Right-click → Open this file again."
+    echo " without it, downstream aborts after contract install (~2 min wasted)."
+    osascript -e 'display notification "Add LINEAR_API_KEY to ~/.hermes/.env" with title "Hermes STALL preflight FAILED" sound name "Basso"' 2>/dev/null || true
+    read -r -p "Press Enter to close…" _
+    exit 1
+  fi
+  if [[ -z "${HERMES_HOST_SSH_PRIVATE_KEY:-}" ]]; then
+    echo "WARN: HERMES_HOST_SSH_PRIVATE_KEY not loaded — ensure ~/.hermes/.env has the host key or SSH agent works."
+  fi
+}
+
+_preflight_mac_secrets
+
 osascript -e 'display notification "Inspecting stalled RAL-793 run on .11…" with title "Hermes STALL downstream" sound name "Glass"' 2>/dev/null || true
 xattr -d com.apple.quarantine "$0" 2>/dev/null || true
 chmod +x "$0" 2>/dev/null || true
