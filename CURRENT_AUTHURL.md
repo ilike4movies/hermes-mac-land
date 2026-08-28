@@ -1,17 +1,17 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-28T21:18:53Z
+**Last refreshed:** 2026-08-28T22:19:09Z
 
-**Approve:** https://login.tailscale.com/a/7a69b1a01e964
+**Approve:** https://login.tailscale.com/a/80d5b86015c32
 
-Soft #123/#124 refresh @ ~21:15Z (HARD=0) minted **7a69b1a0**. Tip **#125** skips soft remint while this AuthURL stays advertised — approve **this** URL. Tip **#126**/#127: Mac ENABLE + ONE-SHOT Phase 2 use `HERMES_GH_WORKFLOW_PAT` from `~/.hermes/.env` for workflow write. Retired `1f410a53` (and older).
+`tailscale up --timeout=3600s` expired (~1h) → new AuthURL **80d5b860** (retired `7a69b1a0`). Tip **#125** soft-skip held the prior URL until the up process itself timed out — tip **#129** lengthens default up timeout so soft-skip can hold approve links longer.
 
-**Ignore retired AuthURLs:** `1f410a53`, `1bcf51f9`, `11789ce2`, `1a1dd33b`, `16b94d1f`, `12e9ef58`, `184fd6d6`, …
+**Ignore retired AuthURLs:** `7a69b1a0`, `1f410a53`, `1bcf51f9`, `11789ce2`, `1a1dd33b`, `16b94d1f`, `12e9ef58`, `184fd6d6`, …
 
-Cloud waiters armed on Ooterverse pod. Prefer **Mac ONE-SHOT** if Runtime Secrets stay unset:
+Cloud waiters armed. Prefer **Mac ONE-SHOT** if Runtime Secrets stay unset:
 
 ```bash
 curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
 ```
 
-Tip through **#128**. Expect `zombie=1 zombie_passes=3`. Success = GitHub #1 `## Downstream DONE` + RAL-793 inventory.
+Tip through **#128** (+#129 shipping). Expect `zombie=1 zombie_passes=3`. Success = GitHub #1 `## Downstream DONE` + RAL-793 inventory.
