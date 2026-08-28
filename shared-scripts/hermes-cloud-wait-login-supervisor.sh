@@ -40,7 +40,8 @@ _reload_host_secrets() {
     HERMES_HOST_SSH_PRIVATE_KEY="$(cat "$HOST_KEY_FILE")"
     export HERMES_HOST_SSH_PRIVATE_KEY
   fi
-  for _f in /tmp/cursor-secrets/HERMES_HOST_SSH_PRIVATE_KEY \
+  for _f in /tmp/cursor/cloud-agent-secrets/HERMES_HOST_SSH_PRIVATE_KEY \
+            /tmp/cursor-secrets/HERMES_HOST_SSH_PRIVATE_KEY \
             "$HOME/.cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY" \
             /opt/cursor/secrets/HERMES_HOST_SSH_PRIVATE_KEY; do
     if [[ -z "${HERMES_HOST_SSH_PRIVATE_KEY:-}" && -f "$_f" ]]; then
