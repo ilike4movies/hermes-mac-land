@@ -70,20 +70,37 @@ chmod +x "$0" 2>/dev/null || true
 SCRIPT="/tmp/hermes-dispatcher-downstream-fetched-$$.sh"
 rm -f "$SCRIPT"
 FETCHED=""
+# Prefer known-good tip commit (raw CDN for main can lag); accept self-healing entrypoint (#118+)
+DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-dc1980b03069724b5fa96724a92fb9d348ecd1dd}"
+_is_good_downstream() {
+  local f="$1"
+  # Self-healing curl|bash / ONE-SHOT entrypoint (tip #118+)
+  if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
+     && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
+     && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null; then
+    return 0
+  fi
+  # Legacy monolithic downstream body
+  if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
+     && grep -q 'stack-apply' "$f" 2>/dev/null \
+     && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null \
+     && grep -q 'RAL-634 starvation verify' "$f" 2>/dev/null \
+     && grep -q '_post_github_status' "$f" 2>/dev/null \
+     && grep -q 'STALL_DISPATCH_PASSES' "$f" 2>/dev/null \
+     && grep -q 'WAIT_INVENTORY' "$f" 2>/dev/null \
+     && grep -q 'fail-closed' "$f" 2>/dev/null; then
+    return 0
+  fi
+  return 1
+}
 for url in \
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${DOWNSTREAM_PIN}/shared-scripts/hermes-dispatcher-downstream.sh" \
   "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/shared-scripts/hermes-dispatcher-downstream.sh" \
   "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh"
 do
   echo "Trying fetch: $url"
   if curl -fsSL "$url" -o "$SCRIPT"; then
-    if grep -q 'RAL-793 run inspect' "$SCRIPT" 2>/dev/null \
-       && grep -q 'stack-apply' "$SCRIPT" 2>/dev/null \
-       && grep -q 'DISPATCH-NOW' "$SCRIPT" 2>/dev/null \
-       && grep -q 'RAL-634 starvation verify' "$SCRIPT" 2>/dev/null \
-       && grep -q '_post_github_status' "$SCRIPT" 2>/dev/null \
-       && grep -q 'STALL_DISPATCH_PASSES' "$SCRIPT" 2>/dev/null \
-       && grep -q 'WAIT_INVENTORY' "$SCRIPT" 2>/dev/null \
-       && grep -q 'fail-closed' "$SCRIPT" 2>/dev/null; then
+    if _is_good_downstream "$SCRIPT"; then
       FETCHED="$url"
       break
     fi
