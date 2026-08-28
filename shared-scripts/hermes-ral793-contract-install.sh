@@ -183,7 +183,31 @@ if [[ ! -f "\$REG" ]]; then
 fi
 python3 -c 'import json,sys; p=json.load(open(sys.argv[1])); assert p.get("schema")=="cos.linear.execution_contract_registry.v1"; c=p.get("contracts") or {}; print("schema_ok", "RAL-793" in c)' "\$REG"
 mkdir -p "$CANARY_ROOT/evidence" /opt/moltbot/data/cos-hermes/deploy-backups
-[[ -f "$CANARY_ROOT/evidence/RAL-793-inventory.md" ]] || printf '%s\n' 'pending' > "$CANARY_ROOT/evidence/RAL-793-inventory.md"
+[[ -f "$CANARY_ROOT/evidence/RAL-793-inventory.md" ]] || cat > "$CANARY_ROOT/evidence/RAL-793-inventory.md" <<'SEED'
+pending
+# SEED — stale archaeology (NOT live inventory). Hermes must REPLACE this file.
+# First line stays `pending` until live host verify so inventory-wait cannot false-pass.
+# Sources: RAL-456 (2026-07-19), Notion Episode Production Process (2026-02), RAL-70.
+#
+# Expected workspace roots to probe on .11 (confirm; do not assume):
+# - /opt/moltbot/workspace-bullpenbedtime/ (or Hermes COS home equivalent)
+# - pipeline/: produce.js, 00-plan-episode.js, 02-generate-tts.js, 02b-generate-srt.js,
+#   02c-mix-audio.js, 03-generate-images.js, 04-render-video.js, 05-generate-metadata.js,
+#   06-generate-thumbnail.js (upload 07+ OUT OF SCOPE here)
+# - work/epXX/ for EP04–EP14: script, narration.wav, captions.srt, images/, video.mp4, metadata.json
+# - Remotion: remotion-server / HeadlessChannel; Whisper captions historically CUDA-OOM on 8GB 2080
+#
+## EP map seed (RAL-456 readback — VERIFY LIVE)
+| EP | Seed note (2026-07-19) | Verify on host |
+|----|------------------------|----------------|
+| EP01 | Published historically (YouTube) | confirm assets + Studio URL |
+| EP02–EP03 | Channel had 2 public videos @ review | confirm which IDs |
+| EP04 | script+TTS+captions present; only 1 image; NO completed render | map work/ep04 |
+| EP05–EP14 | Held at Content Portal (RAL-70); scripts/audio/images claimed generated | per-ep completeness |
+#
+# Channel seed: @bullpenbedtime; selfDeclaredMadeForKids=false; portal :9090 DEAD — do not restart.
+# Replace this whole file with dated live inventory including hashes/paths. EP04 must appear.
+SEED
 printf 'pre_sha=%s\n' "\$(sha256sum "\$REG" | awk '{print \$1}')"
 REMOTE
 )"
