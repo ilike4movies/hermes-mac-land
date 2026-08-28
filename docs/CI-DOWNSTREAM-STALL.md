@@ -21,15 +21,19 @@ GitHub API tokens without the `workflows` scope cannot create files under `.gith
 3. If install fails on scope: `gh auth refresh -h github.com -s workflow` then re-open
 4. Ensure Action secrets exist (launcher opens the secrets settings page on run failure)
 
-### B — Web UI
+### B — Web UI (deep link; no `workflows` API scope)
 
-1. Open [`ci/downstream-stall.yml`](../ci/downstream-stall.yml)
-2. Create `.github/workflows/downstream-stall.yml` on `main` with the same contents
-3. Repo **Settings → Secrets and variables → Actions** — add:
+1. Open the create-file editor (logged in as `ilike4movies`):
+   https://github.com/ilike4movies/hermes-mac-land/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml
+2. In another tab, open [`ci/downstream-stall.yml`](../ci/downstream-stall.yml) → **Raw** → select-all → copy → paste into the editor
+3. Commit directly to `main` (message: `ci: enable downstream-stall workflow`)
+4. Repo **Settings → Secrets and variables → Actions** — add if missing:
    - `TS_AUTHKEY` — Tailscale auth key (ephemeral/reusable OK for CI)
    - `HERMES_HOST_SSH_PRIVATE_KEY` — PEM for BatchMode SSH to `.11`
    - `LINEAR_API_KEY` — required for fail-closed `DISPATCH-NOW`
-4. **Actions → Downstream stall recovery → Run workflow**
+5. **Actions → Downstream stall recovery → Run workflow**
+
+API/cloud agents cannot land this file (Contents + Git Data trees return 404 without `workflows` scope). Web UI or Mac `gh` with `workflow` scope are the only enable paths.
 
 Or CLI (after workflow file exists):
 
