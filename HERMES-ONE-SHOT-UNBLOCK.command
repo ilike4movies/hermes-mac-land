@@ -6,7 +6,7 @@
 #   0b) Open Web UI workflow create + Raw paste tabs early (parallel with STALL)
 #   0c) Install 5-min Downstream nag LaunchAgent (auto ONE-SHOT until issue #1 shows Downstream DONE)
 #   1) Try STALL downstream (SSH/Tailscale to .11) — fastest when mesh works
-#   2) On STALL fail → auto ENABLE-DOWNSTREAM-ACTIONS (install workflow + gh workflow run)
+#   2) On STALL fail → Phase 2 ENABLE (install workflow + gh workflow run; tip #127 uses HERMES_GH_WORKFLOW_PAT)
 # Requires ~/.hermes/.env LINEAR_API_KEY. Prefer this over picking between STALL vs ENABLE.
 # Do not put open canary ticket IDs in PR titles when enabling Actions.
 set -euo pipefail
@@ -41,7 +41,7 @@ _load_mac_hermes_env() {
   while IFS= read -r line || [[ -n "$line" ]]; do
     case "$line" in
       ''|\#*) continue ;;
-      LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|HERMES_HOST_SSH_PRIVATE_KEY=*|GH_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*|TS_AUTHKEY=*)
+      LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|HERMES_HOST_SSH_PRIVATE_KEY=*|GH_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*|TS_AUTHKEY=*|HERMES_GH_WORKFLOW_PAT=*)
         key="${line%%=*}"
         val="${line#*=}"
         val="${val%\"}"; val="${val#\"}"
@@ -244,6 +244,13 @@ _run_enable_actions() {
   echo ""
   echo "=== Phase 2: ENABLE Downstream Actions (local gh) ==="
   osascript -e 'display notification "Phase 2: enabling GitHub Actions path…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
+  # Tip #127: same as ENABLE #126 — prefer HERMES_GH_WORKFLOW_PAT when gh lacks workflows scope.
+  _load_mac_hermes_env || true
+  if [[ -n "${HERMES_GH_WORKFLOW_PAT:-}" ]]; then
+    export GH_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+    export GITHUB_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+    echo "OK using HERMES_GH_WORKFLOW_PAT for workflow write (tip #127)"
+  fi
   if ! command -v gh >/dev/null 2>&1; then
     echo "FAILED: gh CLI missing. Install GitHub CLI, then: gh auth login"
     echo "Or web UI: paste Raw ci/downstream-stall.yml into create-file editor"
@@ -281,7 +288,7 @@ _run_enable_actions() {
         -f content="$B64" \
         -f branch=main >/tmp/hermes-wf-put.json 2>/tmp/hermes-wf-put.err; then
       echo "FAILED: could not write ${WF_PATH} (likely missing workflow scope)"
-      echo "Fix: gh auth refresh -h github.com -s workflow"
+      echo "Fix: set HERMES_GH_WORKFLOW_PAT in ~/.hermes/.env (tip #127) or: gh auth refresh -h github.com -s workflow"
       echo "Or Web UI: paste Raw ci/downstream-stall.yml into create-file editor"
       cat /tmp/hermes-wf-put.err 2>/dev/null || true
       WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
