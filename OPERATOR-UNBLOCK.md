@@ -6,14 +6,14 @@ joining the mesh (`BackendState=Running`) auto-runs `hermes-dispatcher-downstrea
 (+ `LINEAR_API_KEY`) is present. Waiters keep looping if Tailscale joins before secrets arrive
 (Runtime Secrets / `/tmp/hermes-cloud-apply/host-ssh-key`); they do not one-shot-and-exit on Running alone. Jump-host ping is warn-only on the downstream-only path (direct `.11` SSH).
 
-Interactive AuthURLs (~1h TTL) auto-refresh after ~15m while still NeedsLogin (`HERMES_TAILSCALE_AUTHURL_REFRESH_SECS`, default 900) — see `CURRENT_AUTHURL.txt`. When `gh` can write, URL changes also auto-post to [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) (`HERMES_AUTHURL_GITHUB_BEACON=1`, default on; deduped via `LAST_POSTED_AUTHURL.txt`).
+Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`HERMES_TAILSCALE_AUTHURL_REFRESH_SECS`, default 2700) — see `CURRENT_AUTHURL.txt`. When `gh` can write, URL changes also auto-post to [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) (`HERMES_AUTHURL_GITHUB_BEACON=1`, default on; deduped via `LAST_POSTED_AUTHURL.txt`).
 
 
 # Hermes dispatcher — operator unblock (RAL-800)
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T10:40Z
+**Updated:** 2026-08-28T11:00Z
 
 ## ⚠️ Linear auto-Done hygiene
 

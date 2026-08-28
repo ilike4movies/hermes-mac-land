@@ -271,8 +271,9 @@ PY
 
 _ensure_single_tailscale_up_wait() {
   local login_wait_secs="${1:-$LOGIN_WAIT_SECS}"
-  # Proactive AuthURL refresh: if interactive up has been waiting ~15m+ and still
+  # Proactive AuthURL refresh: if interactive up has been waiting ~45m+ and still
   # NeedsLogin, kill and restart so operators get a fresh approve URL (TTL~1h).
+  # Prefer ~45m over ~15m: frequent kills invalidate open approve links mid-click.
   if _tailscale_up_wait_running; then
     local age_s=0 pid
     if [[ -f "$TS_UP_PIDFILE" ]]; then
@@ -288,7 +289,7 @@ _ensure_single_tailscale_up_wait() {
     if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
       age_s="$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || echo 0)"
     fi
-    if [[ "${age_s:-0}" =~ ^[0-9]+$ ]] && (( age_s >= ${HERMES_TAILSCALE_AUTHURL_REFRESH_SECS:-900} )); then
+    if [[ "${age_s:-0}" =~ ^[0-9]+$ ]] && (( age_s >= ${HERMES_TAILSCALE_AUTHURL_REFRESH_SECS:-2700} )); then
       echo "WARN proactive AuthURL refresh — up wait age=${age_s}s >= refresh threshold; restarting"
       if [[ -n "${pid:-}" ]]; then
         sudo kill "$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
