@@ -167,6 +167,11 @@ _refresh_authurl_file() {
       echo 'Cloud waiters armed; TS_AUTHKEY preferred. Proactive refresh before prior TTL.'
     } >"$authfile"
     echo "APPROVE_THIS_URL=$url"
+    # Local marker for cloud agents (MCP) when gh tip write is unavailable.
+    {
+      printf '%s\n' "$url"
+      printf 'refreshed=%s\n' "$(date -u +%FT%TZ)"
+    } >"${SCRIPT_DIR}/PENDING_AUTHURL_TIP.txt"
   fi
   # Best-effort auto-beacon when AuthURL changes (dedupe by URL).
   # Order: gh CLI → curl+GitHub token → Linear comment (RAL-823 by default).
@@ -244,6 +249,7 @@ Admin: https://login.tailscale.com/admin/machines
             fi
             if "${tip_put[@]}" >/dev/null 2>&1; then
               echo "OK tip CURRENT_AUTHURL.md refreshed on ${gh_repo}"
+              posted=1
             fi
           elif [[ -n "$tip_tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
             tip_api="https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${tip_path}"
@@ -251,6 +257,7 @@ Admin: https://login.tailscale.com/admin/machines
 print(json.dumps({**d, **({"sha":s} if s else {})}))')"
             if curl -fsS -X PUT -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"               -H "Content-Type: application/json" --data "$tip_payload" "$tip_api" >/dev/null 2>&1; then
               echo "OK tip CURRENT_AUTHURL.md refreshed on ${gh_repo} (curl)"
+              posted=1
             fi
           fi
         fi
