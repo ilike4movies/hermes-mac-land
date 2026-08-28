@@ -1,23 +1,23 @@
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Hermes//AuthURL Wake//EN
+PRODID:-//Hermes Mac Land//AuthURL Wake//EN
 CALSCALE:GREGORIAN
 METHOD:REQUEST
 BEGIN:VEVENT
-UID:hermes-authurl-eeaef760-20260828T160331Z@hermes-mac-land
-DTSTAMP:20260828T160331Z
-DTSTART:20260828T160331Z
-DTEND:20260828T164831Z
-SUMMARY:ACTION Hermes: approve Tailscale eeaef760
-DESCRIPTION:Approve NOW: https://login.tailscale.com/a/eeaef76011693\nMac ONE-SHOT: curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command\nCanary 2954673 silent 40h+. No rockets.
-LOCATION:https://login.tailscale.com/a/eeaef76011693
-URL:https://login.tailscale.com/a/eeaef76011693
+UID:hermes-authurl-1953f34c-1787935710@hermes-mac-land
+DTSTAMP:20260828T164830Z
+DTSTART:20260828T164830Z
+DTEND:20260828T184830Z
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL 1953f34c
+DESCRIPTION:Approve NOW: https://login.tailscale.com/a/1953f34c019178\nThen add Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY.\nOr Mac ONE-SHOT from hermes-mac-land tip.\nIgnore older URLs (eeaef760\, 48641840\, …).
+LOCATION:https://login.tailscale.com/a/1953f34c019178
+URL:https://login.tailscale.com/a/1953f34c019178
 STATUS:CONFIRMED
 SEQUENCE:0
 BEGIN:VALARM
-TRIGGER:-PT0M
 ACTION:DISPLAY
-DESCRIPTION:Approve Tailscale eeaef760 NOW
+DESCRIPTION:Approve Tailscale AuthURL 1953f34c NOW
+TRIGGER:-PT0S
 END:VALARM
 END:VEVENT
 END:VCALENDAR
