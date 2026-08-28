@@ -19,24 +19,27 @@ echo "OLD=${OLD:-none}"
 
 # Stop join wait-login + interactive up only (python kill avoids self-match).
 python3 - <<'PY'
-import os, signal, subprocess, time
+import subprocess, time
 out = subprocess.check_output(["ps", "-eo", "pid,args"], text=True)
 for line in out.splitlines():
     args = line.split(None, 1)[1] if " " in line else ""
     kill = False
     if "hermes-moltbot-cloud-tailscale-join-and-apply.sh --wait-login" in args:
         kill = True
-    if args.startswith("sudo tailscale") or args.startswith("tailscale"):
-        if "up --timeout" in args:
-            kill = True
+    if ("up --timeout" in args) and (
+        args.startswith("sudo tailscale")
+        or args.startswith("tailscale ")
+        or args.startswith("/usr/bin/tailscale")
+    ):
+        kill = True
     if not kill:
         continue
-    pid = int(line.split()[0])
+    pid = line.split()[0]
     print(f"TERM {pid} {args[:100]}")
-    try:
-        os.kill(pid, signal.SIGTERM)
-    except ProcessLookupError:
-        pass
+    # sudo-owned up waiters need sudo kill (plain os.kill → EPERM / AuthURL churn)
+    subprocess.run(["sudo", "kill", "-TERM", pid], check=False)
+    subprocess.run(["kill", "-TERM", pid], check=False,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 time.sleep(2)
 PY
 rm -f tailscale-up-wait.pid
