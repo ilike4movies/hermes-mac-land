@@ -45,9 +45,9 @@ gh workflow run downstream-stall.yml --repo ilike4movies/hermes-mac-land
 
 Same chain as Mac STALL.command / `hermes-dispatcher-downstream.sh`:
 
-inspect → contract install → (stack-apply default skip) → dual/`zombie` `DISPATCH-NOW` → RAL-634 verify → inventory wait (default 600s)
+inspect → contract install → (stack-apply default skip) → dual/`zombie` `DISPATCH-NOW` → RAL-634 verify → inventory wait (default 900s)
 
-GHA template defaults: `HERMES_STALL_ZOMBIE=1`, `HERMES_STALL_ZOMBIE_PASSES=3`, `HERMES_INVENTORY_WAIT_SECS=600`, timeout 25m.
+GHA template defaults: `HERMES_STALL_ZOMBIE=1`, `HERMES_STALL_ZOMBIE_PASSES=3`, `HERMES_INVENTORY_WAIT_SECS=900`, timeout 25m.
 
 Posts `## Downstream STARTED` / `DONE` / `FAILED` / `PARTIAL` to [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
