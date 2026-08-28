@@ -7,19 +7,29 @@ _refresh_authurl_file() {
   reload_cloud_secrets || true
   url="$(ts status 2>&1 | grep -oE 'https://login\.tailscale\.com/a/[a-z0-9]+' | head -1 || true)"
   [[ -n "$url" ]] || return 0
+  local pending="${SCRIPT_DIR}/PENDING_AUTHURL_TIP.txt"
+  local auth_changed=0 pending_stale=0
   if [[ ! -f "$authfile" ]] || ! grep -qF "$url" "$authfile" 2>/dev/null; then
+    auth_changed=1
+  fi
+  if [[ ! -f "$pending" ]] || ! grep -qF "$url" "$pending" 2>/dev/null; then
+    pending_stale=1
+  fi
+  if [[ "$auth_changed" == "1" ]]; then
     {
       printf '%s\n' "$url"
       printf 'ACTIVE — approve now (%s).\n' "$(date -u +%FT%TZ)"
       echo 'Cloud waiters armed; TS_AUTHKEY preferred. Proactive refresh before prior TTL.'
     } >"$authfile"
     echo "APPROVE_THIS_URL=$url"
-    # Local marker for cloud agents (MCP) when gh tip write is unavailable.
+  fi
+  # Keep PENDING + local ICS aligned even if CURRENT was written out-of-band
+  # (hard wipe / agent MCP) so cloud agents do not read a stale AuthURL marker.
+  if [[ "$auth_changed" == "1" || "$pending_stale" == "1" ]]; then
     {
       printf '%s\n' "$url"
       printf 'refreshed=%s\n' "$(date -u +%FT%TZ)"
-    } >"${SCRIPT_DIR}/PENDING_AUTHURL_TIP.txt"
-    # Local ICS for agent MCP / Mac copies when tip gh write is unavailable.
+    } >"$pending"
     if command -v python3 >/dev/null 2>&1; then
       AUTHURL_ICS_URL="$url" python3 - <<'ICS' >"${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics" 2>/dev/null || true
 import os
