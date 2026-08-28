@@ -26,7 +26,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 JUMP_HOST="${HERMES_JUMP_HOST:-100.92.147.61}"
 JUMP_SSH="${HERMES_JUMP_SSH:-ilike4@${JUMP_HOST}}"
 WAIT_SECS="${HERMES_TAILSCALE_WAIT_SECS:-90}"
-LOGIN_WAIT_SECS="${HERMES_TAILSCALE_LOGIN_WAIT_SECS:-14400}"  # tip #129: 4h so soft-skip (#125) holds AuthURL past 1h up timeout
+LOGIN_WAIT_SECS="${HERMES_TAILSCALE_LOGIN_WAIT_SECS:-14400}"  # tip #129: script-level wait loop (4h); supervisor respawns after
+# Tip #131: interactive `tailscale up --timeout` default 0s = wait forever (Tailscale: 0 blocks forever).
+# Stops AuthURL remint from up-process expiry; soft-skip (#125) can hold approve links indefinitely.
+# Override finite up timeout with HERMES_TAILSCALE_UP_TIMEOUT_SECS (e.g. 14400).
+UP_TIMEOUT_SECS="${HERMES_TAILSCALE_UP_TIMEOUT_SECS:-0}"
 SOCK="${HERMES_TAILSCALE_SOCKET:-/var/run/tailscale/tailscaled.sock}"
 SECRETS_ENV="${HERMES_CLOUD_SECRETS_ENV:-/tmp/hermes-cloud-apply/secrets.env}"
 TS_KEY_FILE="${HERMES_TS_AUTHKEY_FILE:-/tmp/hermes-cloud-apply/ts-authkey}"
