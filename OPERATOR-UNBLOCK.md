@@ -1,9 +1,10 @@
 ## Cloud wait-login → downstream (after Tailscale approve)
 
 When a cloud agent is waiting on interactive Tailscale login and `HERMES_AUTO_SURGICAL_LAND=0`,
-joining the mesh (`BackendState=Running`) now auto-runs `hermes-dispatcher-downstream.sh`
-(stalled-canary defaults) instead of surgical land. Still requires `HERMES_HOST_SSH_PRIVATE_KEY`
-(+ `LINEAR_API_KEY`) present as Runtime Secrets or mid-wait files under `/tmp/hermes-cloud-apply/`.
+joining the mesh (`BackendState=Running`) auto-runs `hermes-dispatcher-downstream.sh`
+(stalled-canary defaults) instead of surgical land — **only after** `HERMES_HOST_SSH_PRIVATE_KEY`
+(+ `LINEAR_API_KEY`) is present. Waiters keep looping if Tailscale joins before secrets arrive
+(Runtime Secrets / `/tmp/hermes-cloud-apply/host-ssh-key`); they do not one-shot-and-exit on Running alone.
 
 Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`HERMES_TAILSCALE_AUTHURL_REFRESH_SECS`, default 2700) — see `CURRENT_AUTHURL.txt`.
 
@@ -12,7 +13,7 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T07:41Z
+**Updated:** 2026-08-28T07:55Z
 
 ## ⚠️ Linear auto-Done hygiene
 
