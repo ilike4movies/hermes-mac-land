@@ -111,7 +111,7 @@ _preflight_env() {
     echo "FAIL preflight: $reason" >&2
     echo "  COMPOSER_REPO_URL=${COMPOSER_REPO_URL:-unset}" >&2
     echo "  fix: start NEW cloud agent on hermes-mac-land with LEGACY Hermes .11 secrets" >&2
-    echo "  or Mac Hermes: double-click HERMES-DOWNSTREAM-RAL793-STALL.command" >&2
+    echo "  or Mac Hermes: Right-click → Open HERMES-DOWNSTREAM-RAL793-STALL.command (not double-click)" >&2
     return 1
   fi
   return 0
