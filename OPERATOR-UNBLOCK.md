@@ -64,7 +64,7 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 
 **Fastest tonight:** Mac Right-click → Open **ONE-SHOT**.command (STALL → Actions fallback).
 
-Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait default 10 min** (`HERMES_INVENTORY_WAIT_SECS=600`, #71). Runtime ~10–15 min (STALL inventory) or Actions ~5–10 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
+Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait (~10 min / 600s default, #71)**. Runtime ~10–12 min (STALL) or Actions ~5–15 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
 ## Program gates
 
