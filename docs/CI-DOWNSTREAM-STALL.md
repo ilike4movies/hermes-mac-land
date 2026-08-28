@@ -6,9 +6,22 @@ Source workflow (copyable): [`ci/downstream-stall.yml`](../ci/downstream-stall.y
 
 ## Why `ci/` not `.github/workflows/` yet
 
-GitHub API tokens without the `workflows` scope cannot create files under `.github/workflows/` (returns 404). Enable once via the GitHub web UI (or a token with `workflow` scope).
+GitHub API tokens without the `workflows` scope cannot create files under `.github/workflows/` (returns 404). Enable once via:
+
+1. **Mac (preferred):** Right-click → Open [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command) — uses local `gh` (refresh with `gh auth refresh -h github.com -s workflow` if needed), installs the workflow, then runs it.
+2. GitHub web UI paste (below)
+3. A PAT / `gh` token that includes the `workflow` scope
 
 ## One-time enable (~2 min)
+
+### A — Mac enable launcher
+
+1. Download [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command)
+2. **Right-click → Open**
+3. If install fails on scope: `gh auth refresh -h github.com -s workflow` then re-open
+4. Ensure Action secrets exist (launcher opens the secrets settings page on run failure)
+
+### B — Web UI
 
 1. Open [`ci/downstream-stall.yml`](../ci/downstream-stall.yml)
 2. Create `.github/workflows/downstream-stall.yml` on `main` with the same contents
@@ -18,7 +31,7 @@ GitHub API tokens without the `workflows` scope cannot create files under `.gith
    - `LINEAR_API_KEY` — required for fail-closed `DISPATCH-NOW`
 4. **Actions → Downstream stall recovery → Run workflow**
 
-Or CLI:
+Or CLI (after workflow file exists):
 
 ```bash
 gh workflow run downstream-stall.yml --repo ilike4movies/hermes-mac-land
@@ -32,6 +45,8 @@ inspect → contract install → (stack-apply default skip) → dual `DISPATCH-N
 
 Posts `## Downstream STARTED` / `DONE` / `FAILED` / `PARTIAL` to [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
-## Until enabled
+## Until enabled / for tonight's stalled canary
 
-Use Mac STALL.command or LEGACY Hermes `.11` cloud agent. Do not spawn from Ooterverse.
+If Mac already has Tailscale + SSH to `.11` + `LINEAR_API_KEY`, prefer [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) (faster; no Action secrets needed).
+
+Otherwise use LEGACY Hermes `.11` cloud agent. Do not spawn from Ooterverse.

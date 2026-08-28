@@ -26,8 +26,17 @@ Pins run `20260826T232521106484Z-2954673` and runs: inspect → contract install
 
 Avoids Mac click after secrets are set. See [docs/CI-DOWNSTREAM-STALL.md](docs/CI-DOWNSTREAM-STALL.md).
 
-1. Copy [`ci/downstream-stall.yml`](ci/downstream-stall.yml) → `.github/workflows/downstream-stall.yml` on `main` (web UI; API often lacks `workflows` scope)
-2. Add Action secrets: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`, `LINEAR_API_KEY`
+**Mac one-shot enable** (uses local `gh`, which can have `workflow` scope cloud APIs lack):
+
+1. Download [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command)
+2. **Right-click → Open** — installs `.github/workflows/downstream-stall.yml` + runs the workflow
+3. If scope error: `gh auth refresh -h github.com -s workflow` then re-open
+4. Action secrets must exist: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`, `LINEAR_API_KEY`
+
+**Or web UI:**
+
+1. Copy [`ci/downstream-stall.yml`](ci/downstream-stall.yml) → `.github/workflows/downstream-stall.yml` on `main`
+2. Add Action secrets (same three)
 3. **Actions → Downstream stall recovery → Run workflow** (or `gh workflow run downstream-stall.yml`)
 
 ### Or downstream-only (generic)
@@ -175,7 +184,7 @@ Hermes deployment scripts live in **this repo** and `ilike4movies/moltbot` — n
 
 **Cursor routing (2026-08-24):** Hermes deployment / RAL-800 / `.11` / Tailscale / surgical-apply work belongs on **`ilike4movies/hermes-mac-land`** with the saved environment **LEGACY Hermes .11 — do not use for Ooterverse**, never the Ooterverse game environment.
 
-For downstream-only boot on a credentialed cloud agent: set `HERMES_AUTO_SURGICAL_LAND=0` only (`HERMES_AUTO_DOWNSTREAM=1` default). Since **#36**, stall run auto-pins when unset. Since **#44**, also defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` (parity with stall launcher). Since **#47** (2026-08-27): bare `curl | bash` downstream applies the same stall defaults when run ID matches or is auto-pinned. Since **#52**: stall recovery posts two `DISPATCH-NOW` passes (~90s) so SLA-stale CLAIMs reopen after fail. Since **#59**: fail-closed if Linear key missing + inventory wait (~3 min). Since **#62**: Right-click → Open wording in downstream preflight + stall `.command` header. Since **#65**: STALL.command fail-fast LINEAR preflight before SSH.
+For downstream-only boot on a credentialed cloud agent: set `HERMES_AUTO_SURGICAL_LAND=0` only (`HERMES_AUTO_DOWNSTREAM=1` default). Since **#36**, stall run auto-pins when unset. Since **#44**, also defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` (parity with stall launcher). Since **#47** (2026-08-27): bare `curl | bash` downstream applies the same stall defaults when run ID matches or is auto-pinned. Since **#52**: stall recovery posts two `DISPATCH-NOW` passes (~90s) so SLA-stale CLAIMs reopen after fail. Since **#59**: fail-closed if Linear key missing + inventory wait (~3 min). Since **#62**: Right-click → Open wording in downstream preflight + stall `.command` header. Since **#65**: STALL.command fail-fast LINEAR preflight before SSH. Since **#68**: copyable Actions workflow under `ci/`. Mac enable launcher installs it under `.github/workflows/` via local `gh`.
 
 `hermes-dispatcher-downstream.sh` fail-fast preflights missing secrets / wrong repo in <1s (`60cf813`) — see [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md).
 
