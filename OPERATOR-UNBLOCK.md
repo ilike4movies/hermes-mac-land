@@ -4,7 +4,7 @@ When a cloud agent is waiting on interactive Tailscale login and `HERMES_AUTO_SU
 joining the mesh (`BackendState=Running`) auto-runs `hermes-dispatcher-downstream.sh`
 (stalled-canary defaults) instead of surgical land — **only after** `HERMES_HOST_SSH_PRIVATE_KEY`
 (+ `LINEAR_API_KEY`) is present. Waiters keep looping if Tailscale joins before secrets arrive
-(Runtime Secrets / `/tmp/hermes-cloud-apply/host-ssh-key`); they do not one-shot-and-exit on Running alone. Jump-host ping is warn-only on the downstream-only path (direct `.11` SSH).
+(Runtime Secrets / `/tmp/hermes-cloud-apply/host-ssh-key` / `/tmp/cursor/cloud-agent-secrets`); they do not one-shot-and-exit on Running alone. Tip **#103**: on-join watcher exports `COMPOSER_REPO_URL=hermes-mac-land` (Ooterverse inherit) and polls cloud-agent secrets dirs. Jump-host ping is warn-only on the downstream-only path (direct `.11` SSH).
 
 Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`HERMES_TAILSCALE_AUTHURL_REFRESH_SECS`, default 2700) — see pod `CURRENT_AUTHURL.txt` and tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md). When `gh`/token can write, URL changes also auto-post to [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) (`HERMES_AUTHURL_GITHUB_BEACON=1`, default on; deduped via `LAST_POSTED_AUTHURL.txt`) and refresh tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md) for Mac ONE-SHOT (`HERMES_AUTHURL_TIP_FILE=1`).
 
@@ -13,7 +13,7 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T11:27Z
+**Updated:** 2026-08-28T16:16Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -79,7 +79,7 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 | **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
 | **RAL-823** | `b444b07b-d9c5-496c-b5b0-79f31dd4d210` | In Progress — Mac ONE-SHOT operator wake (due 2026-08-28) |
 
-## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~32h+)
+## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~40.8h+)
 
 | Item | Status |
 |------|--------|
@@ -98,6 +98,6 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — #59–#73 (+ nag installer) |
+| 6 | Operator docs | **DONE** — tip through #103 (on-join COMPOSER + cloud-agent secrets bridge) |
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
