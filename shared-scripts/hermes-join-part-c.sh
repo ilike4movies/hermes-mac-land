@@ -116,6 +116,7 @@ PY
     _refresh_authurl_file
     return 0
   fi
+  # Tip #129: default login_wait_secs is 14400 (4h) via HERMES_TAILSCALE_LOGIN_WAIT_SECS.
   echo "== starting single tailscale up wait (${login_wait_secs}s) =="
   nohup sudo tailscale --socket="$SOCK" up --timeout="${login_wait_secs}s" \
     --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true \
