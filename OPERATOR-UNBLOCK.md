@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T23:45Z
+**Updated:** 2026-08-27T23:56Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -38,7 +38,7 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 |--------|------|--------|
 | **RAL-793** | `963472c8-cc84-426a-9ed6-79e08566353a` | In Progress — canary open |
 | **RAL-634** | `1b5a7e86-1d14-456f-b0d1-39a02df243c2` | **Done** — live #103 transition dedupe proof @ 03:35–03:45Z |
-| **RAL-798** | `52e94e17-69e6-4688-a60e-aea25b090ebf` | In Progress — WIP-park material-evidence (moltbot #110 tip `c753da8a`) |
+| **RAL-798** | `52e94e17-69e6-4688-a60e-aea25b090ebf` | In Progress — WIP-park **#110 MERGED** `main` @ `a535cb7` / tip `c753da8a`; `.11` apply + runtime canary still required |
 | **RAL-799** | `0d76e06f-bf49-4587-a733-1b6f397f1392` | **Done** — GitHub→host apply + drift |
 | **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** — host-land only |
 | **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** — interrupt→executor canary |
@@ -100,12 +100,13 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | 3 | RAL-634 starvation / transition dedupe | **DONE** — moltbot #103 + live enter/suppress @ 03:35–03:45Z |
 | 4 | Miss/idle alarms | **DONE** |
 | 5 | RAL-793 canary + inventory | **OPEN** — sole program blocker (~24h+ silent CLAIM) |
-| 6 | Operator docs | **Sync** — stall age + UUID table fix (this PR) |
+| 6 | Operator docs | **Sync** — stall age + UUID table + #110 merge note (this PR) |
 
 ### Source follow-ups (recent)
 
 | PR | Status |
 |----|--------|
+| moltbot [#110](https://github.com/ilike4movies/moltbot/pull/110) | **MERGED** @ `a535cb7` (tip `c753da8a`) — WIP-park material-evidence; **`.11` apply pending** |
 | moltbot [#103](https://github.com/ilike4movies/moltbot/pull/103) | **merged + live** @ `6ce15a8` — transition-aware watchdog dedupe |
 | hermes-mac-land [#39](https://github.com/ilike4movies/hermes-mac-land/pull/39) | **merged** — verify gates on #103 artifacts |
 | hermes-mac-land [#40](https://github.com/ilike4movies/hermes-mac-land/pull/40) | **merged** @ `0ba45ea` — downstream stack-apply step before verify |
@@ -126,6 +127,7 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 2. ~~RAL-634 live prove-out~~ **DONE** (natural watchdog + transition dedupe)
 3. **Credentialed downstream** → contract readback on RAL-793 → inventory evidence
 4. RAL-794 handoff comment (blocked on #3)
+5. **WIP-park #110 on `.11`** — confirm RAL-799 auto-apply landed `c753da8a` / `a535cb7`, or `HERMES_AUTO_STACK_APPLY=1` once; keep RAL-798 In Progress until apply + runtime canary
 
 ## Gate table
 
@@ -141,6 +143,8 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | PR attachments detached from RAL-793 | **Done** |
 | RAL-793 contract pinned | **OPEN** — run credentialed script |
 | RAL-793 inventory evidence | **OPEN** — run `2954673` stalled |
+| moltbot #110 on GitHub main | **MERGED** @ `a535cb7` / tip `c753da8a` |
+| moltbot #110 on `/opt/moltbot` | **OPEN** — await auto-apply or stack-apply readback |
 
 ## Credentialed run commands (Mac / cloud agent with SSH secrets)
 

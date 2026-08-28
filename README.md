@@ -10,6 +10,8 @@
 
 **Sole blocker:** RAL-793 contract + inventory evidence (run `2954673` CLAIMED @ 23:25Z 2026-08-26 but stalled ~24h+). **Do not re-land** unless tip refresh is needed. Gmail ACTION + URGENT threads still UNREAD — Mac Right-click → Open `HERMES-DOWNSTREAM-RAL793-STALL.command`.
 
+**Parallel (not RAL-793):** moltbot [#110](https://github.com/ilike4movies/moltbot/pull/110) WIP-park material-evidence **MERGED** to `main` @ `a535cb7` / tip `c753da8a` — confirm `.11` apply (RAL-799 auto-apply or `HERMES_AUTO_STACK_APPLY=1`); keep RAL-798 In Progress until host readback.
+
 ### Fastest now — stalled RAL-793 run (Mac)
 
 1. Download **fresh** [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command)
