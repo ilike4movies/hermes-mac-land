@@ -10,7 +10,8 @@
 # may appear in HERMES_CLOUD_SECRETS_ENV / TS_AUTHKEY file paths rather than the
 # frozen process environment. Reloaded each wait tick.
 # After Running + HERMES_AUTO_SURGICAL_LAND=0: wait for host SSH key before
-# downstream (secrets often arrive after Tailscale approve).
+# downstream (secrets often arrive after Tailscale approve). Jump ping is
+# warn-only on this path (direct host SSH).
 #
 # Usage:
 #   TS_AUTHKEY=tskey-auth-... bash shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh
@@ -316,7 +317,15 @@ else
   exit 2
 fi
 
-wait_for_jump
+# Downstream-only prefers direct host SSH; do not abort the closed-loop path
+# if jump ping fails after Tailscale Running (routes may still reach .11).
+if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
+  if ! wait_for_jump; then
+    echo "WARN jump not reachable — continuing downstream-only (direct host SSH)"
+  fi
+else
+  wait_for_jump
+fi
 
 # When surgical land is disabled (stalled-canary recovery), run dispatcher
 # downstream instead of via-ssh tip land. Still needs host SSH + Linear keys.
