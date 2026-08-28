@@ -13,7 +13,8 @@
 #
 # Usage:
 #   HERMES_AUTO_SURGICAL_LAND=0 curl -fsSL .../hermes-dispatcher-downstream.sh | bash
-#   (auto-pins stall run + stack-apply=0 + stall_recovery=1 when run matches default)
+#   (auto-pins stall run + stack-apply=1 + stall_recovery=1 when run matches default;
+#    stack-apply lands moltbot #110 WIP-park until .11 tip confirmed)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -31,8 +32,9 @@ if [[ "${HERMES_AUTO_SURGICAL_LAND:-}" == "0" ]] && [[ -z "${HERMES_RUN_ID:-}" ]
 fi
 
 AUTO_DISPATCH="${HERMES_AUTO_DISPATCH_RAL793:-1}"
+# Stall run: stack-apply defaults ON while #110 WIP-park awaits .11 (override 0 once tip confirmed).
 if [[ "${HERMES_RUN_ID:-}" == "$DEFAULT_STALL_RUN_ID" ]]; then
-  AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-0}"
+  AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-1}"
   STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
 else
   AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-1}"
