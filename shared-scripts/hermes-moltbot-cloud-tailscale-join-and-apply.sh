@@ -132,10 +132,37 @@ _refresh_authurl_file() {
 
 _ensure_single_tailscale_up_wait() {
   local login_wait_secs="${1:-$LOGIN_WAIT_SECS}"
+  # Proactive AuthURL refresh: if interactive up has been waiting >45m and still
+  # NeedsLogin, kill and restart so operators get a fresh approve URL (TTL~1h).
   if _tailscale_up_wait_running; then
-    echo "OK tailscale up wait already running (pidfile=$(cat "$TS_UP_PIDFILE" 2>/dev/null || echo none))"
-    _refresh_authurl_file
-    return 0
+    local age_s=0 pid
+    if [[ -f "$TS_UP_PIDFILE" ]]; then
+      pid="$(tr -d ' \r\n' < "$TS_UP_PIDFILE" 2>/dev/null || true)"
+    fi
+    # Adopt orphan up process into pidfile when missing (post-kill race).
+    if [[ -z "${pid:-}" ]] || ! kill -0 "${pid:-}" 2>/dev/null; then
+      pid="$(pgrep -f 'tailscale.* up --timeout' 2>/dev/null | head -1 || true)"
+      if [[ -n "$pid" ]]; then
+        echo "$pid" >"$TS_UP_PIDFILE"
+      fi
+    fi
+    if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
+      age_s="$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || echo 0)"
+    fi
+    if [[ "${age_s:-0}" =~ ^[0-9]+$ ]] && (( age_s >= ${HERMES_TAILSCALE_AUTHURL_REFRESH_SECS:-2700} )); then
+      echo "WARN proactive AuthURL refresh — up wait age=${age_s}s >= refresh threshold; restarting"
+      if [[ -n "${pid:-}" ]]; then
+        sudo kill "$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
+        # also kill child tailscale up if sudo wrapper
+        pkill -f "tailscale.* up --timeout" 2>/dev/null || true
+        sleep 2
+      fi
+      rm -f "$TS_UP_PIDFILE" 2>/dev/null || true
+    else
+      echo "OK tailscale up wait already running (pidfile=$(cat "$TS_UP_PIDFILE" 2>/dev/null || echo none) age_s=${age_s:-?})"
+      _refresh_authurl_file
+      return 0
+    fi
   fi
   exec 9>"$TS_UP_LOCK"
   if ! flock -n 9; then

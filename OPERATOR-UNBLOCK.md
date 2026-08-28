@@ -5,12 +5,14 @@ joining the mesh (`BackendState=Running`) now auto-runs `hermes-dispatcher-downs
 (stalled-canary defaults) instead of surgical land. Still requires `HERMES_HOST_SSH_PRIVATE_KEY`
 (+ `LINEAR_API_KEY`) present as Runtime Secrets or mid-wait files under `/tmp/hermes-cloud-apply/`.
 
+Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`HERMES_TAILSCALE_AUTHURL_REFRESH_SECS`, default 2700) — see `CURRENT_AUTHURL.txt`.
+
 
 # Hermes dispatcher — operator unblock (RAL-800)
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T07:17Z
+**Updated:** 2026-08-28T07:41Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -73,7 +75,7 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 | **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
 | **RAL-823** | `b444b07b-d9c5-496c-b5b0-79f31dd4d210` | In Progress — Mac ONE-SHOT operator wake (due 2026-08-28) |
 
-## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~31.8h+)
+## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~32h+)
 
 | Item | Status |
 |------|--------|
