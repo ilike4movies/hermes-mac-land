@@ -8,7 +8,7 @@ Source workflow (copyable): [`ci/downstream-stall.yml`](../ci/downstream-stall.y
 
 GitHub API tokens without the `workflows` scope cannot create files under `.github/workflows/` (returns 404). Enable once via:
 
-1. **Mac (preferred):** Right-click → Open [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command) — uses local `gh` (refresh with `gh auth refresh -h github.com -s workflow` if needed), installs the workflow, then runs it.
+1. **Mac (preferred):** Right-click → Open [`HERMES-ONE-SHOT-UNBLOCK.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command) (Phase 2) or [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command) — uses local `gh` (refresh with `gh auth refresh -h github.com -s workflow` if needed), installs the workflow, then runs it.
 2. GitHub web UI paste (below)
 3. A PAT / `gh` token that includes the `workflow` scope
 
@@ -41,11 +41,21 @@ gh workflow run downstream-stall.yml --repo ilike4movies/hermes-mac-land
 
 Same chain as Mac STALL.command / `hermes-dispatcher-downstream.sh`:
 
-inspect → contract install → (stack-apply default skip) → dual `DISPATCH-NOW` → RAL-634 verify → inventory wait
+inspect → contract install → (stack-apply default skip) → dual/`zombie` `DISPATCH-NOW` → RAL-634 verify → inventory wait (default 600s)
+
+GHA template defaults: `HERMES_STALL_ZOMBIE=1`, `HERMES_STALL_ZOMBIE_PASSES=3`, `HERMES_INVENTORY_WAIT_SECS=600`, timeout 25m.
 
 Posts `## Downstream STARTED` / `DONE` / `FAILED` / `PARTIAL` to [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
 ## Until enabled / for tonight's stalled canary
+
+**Mac Terminal paste (ONE-SHOT):**
+
+```bash
+curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command \
+  && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command \
+  ; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
+```
 
 If Mac already has Tailscale + SSH to `.11` + `LINEAR_API_KEY`, prefer [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) (faster; no Action secrets needed).
 
