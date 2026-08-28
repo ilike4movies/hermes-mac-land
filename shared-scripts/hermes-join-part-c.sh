@@ -88,12 +88,21 @@ join_tailscale_authkey() {
 }
 
 wait_for_running() {
-  local max="$1" i=0 st
-  echo "== waiting up to ${max}s for BackendState=Running =="
+  local max="$1" i=0 st last_st="" last_status_echo=-999
+  local status_every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}"
+  echo "== waiting up to ${max}s for BackendState=Running (status every ${status_every}s) =="
   while (( i < max )); do
     reload_cloud_secrets
     st="$(backend_state)"
-    echo "  t=${i}s BackendState=${st:-unknown} authkey=${TS_AUTHKEY:+set}"
+    if [[ "$st" != "$last_st" ]] || (( i - last_status_echo >= status_every )); then
+      echo "  t=${i}s BackendState=${st:-unknown} authkey=${TS_AUTHKEY:+set}"
+      last_status_echo=$i
+      last_st="$st"
+      if [[ "$st" == "NeedsLogin" || "$st" == "NoState" || -z "$st" ]]; then
+        # Throttle verbose `ts status` (Logged out / AuthURL) — was every 5s → multi-MB logs.
+        ts status 2>&1 | sed -n '1,8p' || true
+      fi
+    fi
     if [[ "$st" == "Running" ]]; then
       return 0
     fi
@@ -104,7 +113,6 @@ wait_for_running() {
     if [[ "$st" == "NeedsLogin" || "$st" == "NoState" || -z "$st" ]]; then
       _ensure_single_tailscale_up_wait "$max" || true
       _refresh_authurl_file || true
-      ts status 2>&1 | sed -n '1,8p' || true
     fi
     sleep 5
     i=$((i + 5))
