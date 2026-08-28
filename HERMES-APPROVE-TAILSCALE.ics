@@ -1,21 +1,16 @@
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Hermes//Approve Tailscale//EN
+PRODID:-//Hermes//AuthURL//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 BEGIN:VEVENT
-UID:hermes-authurl-1bcf51f9-20260828T194811Z@hermes-mac-land
-DTSTAMP:20260828T194811Z
-DTSTART:20260828T194811Z
-DTEND:20260828T203311Z
-SUMMARY:ACTION: Approve Hermes Tailscale AuthURL 1bcf51f9
-DESCRIPTION:Approve NOW: https://login.tailscale.com/a/1bcf51f901a365\nHostname: cursor-cloud-hermes\nIgnore retired 1a1dd33b / 16b94d1f / 12e9ef58 / older.\nPrefer Mac ONE-SHOT tip through #119.
-URL:https://login.tailscale.com/a/1bcf51f901a365
+UID:hermes-authurl-1f410a53-20260828T203127Z@hermes
+DTSTAMP:20260828T203127Z
+DTSTART:20260828T203127Z
+DTEND:20260828T211627Z
+SUMMARY:ACTION: Approve Hermes Tailscale 1f410a53 NOW
+DESCRIPTION:Approve https://login.tailscale.com/a/1f410a5301cf93 — ignore retired 1bcf51f9/1a1dd33b/…. Prefer Mac ONE-SHOT from hermes-mac-land tip #122. Success: Downstream DONE + RAL-793 inventory. No Slack rockets.
+URL:https://login.tailscale.com/a/1f410a5301cf93
 STATUS:CONFIRMED
-BEGIN:VALARM
-TRIGGER:-PT0M
-ACTION:DISPLAY
-DESCRIPTION:Approve Tailscale AuthURL 1bcf51f9 NOW
-END:VALARM
 END:VEVENT
 END:VCALENDAR
