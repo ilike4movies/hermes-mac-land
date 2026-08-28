@@ -1,15 +1,7 @@
-# Live cloud Tailscale AuthURL
+# Live Tailscale AuthURL (cloud waiter)
 
-**Last refreshed:** 2026-08-28T14:32:38Z (tip #90 refreshes ~45m while NeedsLogin)
+**Approve NOW:** https://login.tailscale.com/a/486418401bf6f
 
-**Approve:** https://login.tailscale.com/a/17d454ec01d6b9
+Updated: 2026-08-28T15:19:43Z
 
-Do **not** use older AuthURLs (`1ae3f2f7`, `19adccba`, `f073a6`, …). Prefer Mac ONE-SHOT if Runtime Secrets stay unset.
-
-After approve, cloud still needs `HERMES_HOST_SSH_PRIVATE_KEY` (+ preferably `LINEAR_API_KEY` / `TS_AUTHKEY`) unless Mac ONE-SHOT completes Downstream DONE.
-
-Hostname to approve: `cursor-cloud-hermes`
-
-Admin: https://login.tailscale.com/admin/machines
-
-Tip also has #97/#98/#99: inventory wait 900s + AuthURL tip beacon + mid-session secrets bridge poll.
+Tip includes #100 (Ooterverse credentialed preflight allow). Do not use older URLs (`17d454ec`, `1ae3f2f7`, …).
