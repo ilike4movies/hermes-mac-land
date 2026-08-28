@@ -82,7 +82,7 @@ jobs:
           HERMES_AUTO_STACK_APPLY: ${{ inputs.stack_apply }}
           HERMES_STALL_RECOVERY: "1"
           HERMES_WAIT_INVENTORY: "1"
-          HERMES_INVENTORY_WAIT_SECS: "600"
+          HERMES_INVENTORY_WAIT_SECS: "900"
           HERMES_AUTO_INSPECT_RAL793: "1"
           HERMES_STALL_ZOMBIE: "1"
           HERMES_STALL_ZOMBIE_PASSES: "3"
