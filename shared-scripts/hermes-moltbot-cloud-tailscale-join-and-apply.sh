@@ -209,7 +209,7 @@ _ensure_single_tailscale_up_wait() {
     if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
       age_s="$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || echo 0)"
     fi
-    if [[ "${age_s:-0}" =~ ^[0-9]+$ ]] && (( age_s >= ${HERMES_TAILSCALE_AUTHURL_REFRESH_SECS:-2700} )); then
+    if [[ "${age_s:-0}" =~ ^[0-9]+$ ]] && (( age_s >= ${HERMES_TAILSCALE_AUTHURL_REFRESH_SECS:-1800} )); then
       echo "WARN proactive AuthURL refresh — up wait age=${age_s}s >= refresh threshold; restarting"
       if [[ -n "${pid:-}" ]]; then
         sudo kill "$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
