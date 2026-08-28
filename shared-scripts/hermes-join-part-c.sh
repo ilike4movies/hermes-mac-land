@@ -179,6 +179,8 @@ if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
   export HERMES_WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
   export HERMES_STALL_ZOMBIE="${HERMES_STALL_ZOMBIE:-1}"
   export HERMES_STALL_ZOMBIE_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
+  # Ooterverse override env must not poison downstream preflight once TS+SSH ready.
+  export COMPOSER_REPO_URL="${HERMES_DOWNSTREAM_COMPOSER_REPO_URL:-github.com/ilike4movies/hermes-mac-land}"
   bash "$ds"
   echo "OK cloud-tailscale-join-and-apply finished (downstream-only)"
   exit 0
