@@ -1,6 +1,6 @@
 # Hermes Mac land (public bootstrap)
 
-**Operator unblock (RAL-800 / live `.11` land):** [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md) — pick cloud agent, verified agent, or Mac path.
+**Operator unblock (RAL-800 / live `.11` land):** [OPERATOR-UNBLOCK.md](OPERATOR-UNBLOCK.md) — pick cloud agent, verified agent, Mac path, or GitHub Actions.
 
 > **Wrong repo?** Do not run Hermes land from Ooterverse-Saturns-Quest. Use **`ilike4movies/hermes-mac-land`** + env **LEGACY Hermes .11** + Runtime Secrets at boot. **Ooterverse subagents cannot run downstream** — they inherit the wrong env.
 
@@ -8,7 +8,7 @@
 
 **Upstream gates Done:** RAL-820 interrupt, RAL-800 tip-main land, RAL-799 live canary+drift, RAL-634 starvation + transition dedupe (#103 live @ 03:35Z).
 
-**Sole blocker:** Media Studio canary contract + inventory evidence (run `2954673` CLAIMED @ 23:25Z 2026-08-26 but stalled ~25h+). **Do not re-land** unless tip refresh is needed.
+**Sole blocker:** Media Studio canary contract + inventory evidence (run `2954673` CLAIMED @ 23:25Z 2026-08-26 but stalled ~26h+). **Do not re-land** unless tip refresh is needed.
 
 **Parallel (not media-studio canary):** moltbot [#110](https://github.com/ilike4movies/moltbot/pull/110) WIP-park material-evidence **MERGED** to `main` @ `a535cb7` / tip `c753da8a` — confirm `.11` apply (RAL-799 auto-apply or `HERMES_AUTO_STACK_APPLY=1`); keep RAL-798 In Progress until host readback.
 
@@ -21,6 +21,14 @@
 Pins run `20260826T232521106484Z-2954673` and runs: inspect → contract install → (stack-apply **skipped** by default; `.11` already at `6ce15a8`) → **two** `DISPATCH-NOW` passes (~90s; SLA-stale CLAIM recovery) → RAL-634 verify → inventory wait (~3 min). Defaults `HERMES_AUTO_STACK_APPLY=0` + `HERMES_STALL_RECOVERY=1` + `HERMES_WAIT_INVENTORY=1` (#42/#44/#52/#59/#62/#65).
 
 **Runtime ~3–5 min.** Watch [GitHub issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) for `## Downstream STARTED` → `DONE`.
+
+### Or GitHub Actions (durable; one-time enable)
+
+Avoids Mac click after secrets are set. See [docs/CI-DOWNSTREAM-STALL.md](docs/CI-DOWNSTREAM-STALL.md).
+
+1. Copy [`ci/downstream-stall.yml`](ci/downstream-stall.yml) → `.github/workflows/downstream-stall.yml` on `main` (web UI; API often lacks `workflows` scope)
+2. Add Action secrets: `TS_AUTHKEY`, `HERMES_HOST_SSH_PRIVATE_KEY`, `LINEAR_API_KEY`
+3. **Actions → Downstream stall recovery → Run workflow** (or `gh workflow run downstream-stall.yml`)
 
 ### Or downstream-only (generic)
 
