@@ -2,7 +2,7 @@
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T00:20Z
+**Updated:** 2026-08-28T00:30Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -27,7 +27,7 @@
 
 **Only these paths work for live gates:**
 1. **Mac Hermes** — double-click `HERMES-DOWNSTREAM-RAL793-STALL.command`
-2. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11**, secrets at boot
+2. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11`, secrets at boot
 
 ## Linear issue UUIDs (MCP / API comment posting)
 
@@ -40,7 +40,7 @@
 | **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** |
 | **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
 
-## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~24.8h+)
+## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~25h+)
 
 | Item | Status |
 |------|--------|
@@ -49,7 +49,7 @@
 
 **Mac:** Right-click → Open [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command)
 
-Stall defaults (#56): `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
+Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait (~3 min)**. Needs `LINEAR_API_KEY` in `~/.hermes/.env` on Mac. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
 ## Program gates
 
@@ -57,6 +57,6 @@ Stall defaults (#56): `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW. Watch [is
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **Sync** — hygiene 00:17Z incident recorded |
+| 6 | Operator docs | **Sync** — stall fail-closed + inventory wait |
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
