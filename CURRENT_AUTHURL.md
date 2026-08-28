@@ -1,10 +1,10 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-28T23:06:30Z
+**Last refreshed:** 2026-08-28T23:28:00Z
 
 **Approve:** https://login.tailscale.com/a/184ff33a01912a
 
-Tip **#130** controlled upgrade 3600s→14400s @ ~23:03Z soft-reminted AuthURL **184ff33a** (retired `80d5b860`). Live up now `--timeout=14400s`. Tip through **#131** (interactive up `--timeout=0` forever default — stops expiry remints). Live AuthURL still **184ff33a** until next controlled upgrade/approve.
+Tip **#130** controlled upgrade 3600s→14400s @ ~23:03Z soft-reminted AuthURL **184ff33a** (retired `80d5b860`). Live up still `--timeout=14400s`. Tip through **#132** (interactive up `--timeout=0` forever default; **#132** holds live AuthURL — no finite→forever remint while AuthURL advertised). Live AuthURL still **184ff33a**.
 
 **Ignore retired AuthURLs:** `80d5b860`, `7a69b1a0`, `1f410a53`, `1bcf51f9`, `11789ce2`, `1a1dd33b`, `16b94d1f`, `12e9ef58`, `184fd6d6`, …
 
