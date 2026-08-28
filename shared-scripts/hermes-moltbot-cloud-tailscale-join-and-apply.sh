@@ -153,15 +153,40 @@ _tailscale_up_wait_running() {
 
 _refresh_authurl_file() {
   local url authfile="${SCRIPT_DIR}/CURRENT_AUTHURL.txt"
+  local lastfile="${SCRIPT_DIR}/LAST_POSTED_AUTHURL.txt"
+  local gh_repo="${HERMES_STATUS_GITHUB_REPO:-ilike4movies/hermes-mac-land}"
+  local gh_issue="${HERMES_STATUS_GITHUB_ISSUE:-1}"
   url="$(ts status 2>&1 | grep -oE 'https://login\.tailscale\.com/a/[a-z0-9]+' | head -1 || true)"
   [[ -n "$url" ]] || return 0
   if [[ ! -f "$authfile" ]] || ! grep -qF "$url" "$authfile" 2>/dev/null; then
     {
       printf '%s\n' "$url"
       printf 'ACTIVE — approve now (%s).\n' "$(date -u +%FT%TZ)"
-      echo 'Cloud waiters armed; TS_AUTHKEY preferred.'
+      echo 'Cloud waiters armed; TS_AUTHKEY preferred. Proactive refresh before prior TTL.'
     } >"$authfile"
     echo "APPROVE_THIS_URL=$url"
+  fi
+  # Best-effort auto-beacon to status inbox when AuthURL changes (dedupe by URL).
+  # Skips when GH_TOKEN / gh auth missing — agent MCP can still post.
+  if [[ "${HERMES_AUTHURL_GITHUB_BEACON:-1}" == "1" ]]; then
+    if [[ ! -f "$lastfile" ]] || ! grep -qF "$url" "$lastfile" 2>/dev/null; then
+      if command -v gh >/dev/null 2>&1; then
+        local body
+        body="## Fresh Tailscale AuthURL (auto-beacon)
+
+Approve NOW: ${url}
+
+After approve, add Runtime Secrets \`HERMES_HOST_SSH_PRIVATE_KEY\` + \`LINEAR_API_KEY\` (waiters keep looping until SSH arrives).
+
+Or Mac ONE-SHOT: \`curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command\`"
+        if gh issue comment "$gh_issue" --repo "$gh_repo" --body "$body" >/dev/null 2>&1; then
+          printf '%s\n' "$url" >"$lastfile"
+          echo "OK AuthURL GitHub beacon posted to ${gh_repo}#${gh_issue}"
+        else
+          echo "WARN AuthURL GitHub beacon skipped (gh auth/write unavailable)"
+        fi
+      fi
+    fi
   fi
 }
 
