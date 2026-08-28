@@ -4,13 +4,13 @@ PRODID:-//Hermes//AuthURL Approve//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 BEGIN:VEVENT
-UID:hermes-authurl-80d5b860@20260828T221909Z
-DTSTAMP:20260828T221909Z
-DTSTART:20260828T221909Z
-DTEND:20260828T230409Z
-SUMMARY:ACTION: Approve Hermes Tailscale 80d5b860
-DESCRIPTION:Approve NOW: https://login.tailscale.com/a/80d5b86015c32\nMac ONE-SHOT from hermes-mac-land tip if secrets unset.\nRetired: 7a69b1a0
-URL:https://login.tailscale.com/a/80d5b86015c32
+UID:hermes-authurl-184ff33a@20260828T230626Z
+DTSTAMP:20260828T230626Z
+DTSTART:20260828T230626Z
+DTEND:20260828T235126Z
+SUMMARY:ACTION: Approve Hermes Tailscale 184ff33a
+DESCRIPTION:Approve NOW: https://login.tailscale.com/a/184ff33a01912a\nMac ONE-SHOT from hermes-mac-land tip if secrets unset.\nRetired: 80d5b860
+URL:https://login.tailscale.com/a/184ff33a01912a
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR
