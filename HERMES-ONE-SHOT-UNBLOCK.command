@@ -3,7 +3,7 @@
 # Single click critical path for stalled canary recovery:
 #   0) Open Tailscale admin + tip CURRENT_AUTHURL (approve cloud waiter) early
 #   0b) Open Web UI workflow create + Raw paste tabs early (parallel with STALL)
-#   0c) Install 10-min Downstream nag LaunchAgent (until issue #1 shows Downstream DONE)
+#   0c) Install 5-min Downstream nag LaunchAgent (auto ONE-SHOT until issue #1 shows Downstream DONE)
 #   1) Try STALL downstream (SSH/Tailscale to .11) — fastest when mesh works
 #   2) On STALL fail → auto ENABLE-DOWNSTREAM-ACTIONS (install workflow + gh workflow run)
 # Requires ~/.hermes/.env LINEAR_API_KEY. Prefer this over picking between STALL vs ENABLE.
@@ -28,6 +28,10 @@ echo "zombie=$HERMES_STALL_ZOMBIE zombie_passes=$HERMES_STALL_ZOMBIE_PASSES stal
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/${REPO}/issues/1"
 echo "Path: Web UI early + STALL first; on fail → ENABLE-ACTIONS (fallback=$FALLBACK_ACTIONS)"
+# Spoken wake so Mac session notices even if browser tabs are buried.
+if [[ "${HERMES_ONE_SHOT_SPEAK:-1}" == "1" ]] && command -v say >/dev/null 2>&1; then
+  say -v Samantha "Hermes ONE-SHOT starting. Approve Tailscale or let STALL run." 2>/dev/null || true
+fi
 
 _load_mac_hermes_env() {
   local f="${HOME}/.hermes/.env"
@@ -119,14 +123,14 @@ _open_webui_workflow_early() {
 }
 
 _install_downstream_nag() {
-  # Keep Mac reminding every 10 min until "## Downstream DONE" posts on issue #1.
+  # Keep Mac reminding every 5 min until "## Downstream DONE" posts on issue #1.
   # Opt out: HERMES_ONE_SHOT_INSTALL_NAG=0
   if [[ "${HERMES_ONE_SHOT_INSTALL_NAG:-1}" != "1" ]]; then
     echo "SKIP downstream nag install (HERMES_ONE_SHOT_INSTALL_NAG=0)"
     return 0
   fi
   echo ""
-  echo "=== Install Downstream nag LaunchAgent (10 min until DONE) ==="
+  echo "=== Install Downstream nag LaunchAgent (5 min + auto ONE-SHOT until DONE) ==="
   local NAG="/tmp/hermes-install-downstream-nag-oneshot-$$.command"
   local url
   rm -f "$NAG"
