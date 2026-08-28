@@ -2,7 +2,7 @@
 
 **Hard gate:** RAL-793 must show Hermes **CLAIMED** on live `.11` with inventory progress.
 
-**Updated:** 2026-08-27T23:56Z
+**Updated:** 2026-08-28T00:20Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -51,7 +51,7 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 
 [hermes-mac-land issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) receives machine posts when Mac/credentialed runs execute (land DIAG + downstream STARTED/DONE/FAILED). Cloud agents without SSH can watch this inbox for credentialed-run receipts.
 
-## Live stall — RAL-793 run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~24h+)
+## Live stall — RAL-793 run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~24.7h+)
 
 | Item | Status |
 |------|--------|
@@ -63,18 +63,18 @@ When posting via Linear MCP `save_comment`, **verify `issueId` UUID** — do not
 | Ooterverse cloud SSH | **BLOCKED** (no secrets) |
 | Latest downstream attempt | FAILED @ 01:04Z (`bc-3914e61d`, wrong env) |
 | `## Downstream STARTED` / `DONE` | **NO** credentialed success yet (0 real beacons) |
-| Operator wake | **Gmail ACTION** `1a042b03d5053dae` (still UNREAD) + **URGENT** `1a0458a5cef8d952` @ 23:24Z (still UNREAD) — attachment `HERMES-DOWNSTREAM-RAL793-STALL.command` |
+| Operator wake | **Gmail ACTION** `1a042b03d5053dae` + **URGENT** `1a0458a5cef8d952` (bumped `1a045b2857ed4631` @ 00:15Z) — still UNREAD; attachment `HERMES-DOWNSTREAM-RAL793-STALL.command` |
 
 ### Fastest unblock (Mac Hermes, Tailscale up)
 
 **Prefer:** open the Gmail ACTION attachment **or** download from GitHub (do **not** paste curl from Gmail body — prefer attachment / raw GitHub URL).
 
-**Double-click:** `HERMES-DOWNSTREAM-RAL793-STALL.command` (pins run ID + stall recovery chain)
+**Double-click:** `HERMES-DOWNSTREAM-RAL793-STALL.command` (pins run ID + stall recovery + stack-apply for #110)
 
 Or shell:
 
 ```bash
-# Simplified post-#47 (auto-pins stall run + stack-apply=0 + stall_recovery=1):
+# Post-#54 (auto-pins stall run + stack-apply=1 + stall_recovery=1):
 HERMES_AUTO_SURGICAL_LAND=0 \
   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 
@@ -83,15 +83,13 @@ HERMES_RUN_ID=20260826T232521106484Z-2954673 HERMES_AUTO_SURGICAL_LAND=0 \
   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 ```
 
-**Stall launcher defaults (#42 @ `21f49dc`):** `HERMES_AUTO_STACK_APPLY=0` (`.11` already at `6ce15a8` @ 03:30Z) + `HERMES_STALL_RECOVERY=1` (explicit Linear comment before re-dispatch).
+**Stall launcher defaults (#54 @ `54319b6`):** `HERMES_AUTO_STACK_APPLY=1` (lands moltbot #110 WIP-park on `.11`) + `HERMES_STALL_RECOVERY=1` (explicit Linear comment before re-dispatch). Override `HERMES_AUTO_STACK_APPLY=0` only after host tip confirms `c753da8a` / `a535cb7`.
 
 **Stall dual DISPATCH-NOW (#52):** when `HERMES_STALL_RECOVERY=1`, Step 3 posts **two** `DISPATCH-NOW` passes (~90s apart). Host movement SLA is **300s** — a single interrupt on a 10h+ CLAIM may only fail the zombie as `claimed_without_executor_movement`; pass 2 reopens from FAILED under the pinned contract. Override wait via `HERMES_STALL_DISPATCH_WAIT_SECS`.
 
-**Downstream chain:** inspect → contract install → (stack-apply skipped by default) → dual DISPATCH-NOW (stall) → RAL-634 verify.
+**Downstream chain:** inspect → contract install → **stack-apply** (default ON for stall) → dual DISPATCH-NOW (stall) → RAL-634 verify.
 
-Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
-
-## Program gates (2026-08-27)
+## Program gates (2026-08-28)
 
 | # | Requirement | Status |
 |---|-------------|--------|
@@ -99,26 +97,24 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | 2 | GitHub→`.11` auto-apply + drift | **DONE** (RAL-799) |
 | 3 | RAL-634 starvation / transition dedupe | **DONE** — moltbot #103 + live enter/suppress @ 03:35–03:45Z |
 | 4 | Miss/idle alarms | **DONE** |
-| 5 | RAL-793 canary + inventory | **OPEN** — sole program blocker (~24h+ silent CLAIM) |
-| 6 | Operator docs | **Sync** — stall age + UUID table + #110 merge note (this PR) |
+| 5 | RAL-793 canary + inventory | **OPEN** — sole program blocker (~24.7h+ silent CLAIM) |
+| 6 | Operator docs | **Sync** — #53 UUID/24h+#110 note; #54 stall stack-apply=1 |
 
 ### Source follow-ups (recent)
 
 | PR | Status |
 |----|--------|
 | moltbot [#110](https://github.com/ilike4movies/moltbot/pull/110) | **MERGED** @ `a535cb7` (tip `c753da8a`) — WIP-park material-evidence; **`.11` apply pending** |
+| hermes-mac-land [#54](https://github.com/ilike4movies/hermes-mac-land/pull/54) | **merged** @ `54319b6` — stall defaults `HERMES_AUTO_STACK_APPLY=1` (land #110 + recover RAL-793) |
+| hermes-mac-land [#53](https://github.com/ilike4movies/hermes-mac-land/pull/53) | **merged** @ `d512666` — stall ~24h+; UUID table fix; #110 merge note |
 | moltbot [#103](https://github.com/ilike4movies/moltbot/pull/103) | **merged + live** @ `6ce15a8` — transition-aware watchdog dedupe |
-| hermes-mac-land [#39](https://github.com/ilike4movies/hermes-mac-land/pull/39) | **merged** — verify gates on #103 artifacts |
-| hermes-mac-land [#40](https://github.com/ilike4movies/hermes-mac-land/pull/40) | **merged** @ `0ba45ea` — downstream stack-apply step before verify |
-| hermes-mac-land [#41](https://github.com/ilike4movies/hermes-mac-land/pull/41) | **merged** @ `1e492f3` — operator doc sync for #40 chain |
-| hermes-mac-land [#42](https://github.com/ilike4movies/hermes-mac-land/pull/42) | **merged** @ `21f49dc` — stall launcher skip stack-apply + recovery mode |
-| hermes-mac-land [#36](https://github.com/ilike4movies/hermes-mac-land/pull/36) | **merged** — cloud boot auto-pins stall run when `HERMES_AUTO_SURGICAL_LAND=0` |
-| hermes-mac-land [#44](https://github.com/ilike4movies/hermes-mac-land/pull/44) | **merged** @ `8fcac2a` — cloud boot stall defaults (`HERMES_AUTO_STACK_APPLY=0`, `HERMES_STALL_RECOVERY=1`) |
-| hermes-mac-land [#47](https://github.com/ilike4movies/hermes-mac-land/pull/47) | **merged** @ `858cb6a` — bare curl stall auto-defaults (#42/#44 parity in downstream.sh) |
-| hermes-mac-land [#48](https://github.com/ilike4movies/hermes-mac-land/pull/48) | **merged** @ `f3c7578` — OPERATOR sync for #47 |
-| hermes-mac-land [#49](https://github.com/ilike4movies/hermes-mac-land/pull/49) | **merged** @ `964943d` — README post-#47 one-liner |
-| hermes-mac-land [#50](https://github.com/ilike4movies/hermes-mac-land/pull/50) | **merged** @ `dc89811` — skip GitHub beacon on expected preflight fail |
 | hermes-mac-land [#52](https://github.com/ilike4movies/hermes-mac-land/pull/52) | **merged** @ `c064314` — dual DISPATCH-NOW for SLA-stale CLAIM stall recovery |
+| hermes-mac-land [#50](https://github.com/ilike4movies/hermes-mac-land/pull/50) | **merged** @ `dc89811` — skip GitHub beacon on expected preflight fail |
+| hermes-mac-land [#47](https://github.com/ilike4movies/hermes-mac-land/pull/47) | **merged** @ `858cb6a` — bare curl stall auto-defaults |
+| hermes-mac-land [#44](https://github.com/ilike4movies/hermes-mac-land/pull/44) | **merged** @ `8fcac2a` — cloud boot stall defaults (superseded stack-apply default by #54) |
+| hermes-mac-land [#42](https://github.com/ilike4movies/hermes-mac-land/pull/42) | **merged** @ `21f49dc` — stall launcher recovery mode |
+| hermes-mac-land [#40](https://github.com/ilike4movies/hermes-mac-land/pull/40) | **merged** @ `0ba45ea` — downstream stack-apply step before verify |
+| hermes-mac-land [#36](https://github.com/ilike4movies/hermes-mac-land/pull/36) | **merged** — cloud boot auto-pins stall run when `HERMES_AUTO_SURGICAL_LAND=0` |
 | hermes-mac-land `60cf813` | **on main** — downstream fail-fast preflight without `COMPOSER_REPO_URL` |
 
 ### Critical path (remaining)
@@ -127,7 +123,7 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 2. ~~RAL-634 live prove-out~~ **DONE** (natural watchdog + transition dedupe)
 3. **Credentialed downstream** → contract readback on RAL-793 → inventory evidence
 4. RAL-794 handoff comment (blocked on #3)
-5. **WIP-park #110 on `.11`** — confirm RAL-799 auto-apply landed `c753da8a` / `a535cb7`, or `HERMES_AUTO_STACK_APPLY=1` once; keep RAL-798 In Progress until apply + runtime canary
+5. **WIP-park #110 on `.11`** — STALL.command now defaults stack-apply ON (#54); confirm tip `c753da8a` / `a535cb7` + runtime canary; keep RAL-798 In Progress until then
 
 ## Gate table
 
@@ -139,26 +135,25 @@ Set `HERMES_AUTO_STACK_APPLY=1` only if `.11` mirror drifted from `main`.
 | RAL-800 tip-main land | **Done** @ 20:21Z |
 | RAL-799 live prove-out | **Done** @ 20:22Z — canary+drift verified |
 | RAL-634 starvation alarm | **Done** — degraded + transition dedupe live |
-| Operator scripts on main | **Done** (#40 stack-apply; #42 stall recovery; #52 dual-dispatch on main) |
+| Operator scripts on main | **Done** (#40 stack-apply; #52 dual-dispatch; **#54 stall stack-apply=1**) |
 | PR attachments detached from RAL-793 | **Done** |
 | RAL-793 contract pinned | **OPEN** — run credentialed script |
 | RAL-793 inventory evidence | **OPEN** — run `2954673` stalled |
 | moltbot #110 on GitHub main | **MERGED** @ `a535cb7` / tip `c753da8a` |
-| moltbot #110 on `/opt/moltbot` | **OPEN** — await auto-apply or stack-apply readback |
+| moltbot #110 on `/opt/moltbot` | **OPEN** — await auto-apply or #54 STALL stack-apply readback |
 
 ## Credentialed run commands (Mac / cloud agent with SSH secrets)
 
 ### Mac double-click (recommended when RAL-800/799 already Done)
 
-- **`HERMES-DOWNSTREAM-RAL793-STALL.command`** — pins stalled run `2954673`; defaults skip stack-apply + stall recovery (#42); dual DISPATCH-NOW when #52 on tip
+- **`HERMES-DOWNSTREAM-RAL793-STALL.command`** — pins stalled run `2954673`; defaults **stack-apply=1** (#54) + stall recovery + dual DISPATCH-NOW (#52)
 - **`HERMES-DOWNSTREAM-ONLY.command`** — contract install + stack-apply + auto DISPATCH-NOW + RAL-634 verify (no land)
 - **`HERMES-DIAGNOSE-THEN-LAND.command`** — full diagnose + land (when tip refresh needed)
 
 ### Shell one-liners
 
 ```bash
-# Stalled run (inspect + downstream; recommended now):
-# Simplified post-#47 (auto-pins stall run + stack-apply=0 + stall_recovery=1):
+# Stalled run (inspect + stack-apply #110 + dual DISPATCH-NOW):
 HERMES_AUTO_SURGICAL_LAND=0 \
   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
 
@@ -169,16 +164,13 @@ HERMES_RUN_ID=20260826T232521106484Z-2954673 HERMES_AUTO_SURGICAL_LAND=0 \
 # Full chain: land + verify + contract install + RAL-634 verify
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-credentialed-resume-land.sh | bash
 
-# Or downstream-only (if land already done; auto DISPATCH-NOW default):
-curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh | bash
-
 # Or individually:
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral793-contract-install.sh | bash -s -- --post-linear
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-moltbot-stack-apply-via-ssh.sh | bash -s -- --post-linear
 curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral634-starvation-verify.sh | bash -s -- --post-linear
 ```
 
-Set `HERMES_SKIP_DOWNSTREAM=1` on resume-land for land-only smoke. Set `HERMES_AUTO_DISPATCH_RAL793=0` to skip auto DISPATCH-NOW. Set `HERMES_AUTO_STACK_APPLY=0` to skip governed stack-apply (stall launcher default since #42).
+Set `HERMES_SKIP_DOWNSTREAM=1` on resume-land for land-only smoke. Set `HERMES_AUTO_DISPATCH_RAL793=0` to skip auto DISPATCH-NOW. Set `HERMES_AUTO_STACK_APPLY=0` to skip governed stack-apply **only after** `/opt/moltbot` confirms tip `c753da8a` / `a535cb7`.
 
 ### hermes-mac-land cloud agent (env LEGACY Hermes .11)
 
@@ -193,9 +185,7 @@ HERMES_AUTO_SURGICAL_LAND=0
 # HERMES_RUN_ID optional — defaults to stalled canary run
 ```
 
-Since **#44** (2026-08-27): when downstream-only boot pins stall run `2954673`, also defaults `HERMES_AUTO_STACK_APPLY=0` and `HERMES_STALL_RECOVERY=1` (parity with stall launcher #42).
-
-Since **#47** (2026-08-27): `hermes-dispatcher-downstream.sh` itself applies the same stall defaults when run ID matches `2954673` or is auto-pinned via `HERMES_AUTO_SURGICAL_LAND=0`.
+Since **#54** (merged @ `54319b6`): stall-run defaults `HERMES_AUTO_STACK_APPLY=1` + `HERMES_STALL_RECOVERY=1` (STALL.command, downstream.sh, cloud-start) so one click lands #110 and recovers RAL-793.
 
 Since **#52** (merged @ `c064314`): stall recovery posts **two** `DISPATCH-NOW` passes (~90s) so SLA-stale CLAIMs reopen after fail.
 
@@ -220,7 +210,7 @@ If `hermes-dispatcher-downstream.sh` exits at Step 1 with `FAIL SSH to .11` and 
 2. **New cloud agent** on repo `ilike4movies/hermes-mac-land` with environment **LEGACY Hermes .11 — do not use for Ooterverse**
 3. **Add secrets** `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` to the agent environment at boot (not mid-session)
 
-**Success receipts:** GitHub #1 `## Downstream STARTED` → `## Downstream DONE`; RAL-793 contract readback; `evidence/RAL-793-inventory.md` on `.11`.
+**Success receipts:** GitHub #1 `## Downstream STARTED` → `## Downstream DONE`; RAL-793 contract readback; `evidence/RAL-793-inventory.md` on `.11`; `/opt/moltbot` tip includes #110 (`c753da8a`).
 
 ## RAL-793 stall inspect (CLAIMED but silent on Linear)
 
@@ -235,7 +225,7 @@ HERMES_RUN_ID=20260826T232521106484Z-2954673 \
   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-ral793-run-inspect.sh | bash -s -- --post-linear
 ```
 
-Posts artifact summary to RAL-793. Downstream chain auto-runs inspect when `HERMES_RUN_ID` is set (#34). Stall recovery mode (#42) posts explicit Linear comment before re-dispatch; #52 adds dual DISPATCH-NOW for SLA-stale CLAIMs.
+Posts artifact summary to RAL-793. Downstream chain auto-runs inspect when `HERMES_RUN_ID` is set (#34). Stall recovery mode posts explicit Linear comment before re-dispatch; #52 adds dual DISPATCH-NOW for SLA-stale CLAIMs.
 
 ## This pod cannot land tip-main
 
