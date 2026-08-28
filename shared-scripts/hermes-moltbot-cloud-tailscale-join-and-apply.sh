@@ -1,1 +1,1 @@
-LOAD_FROM_FILE:/tmp/cou_authurl_content.sh
+PLACEHOLDER_WILL_REPLACE
