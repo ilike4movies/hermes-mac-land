@@ -3,12 +3,14 @@
 #
 # Assembles part-a/b/c then execs. If co-located parts are missing (piped bash,
 # or ONE-SHOT/STALL download into /tmp), fetches parts from tip raw URLs.
+# If tip CDN for HERMES_DOWNSTREAM_REF fails, falls back to known-good
+# HERMES_DOWNSTREAM_FALLBACK_REF (default dc1980b = #118 self-healing commit).
 # Do NOT replace this with a local-only cat of parts — that breaks Mac ONE-SHOT.
 set -euo pipefail
 
 REPO="${HERMES_DOWNSTREAM_REPO:-ilike4movies/hermes-mac-land}"
 REF="${HERMES_DOWNSTREAM_REF:-main}"
-BASE="https://raw.githubusercontent.com/${REPO}/${REF}/shared-scripts"
+FALLBACK="${HERMES_DOWNSTREAM_FALLBACK_REF:-dc1980b}"
 
 SCRIPT_DIR=""
 if [[ -n "${BASH_SOURCE[0]:-}" && "${BASH_SOURCE[0]}" != *"/dev/fd/"* ]]; then
@@ -27,11 +29,31 @@ for p in hermes-dispatcher-part-a.sh hermes-dispatcher-part-b.sh hermes-dispatch
   fi
 done
 
+_fetch_parts() {
+  local ref="$1"
+  local base="https://raw.githubusercontent.com/${REPO}/${ref}/shared-scripts"
+  local p
+  for p in hermes-dispatcher-part-a.sh hermes-dispatcher-part-b.sh hermes-dispatcher-part-c.sh; do
+    curl -fsSL "$base/$p" -o "$WORK/$p" || return 1
+  done
+  return 0
+}
+
 if [[ "$_have_local_parts" != "1" ]]; then
   echo "OK downstream entrypoint: fetching part-a/b/c from ${REPO}@${REF}"
-  for p in hermes-dispatcher-part-a.sh hermes-dispatcher-part-b.sh hermes-dispatcher-part-c.sh; do
-    curl -fsSL "$BASE/$p" -o "$WORK/$p"
-  done
+  if ! _fetch_parts "$REF"; then
+    if [[ "$REF" != "$FALLBACK" ]]; then
+      echo "WARN tip fetch failed for ${REF}; falling back to ${FALLBACK}"
+      if ! _fetch_parts "$FALLBACK"; then
+        echo "FAIL could not fetch part-a/b/c from ${REF} or fallback ${FALLBACK}" >&2
+        exit 1
+      fi
+      REF="$FALLBACK"
+    else
+      echo "FAIL could not fetch part-a/b/c from ${REF}" >&2
+      exit 1
+    fi
+  fi
 fi
 
 ASM="$WORK/.hermes-dispatcher-downstream.assembled.sh"
