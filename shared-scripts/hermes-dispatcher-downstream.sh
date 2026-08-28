@@ -50,7 +50,7 @@ GH_STATUS_ISSUE="${HERMES_MAC_LAND_STATUS_ISSUE:-1}"
 GH_STATUS_REPO="${HERMES_MAC_LAND_STATUS_REPO:-ilike4movies/hermes-mac-land}"
 STARVE_RC=0
 INVENTORY_RC=0
-INVENTORY_WAIT_SECS="${HERMES_INVENTORY_WAIT_SECS:-180}"
+INVENTORY_WAIT_SECS="${HERMES_INVENTORY_WAIT_SECS:-600}"
 INVENTORY_POLL_SECS="${HERMES_INVENTORY_POLL_SECS:-30}"
 
 _contract="$DIR/hermes-ral793-contract-install.sh"
@@ -111,7 +111,7 @@ _preflight_env() {
     echo "FAIL preflight: $reason" >&2
     echo "  COMPOSER_REPO_URL=${COMPOSER_REPO_URL:-unset}" >&2
     echo "  fix: start NEW cloud agent on hermes-mac-land with LEGACY Hermes .11 secrets" >&2
-    echo "  or Mac Hermes: Right-click → Open HERMES-DOWNSTREAM-RAL793-STALL.command (not double-click)" >&2
+    echo "  or Mac Hermes: Right-click → Open HERMES-ONE-SHOT-UNBLOCK.command (not double-click)" >&2
     return 1
   fi
   return 0
