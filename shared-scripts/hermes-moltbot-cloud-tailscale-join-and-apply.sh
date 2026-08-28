@@ -253,7 +253,17 @@ PY
       if [[ "$posted" == "1" ]]; then
         printf '%s\n' "$url" >"$lastfile"
       else
-        echo "WARN AuthURL beacon skipped (gh/token/Linear write unavailable)"
+        # Throttle skip warnings (wait loop polls every ~5s).
+        local warnfile="${SCRIPT_DIR}/LAST_AUTHURL_BEACON_WARN.txt"
+        local now warn_age=99999
+        now="$(date +%s)"
+        if [[ -f "$warnfile" ]]; then
+          warn_age=$(( now - $(stat -c %Y "$warnfile" 2>/dev/null || echo 0) ))
+        fi
+        if (( warn_age >= ${HERMES_AUTHURL_BEACON_WARN_SECS:-60} )); then
+          echo "WARN AuthURL beacon skipped (gh/token/Linear write unavailable)"
+          printf '%s\n' "$url" >"$warnfile"
+        fi
       fi
     fi
   fi
