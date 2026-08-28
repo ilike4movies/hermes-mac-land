@@ -58,6 +58,10 @@ _spawn_wait_login() {
     else
       echo "$(date -u +%FT%TZ) starting wait-login (BackendState=${st:-unknown})"
     fi
+    # Tip #124: wait-login respawns inherit soft AuthURL keep-alive by default
+    # (tip #123). Do not force hard wipe on supervisor restart mid-approve.
+    export HERMES_AUTHURL_HARD_ON_REFRESH="${HERMES_AUTHURL_HARD_ON_REFRESH:-0}"
+    echo "$(date -u +%FT%TZ) wait-login spawn HERMES_AUTHURL_HARD_ON_REFRESH=${HERMES_AUTHURL_HARD_ON_REFRESH}"
     bash "$DIR/hermes-moltbot-cloud-tailscale-join-and-apply.sh" --wait-login >>"$DIR/wait-login.log" 2>&1 &
     echo $! >"$DIR/waiter.pid"
   ) 200>"$DIR/wait-login.flock"
