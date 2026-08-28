@@ -2,7 +2,7 @@
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T02:20Z
+**Updated:** 2026-08-28T03:12Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -54,8 +54,9 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 | **RAL-799** | `0d76e06f-bf49-4587-a733-1b6f397f1392` | **Done** |
 | **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** |
 | **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
+| **RAL-823** | `b444b07b-d9c5-496c-b5b0-79f31dd4d210` | In Progress — Mac ONE-SHOT operator wake (due 2026-08-28) |
 
-## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~27h+)
+## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~27.5h+)
 
 | Item | Status |
 |------|--------|
@@ -66,12 +67,14 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 
 Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait default 10 min** (`HERMES_INVENTORY_WAIT_SECS=600`, #71). Runtime ~10–15 min (STALL inventory) or Actions ~5–10 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
+**Zombie reclaim (#72):** when stall age ≥1h (auto-detected from `HERMES_RUN_ID` prefix), downstream escalates to **3× DISPATCH-NOW @ 120s** for ultra-stale CLAIM — fail stale CLAIM → reopen → second reopen if still stuck. Mac launchers default `HERMES_STALL_ZOMBIE=1` + `HERMES_STALL_ZOMBIE_PASSES=3` for run `2954673`. Track operator work on **RAL-823**.
+
 ## Program gates
 
 | # | Requirement | Status |
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — #59–#69 (+ ONE-SHOT STALL→Actions launcher) |
+| 6 | Operator docs | **DONE** — #59–#72 (ONE-SHOT + zombie reclaim) |
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse

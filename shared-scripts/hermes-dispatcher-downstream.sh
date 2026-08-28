@@ -7,6 +7,7 @@
 #   2. governed stack-apply (moltbot main → .11; HERMES_AUTO_STACK_APPLY=0 to skip)
 #   3. DISPATCH-NOW RAL-793 via Linear comment (default on; HERMES_AUTO_DISPATCH_RAL793=0 to skip)
 #      stall_recovery=1 → two DISPATCH-NOW passes (~90s) to clear SLA-stale CLAIM then reopen
+#      zombie reclaim (age≥1h) → three DISPATCH-NOW passes (~120s) for ultra-stale CLAIM
 #      FAIL-CLOSED if AUTO_DISPATCH=1 and no DISPATCH-NOW post succeeds (needs LINEAR_API_KEY)
 #   4. RAL-634 starvation verify (--post-linear)
 #   5. optional inventory wait (stall default on) — poll run-inspect until evidence is real
@@ -64,6 +65,24 @@ _starve="$DIR/hermes-ral634-starvation-verify.sh"
 
 _stack_apply="$DIR/hermes-moltbot-stack-apply-via-ssh.sh"
 [[ -x "$_stack_apply" ]] || _stack_apply="$ROOT/shared-scripts/hermes-moltbot-stack-apply-via-ssh.sh"
+
+_stall_age_secs() {
+  local run_id="${1:-${HERMES_RUN_ID:-}}"
+  local prefix ts start now
+  prefix="${run_id%%-*}"
+  [[ "$prefix" =~ ^([0-9]{8}T[0-9]{6}) ]] || { echo 0; return 0; }
+  ts="${BASH_REMATCH[1]}"
+  if date -u -d "${ts}Z" +%s >/dev/null 2>&1; then
+    start="$(date -u -d "${ts}Z" +%s)"
+  elif date -u -j -f "%Y%m%dT%H%M%S" "$ts" +%s >/dev/null 2>&1; then
+    start="$(date -u -j -f "%Y%m%dT%H%M%S" "$ts" +%s)"
+  else
+    echo 0
+    return 0
+  fi
+  now="$(date -u +%s)"
+  echo $(( now - start ))
+}
 
 _load_hermes_ssh_env() {
   local f key val
@@ -219,6 +238,20 @@ if [[ -z "$STALL_RECOVERY" ]] && [[ -n "${HERMES_RUN_ID:-}" ]]; then
   STALL_RECOVERY=1
 fi
 
+STALL_AGE_SECS=0
+if [[ -n "${HERMES_RUN_ID:-}" ]]; then
+  STALL_AGE_SECS="$(_stall_age_secs "$HERMES_RUN_ID")"
+fi
+ZOMBIE="${HERMES_STALL_ZOMBIE:-}"
+if [[ -z "$ZOMBIE" ]]; then
+  if [[ "$STALL_RECOVERY" == "1" ]] && [[ "$STALL_AGE_SECS" -ge 3600 ]]; then
+    ZOMBIE=1
+  else
+    ZOMBIE=0
+  fi
+fi
+STALL_AGE_HOURS="$(( STALL_AGE_SECS / 3600 ))"
+
 WHEN="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 HOST="$(hostname 2>/dev/null || echo unknown)"
 USER_NAME="$(whoami 2>/dev/null || echo unknown)"
@@ -232,10 +265,13 @@ _post_github_status "## Downstream STARTED @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
 chain: inspect(auto=$AUTO_INSPECT) → contract install → stack-apply(auto=$AUTO_STACK_APPLY) → DISPATCH-NOW (auto=$AUTO_DISPATCH) → RAL-634 verify → inventory-wait(auto=$WAIT_INVENTORY)
-stall_recovery=$STALL_RECOVERY run=${HERMES_RUN_ID:-unset}
+stall_recovery=$STALL_RECOVERY zombie=$ZOMBIE stall_age=${STALL_AGE_SECS}s run=${HERMES_RUN_ID:-unset}
 log: \`$LOG\`"
 
 echo "== Hermes dispatcher downstream @ $WHEN ==" | tee -a "$LOG"
+if [[ -n "${HERMES_RUN_ID:-}" ]]; then
+  echo "stall_age=${STALL_AGE_SECS}s (~${STALL_AGE_HOURS}h) zombie=$ZOMBIE run=${HERMES_RUN_ID}" | tee -a "$LOG"
+fi
 
 if [[ "$AUTO_INSPECT" == "1" ]]; then
   echo "== Step 0: RAL-793 run inspect (read-only) ==" | tee -a "$LOG"
@@ -296,20 +332,36 @@ See log: \`$LOG\`"
   STALL_DISPATCH_PASSES=1
   STALL_DISPATCH_WAIT_SECS="${HERMES_STALL_DISPATCH_WAIT_SECS:-90}"
   if [[ "$STALL_RECOVERY" == "1" ]]; then
-    # Stale CLAIM older than movement SLA (300s) may need two interrupts:
-    # pass 1 resumes (recovery_attempts=0) or fails stale CLAIM (SLA exceeded);
-    # pass 2 reopens from FAILED under pinned contract. Second pass is a no-op
-    # if pass 1 already reached WORKING.
-    STALL_DISPATCH_PASSES=2
-    _post_linear_comment "## Stall recovery @ $WHEN
+    if [[ "$ZOMBIE" == "1" ]]; then
+      # Ultra-stale CLAIM (≥1h silent): triple DISPATCH-NOW ladder @ 120s.
+      STALL_DISPATCH_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
+      STALL_DISPATCH_WAIT_SECS="${HERMES_STALL_DISPATCH_WAIT_SECS:-120}"
+      _post_linear_comment "## Zombie reclaim @ $WHEN
 
-Run \`${HERMES_RUN_ID:-unknown}\` was CLAIMED before contract was on registry (~10h+ silent). Contract install completed.
+Run \`${HERMES_RUN_ID:-unknown}\` silent ~${STALL_AGE_HOURS}h+ (${STALL_AGE_SECS}s since CLAIM). Contract install completed.
+
+Posting **three** \`DISPATCH-NOW\` passes (${STALL_DISPATCH_WAIT_SECS}s apart) — **zombie reclaim** ladder:
+1. fail stale CLAIM (movement SLA 300s) **or** resume recovered claim
+2. reopen from FAILED under pinned contract
+3. second reopen if still stuck after pass 2
+
+Expect \`evidence/RAL-793-inventory.md\` — not WORK-PACKET-DONE alone." || true
+    else
+      # Stale CLAIM older than movement SLA (300s) may need two interrupts:
+      # pass 1 resumes (recovery_attempts=0) or fails stale CLAIM (SLA exceeded);
+      # pass 2 reopens from FAILED under pinned contract. Second pass is a no-op
+      # if pass 1 already reached WORKING.
+      STALL_DISPATCH_PASSES=2
+      _post_linear_comment "## Stall recovery @ $WHEN
+
+Run \`${HERMES_RUN_ID:-unknown}\` was CLAIMED before contract was on registry (~${STALL_AGE_HOURS}h silent, ${STALL_AGE_SECS}s). Contract install completed.
 
 Posting **two** \`DISPATCH-NOW\` passes (${STALL_DISPATCH_WAIT_SECS}s apart):
 1. resume recovered claim **or** fail stale CLAIM (movement SLA 300s)
 2. reopen from FAILED under pinned contract if pass 1 terminalized the zombie
 
 Expect \`evidence/RAL-793-inventory.md\` — not WORK-PACKET-DONE alone." || true
+    fi
   fi
   _dispatch_ok=0
   _pass=1
@@ -317,9 +369,15 @@ Expect \`evidence/RAL-793-inventory.md\` — not WORK-PACKET-DONE alone." || tru
     if [[ "$_pass" -gt 1 ]]; then
       echo "WAIT ${STALL_DISPATCH_WAIT_SECS}s before DISPATCH-NOW pass $_pass/$STALL_DISPATCH_PASSES" | tee -a "$LOG"
       sleep "$STALL_DISPATCH_WAIT_SECS"
-      _post_linear_comment "## Stall recovery pass $_pass/$STALL_DISPATCH_PASSES @ $(date -u +%Y-%m-%dT%H:%M:%SZ)
+      if [[ "$ZOMBIE" == "1" ]]; then
+        _post_linear_comment "## Zombie reclaim pass $_pass/$STALL_DISPATCH_PASSES @ $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+Pass 1 may have failed stale CLAIM as \`claimed_without_executor_movement\`. Pass 2+ reopen from FAILED under pinned contract (no-op if already WORKING). Pass 3 is a second reopen if still stuck." || true
+      else
+        _post_linear_comment "## Stall recovery pass $_pass/$STALL_DISPATCH_PASSES @ $(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 Pass 1 may have resumed the claim or failed it as \`claimed_without_executor_movement\`. Pass 2 reopens from FAILED under pinned contract (no-op if already WORKING)." || true
+      fi
     fi
     if _post_linear_comment "$DISPATCH_BODY"; then
       echo "OK posted Linear interrupt comment (pass $_pass/$STALL_DISPATCH_PASSES): $DISPATCH_BODY" | tee -a "$LOG"
@@ -341,7 +399,7 @@ See log: \`$LOG\`"
   fi
   _post_linear_comment "## Auto-dispatch @ $WHEN
 
-Posted \`$DISPATCH_BODY\` ×${STALL_DISPATCH_PASSES} after contract install/readback (stall_recovery=$STALL_RECOVERY). Expect CLAIMED + \`evidence/RAL-793-inventory.md\` — not WORK-PACKET-DONE alone." || true
+Posted \`$DISPATCH_BODY\` ×${STALL_DISPATCH_PASSES} after contract install/readback (stall_recovery=$STALL_RECOVERY zombie=$ZOMBIE). Expect CLAIMED + \`evidence/RAL-793-inventory.md\` — not WORK-PACKET-DONE alone." || true
 else
   echo "SKIP Step 3: HERMES_AUTO_DISPATCH_RAL793=0 — post DISPATCH-NOW manually" | tee -a "$LOG"
 fi
@@ -402,15 +460,24 @@ echo "DONE downstream @ $WHEN" | tee -a "$LOG"
 echo "  Expect inventory evidence on $LINEAR_TICKET (evidence/RAL-793-inventory.md)" | tee -a "$LOG"
 echo "  Do NOT treat prior WORK-PACKET-DONE as objective closure" | tee -a "$LOG"
 
+_DISPATCH_MODE="single-pass"
+if [[ "$STALL_RECOVERY" == "1" ]]; then
+  if [[ "$ZOMBIE" == "1" ]]; then
+    _DISPATCH_MODE="zombie triple-pass"
+  else
+    _DISPATCH_MODE="stall dual-pass"
+  fi
+fi
+
 if [[ "$STARVE_RC" -eq 0 && "$INVENTORY_RC" -eq 0 ]]; then
   _post_github_status "## Downstream DONE @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
 run inspect: auto=$AUTO_INSPECT
-stall_recovery: $STALL_RECOVERY
+stall_recovery: $STALL_RECOVERY zombie: $ZOMBIE stall_age: ${STALL_AGE_SECS}s
 contract install: OK
 stack-apply: auto=$AUTO_STACK_APPLY
-DISPATCH-NOW: auto=$AUTO_DISPATCH (stall dual-pass when stall_recovery=1; fail-closed)
+DISPATCH-NOW: auto=$AUTO_DISPATCH ($_DISPATCH_MODE when stall_recovery=1; fail-closed)
 RAL-634 verify: PASS
 inventory wait: $INVENTORY_STATUS (auto=$WAIT_INVENTORY)
 
@@ -420,10 +487,10 @@ else
 
 host=\`$HOST\` user=\`$USER_NAME\`
 run inspect: auto=$AUTO_INSPECT
-stall_recovery: $STALL_RECOVERY
+stall_recovery: $STALL_RECOVERY zombie: $ZOMBIE stall_age: ${STALL_AGE_SECS}s
 contract install: OK
 stack-apply: auto=$AUTO_STACK_APPLY
-DISPATCH-NOW: auto=$AUTO_DISPATCH (stall dual-pass when stall_recovery=1; fail-closed)
+DISPATCH-NOW: auto=$AUTO_DISPATCH ($_DISPATCH_MODE when stall_recovery=1; fail-closed)
 RAL-634 verify: $([[ "$STARVE_RC" -eq 0 ]] && echo PASS || echo "FAIL (rc=$STARVE_RC)")
 inventory wait: $INVENTORY_STATUS (auto=$WAIT_INVENTORY)
 
