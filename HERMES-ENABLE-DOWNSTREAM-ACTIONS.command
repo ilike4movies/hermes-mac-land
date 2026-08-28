@@ -60,10 +60,14 @@ else
     echo "Likely missing 'workflow' scope on this gh token."
     echo "Fix options:"
     echo "  1) gh auth refresh -h github.com -s workflow"
-    echo "  2) Web UI: copy ci/downstream-stall.yml → ${WF_PATH} on main"
-    echo "     https://github.com/${REPO}/new/main?filename=${WF_PATH}"
+    echo "  2) Web UI: paste Raw ci/downstream-stall.yml into create-file editor"
+    WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+    WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+    echo "     create: $WEBUI_NEW"
+    echo "     Raw:    $WEBUI_RAW"
     cat /tmp/hermes-wf-put.err 2>/dev/null || true
-    open "https://github.com/${REPO}/new/main?filename=${WF_PATH}" 2>/dev/null || true
+    open "$WEBUI_NEW" 2>/dev/null || true
+    open "$WEBUI_RAW" 2>/dev/null || true
     osascript -e 'display notification "Need workflow scope or web UI paste" with title "Hermes Actions enable FAILED" sound name "Basso"' 2>/dev/null || true
     read -r -p "Press Enter to close…" _
     exit 1
@@ -89,7 +93,7 @@ echo ""
 echo "Triggering workflow_dispatch…"
 if gh workflow run downstream-stall.yml --repo "$REPO"; then
   echo "OK workflow_dispatch accepted"
-  echo "Watch: https://github.com/${REPO}/actions"
+echo "Watch: https://github.com/${REPO}/actions"
   echo "Inbox: https://github.com/${REPO}/issues/1"
   open "https://github.com/${REPO}/actions" 2>/dev/null || true
   osascript -e 'display notification "Workflow started. Watch Actions + issue #1." with title "Hermes Actions enable OK" sound name "Hero"' 2>/dev/null || true
