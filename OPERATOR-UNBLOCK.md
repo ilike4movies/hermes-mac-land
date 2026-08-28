@@ -27,7 +27,7 @@
 
 **Only these paths work for live gates:**
 1. **Mac Hermes** — double-click `HERMES-DOWNSTREAM-RAL793-STALL.command`
-2. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11`, secrets at boot
+2. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11**, secrets at boot
 
 ## Linear issue UUIDs (MCP / API comment posting)
 
