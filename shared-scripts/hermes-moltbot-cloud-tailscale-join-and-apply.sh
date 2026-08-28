@@ -9,6 +9,8 @@
 # Mid-wait secret reload (cloud agents): if secrets are injected after start, they
 # may appear in HERMES_CLOUD_SECRETS_ENV / TS_AUTHKEY file paths rather than the
 # frozen process environment. Reloaded each wait tick.
+# After Running + HERMES_AUTO_SURGICAL_LAND=0: wait for host SSH key before
+# downstream (secrets often arrive after Tailscale approve).
 #
 # Usage:
 #   TS_AUTHKEY=tskey-auth-... bash shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh
@@ -83,6 +85,38 @@ reload_cloud_secrets() {
     export LINEAR_API_KEY
   fi
 }
+
+
+_host_ssh_ready() {
+  reload_cloud_secrets
+  [[ -n "${HERMES_HOST_SSH_PRIVATE_KEY:-}" ]] && return 0
+  [[ -s "$HOST_KEY_FILE" ]] && return 0
+  return 1
+}
+
+wait_for_host_ssh_key() {
+  local max="${HERMES_HOST_SSH_WAIT_SECS:-3600}" i=0
+  if _host_ssh_ready; then
+    echo "OK host SSH key already present"
+    return 0
+  fi
+  echo "== waiting up to ${max}s for HERMES_HOST_SSH_PRIVATE_KEY / $HOST_KEY_FILE =="
+  while (( i < max )); do
+    reload_cloud_secrets
+    if _host_ssh_ready; then
+      echo "OK host SSH key arrived after ${i}s"
+      return 0
+    fi
+    if (( i % 60 == 0 )); then
+      echo "  t=${i}s still waiting for host SSH / Linear key files (Runtime Secrets)"
+    fi
+    sleep 15
+    i=$((i + 15))
+  done
+  echo "ERROR: host SSH key not present after ${max}s" >&2
+  return 1
+}
+
 
 ts() {
   if [[ -S "$SOCK" ]]; then
@@ -288,6 +322,10 @@ wait_for_jump
 # downstream instead of via-ssh tip land. Still needs host SSH + Linear keys.
 if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
   echo "== HERMES_AUTO_SURGICAL_LAND=0 — dispatcher downstream (not surgical land) =="
+  wait_for_host_ssh_key || {
+    echo "ERROR: cannot run downstream without HERMES_HOST_SSH_PRIVATE_KEY" >&2
+    exit 1
+  }
   ds="$SCRIPT_DIR/hermes-dispatcher-downstream.sh"
   if [[ ! -x "$ds" ]]; then
     echo "ERROR: missing $ds" >&2
