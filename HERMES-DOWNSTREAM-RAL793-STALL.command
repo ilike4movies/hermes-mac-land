@@ -1,7 +1,7 @@
 #!/bin/bash
 # HERMES-DOWNSTREAM-RAL793-STALL.command — double-click on Mac Hermes
 # Pins stalled run 20260826T232521106484Z-2954673 and runs full downstream chain:
-# inspect → contract install → (optional stack-apply) → dual DISPATCH-NOW (#52) → RAL-634 verify.
+# inspect → contract install → stack-apply (#110 WIP-park) → dual DISPATCH-NOW (#52) → RAL-634 verify.
 # Fetches hermes-dispatcher-downstream.sh from main at runtime (post-#52 dual-dispatch included).
 # Posts machine status to GitHub issue #1 when gh is available.
 set -euo pipefail
@@ -9,8 +9,9 @@ export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:-public-downstream-ral79
 export HERMES_RUN_ID="${HERMES_RUN_ID:-20260826T232521106484Z-2954673}"
 export HERMES_AUTO_SURGICAL_LAND=0
 export HERMES_AUTO_INSPECT_RAL793=1
-# Stack already at 6ce15a8 on .11 @ 03:30Z — skip unless mirror drifted.
-export HERMES_AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-0}"
+# moltbot #110 (WIP-park) MERGED @ a535cb7 / tip c753da8a — default ON until .11 apply confirmed.
+# Override HERMES_AUTO_STACK_APPLY=0 only if host already at tip.
+export HERMES_AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-1}"
 export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
 PIN="${HERMES_MAC_LAND_PIN:-main}"
 cd "${TMPDIR:-/tmp}"
@@ -57,6 +58,7 @@ if bash "$SCRIPT"; then
   echo "OK downstream gates finished for run $HERMES_RUN_ID"
   echo "NEXT: watch Linear for contract readback + inventory evidence (not WORK-PACKET-DONE alone)"
   echo " watch GitHub issue #1 for Downstream DONE receipt"
+  echo " also confirm /opt/moltbot has #110 tip c753da8a / a535cb7 (WIP-park)"
   osascript -e 'display notification "Stall downstream OK. Watch Linear + GitHub #1." with title "Hermes STALL downstream OK" sound name "Hero"' 2>/dev/null || true
   say "Hermes stall downstream complete. Watch Linear for inventory evidence." 2>/dev/null || true
   read -r -p "Press Enter to close…" _
