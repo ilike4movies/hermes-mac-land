@@ -65,7 +65,29 @@ _host_ssh_ready() {
   return 1
 }
 
+_run_bridge() {
+  if [[ -x "$DIR/bridge-secrets-from-env.sh" ]]; then
+    bash "$DIR/bridge-secrets-from-env.sh" >/dev/null 2>&1 || true
+  elif [[ -x "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" ]]; then
+    bash "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" >/dev/null 2>&1 || true
+  fi
+}
+
+_ensure_secrets_bridge_poller() {
+  if pgrep -f 'hermes-cloud-secrets-bridge-poller.sh' >/dev/null 2>&1; then
+    return 0
+  fi
+  local poller="$DIR/hermes-cloud-secrets-bridge-poller.sh"
+  [[ -x "$poller" ]] || poller="$(dirname "$0")/hermes-cloud-secrets-bridge-poller.sh"
+  if [[ -x "$poller" ]]; then
+    nohup bash "$poller" >/dev/null 2>&1 &
+    echo "$(date -u +%FT%TZ) started secrets-bridge-poller"
+  fi
+}
+
 while true; do
+  _run_bridge
+  _ensure_secrets_bridge_poller
   st="$(backend_state)"
   if [[ "$st" == "Running" ]]; then
     echo "$(date -u +%FT%TZ) OK Running — Tailscale joined"
