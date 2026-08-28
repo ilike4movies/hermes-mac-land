@@ -1,13 +1,15 @@
 _ensure_single_tailscale_up_wait() {
   local login_wait_secs="${1:-$LOGIN_WAIT_SECS}"
+  # Tip #131: desired interactive up timeout (0 = forever). Script wait loop still
+  # uses login_wait_secs / LOGIN_WAIT_SECS separately.
+  local desired_up_timeout="${HERMES_TAILSCALE_UP_TIMEOUT_SECS:-${UP_TIMEOUT_SECS:-0}}"
   # Proactive AuthURL refresh: if interactive up has been waiting ~45m+ and still
   # NeedsLogin, kill and restart so operators get a fresh approve URL (TTL~1h).
   # Prefer ~45m over ~15m: frequent kills invalidate open approve links mid-click.
   #
-  # Tip #130: when a *short* up timeout (< desired LOGIN_WAIT_SECS, e.g. leftover
-  # 3600s after tip #129 raised the default to 14400) is near expiry, do a
-  # *controlled* soft upgrade to the longer timeout instead of #125 soft-skip
-  # holding until surprise remint at short-timeout death.
+  # Tip #130/#131: when a *finite* up timeout is shorter than desired (desired 0=
+  # forever, or leftover 3600/14400), near that finite expiry do a *controlled*
+  # soft upgrade instead of #125 soft-skip holding until surprise remint.
   local _do_restart=0 _upgrade_short=0 _hard=0 age_s=0 pid="" _up_timeout="" _remain=""
   if _tailscale_up_wait_running; then
     if [[ -f "$TS_UP_PIDFILE" ]]; then
@@ -30,21 +32,34 @@ _ensure_single_tailscale_up_wait() {
     fi
     if [[ ! "${age_s:-0}" =~ ^[0-9]+$ ]]; then age_s=0; fi
 
-    # Tip #130 pre-expiry short→long timeout upgrade (bypasses soft-skip).
-    if [[ "${HERMES_TAILSCALE_UP_UPGRADE_SHORT:-1}" == "1" ]] \
-      && [[ "${_up_timeout:-}" =~ ^[0-9]+$ ]] \
-      && (( _up_timeout < login_wait_secs )); then
+    # Tip #130/#131 pre-expiry finite→desired up-timeout upgrade (bypasses soft-skip).
+    # desired 0 = forever: any finite up_timeout is "short". Trigger ONLY near the
+    # finite up's own expiry (remain<=lead) so we do not remint a healthy 14400s
+    # up at the 45m soft-refresh age while migrating to forever.
+    _is_short=0
+    if [[ "${_up_timeout:-}" =~ ^[0-9]+$ ]]; then
+      if (( desired_up_timeout == 0 )); then
+        if (( _up_timeout > 0 )); then _is_short=1; fi
+      elif (( _up_timeout < desired_up_timeout )); then
+        _is_short=1
+      fi
+    fi
+    if [[ "${HERMES_TAILSCALE_UP_UPGRADE_SHORT:-1}" == "1" && "$_is_short" == "1" ]]; then
       _remain=$(( _up_timeout - age_s ))
       local lead="${HERMES_TAILSCALE_UP_UPGRADE_LEAD_SECS:-900}"
       local refresh="${HERMES_TAILSCALE_AUTHURL_REFRESH_SECS:-2700}"
-      if (( _remain <= lead )) || (( age_s >= refresh )); then
+      local _trigger=0
+      if (( _remain <= lead )); then _trigger=1; fi
+      # Finite→finite upgrades may also use the ~45m refresh age (legacy #130).
+      if (( desired_up_timeout > 0 )) && (( age_s >= refresh )); then _trigger=1; fi
+      if (( _trigger == 1 )); then
         _do_restart=1
         _upgrade_short=1
-        echo "WARN tip#130 controlled up-timeout upgrade ${_up_timeout}s → ${login_wait_secs}s (age_s=${age_s} remain_s=${_remain} lead_s=${lead})"
-        echo "upgrade=$(date -u +%FT%TZ) from=${_up_timeout} to=${login_wait_secs} age_s=${age_s} remain_s=${_remain}" \
+        echo "WARN tip#130/#131 controlled up-timeout upgrade ${_up_timeout}s → ${desired_up_timeout}s (age_s=${age_s} remain_s=${_remain} lead_s=${lead}; 0=forever)"
+        echo "upgrade=$(date -u +%FT%TZ) from=${_up_timeout} to=${desired_up_timeout} age_s=${age_s} remain_s=${_remain}" \
           >>"${SCRIPT_DIR}/LAST_UP_TIMEOUT_UPGRADE.txt" 2>/dev/null || true
         # Soft remint may keep or change AuthURL — flag MCP surface so agents re-check.
-        echo "tip130_upgrade=$(date -u +%FT%TZ) from=${_up_timeout} to=${login_wait_secs}" \
+        echo "tip131_upgrade=$(date -u +%FT%TZ) from=${_up_timeout} to=${desired_up_timeout}" \
           >"${SCRIPT_DIR}/AUTHURL_MCP_SURFACE_NEEDED.txt" 2>/dev/null || true
       fi
     fi
@@ -92,7 +107,7 @@ except Exception:
       # Force soft remint: HERMES_AUTHURL_FORCE_REFRESH=1.
       if [[ "${HERMES_AUTHURL_HARD_ON_REFRESH:-0}" == "1" ]]; then _hard=1; fi
       if [[ "$_upgrade_short" == "1" ]]; then
-        echo "OK AuthURL refresh mode=SOFT upgrade (tip#130 short-timeout → ${login_wait_secs}s)"
+        echo "OK AuthURL refresh mode=SOFT upgrade (tip#130/#131 short-timeout → ${desired_up_timeout}s; 0=forever)"
       elif [[ "$_hard" == "1" ]]; then
         echo "WARN AuthURL refresh mode=HARD (HERMES_AUTHURL_HARD_ON_REFRESH=1)"
       else
@@ -137,8 +152,8 @@ PY
       local every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}" stamp="$SCRIPT_DIR/LAST_UP_OK_ECHO.at" now
       now="$(date +%s)"
       if [[ ! -f "$stamp" ]] || (( now - $(cat "$stamp" 2>/dev/null || echo 0) >= every )); then
-        if [[ -n "${_up_timeout}" ]] && (( _up_timeout < login_wait_secs )); then
-          echo "OK tip#130 short up still young (timeout=${_up_timeout}s desired=${login_wait_secs}s age_s=${age_s:-?} remain_s=$((_up_timeout - age_s)); upgrade near expiry)"
+        if [[ -n "${_up_timeout}" ]] && { (( desired_up_timeout == 0 && _up_timeout > 0 )) || (( desired_up_timeout > 0 && _up_timeout < desired_up_timeout )); }; then
+          echo "OK tip#130/#131 short up still young (timeout=${_up_timeout}s desired=${desired_up_timeout}s age_s=${age_s:-?} remain_s=$((_up_timeout - age_s)); upgrade near expiry; 0=forever)"
         fi
         echo "OK tailscale up wait already running (pidfile=$(cat "$TS_UP_PIDFILE" 2>/dev/null || echo none) age_s=${age_s:-?})"
         echo "$now" >"$stamp"
@@ -157,9 +172,9 @@ PY
     _refresh_authurl_file
     return 0
   fi
-  # Tip #129: default login_wait_secs is 14400 (4h) via HERMES_TAILSCALE_LOGIN_WAIT_SECS.
-  echo "== starting single tailscale up wait (${login_wait_secs}s) =="
-  nohup sudo tailscale --socket="$SOCK" up --timeout="${login_wait_secs}s" \
+  # Tip #131: interactive up --timeout default 0s (forever). Script wait uses LOGIN_WAIT_SECS.
+  echo "== starting single tailscale up wait (up_timeout=${desired_up_timeout}s; 0=forever; script_wait=${login_wait_secs}s) =="
+  nohup sudo tailscale --socket="$SOCK" up --timeout="${desired_up_timeout}s" \
     --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true \
     >/tmp/tailscale-up-wait.log 2>&1 &
   echo $! >"$TS_UP_PIDFILE"

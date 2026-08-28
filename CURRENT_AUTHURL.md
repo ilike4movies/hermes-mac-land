@@ -4,7 +4,7 @@
 
 **Approve:** https://login.tailscale.com/a/184ff33a01912a
 
-Tip **#130** controlled upgrade 3600s→14400s @ ~23:03Z soft-reminted AuthURL **184ff33a** (retired `80d5b860`). Live up now `--timeout=14400s`. Tip through **#130**.
+Tip **#130** controlled upgrade 3600s→14400s @ ~23:03Z soft-reminted AuthURL **184ff33a** (retired `80d5b860`). Live up now `--timeout=14400s`. Tip through **#131** (interactive up `--timeout=0` forever default — stops expiry remints). Live AuthURL still **184ff33a** until next controlled upgrade/approve.
 
 **Ignore retired AuthURLs:** `80d5b860`, `7a69b1a0`, `1f410a53`, `1bcf51f9`, `11789ce2`, `1a1dd33b`, `16b94d1f`, `12e9ef58`, `184fd6d6`, …
 
