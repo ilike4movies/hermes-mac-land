@@ -28,7 +28,39 @@ _tailscale_up_wait_running() {
 }
 
 _wait_login_active() {
+  local pid cmdline
+  if [[ -f "$DIR/waiter.pid" ]]; then
+    pid="$(tr -d ' \r\n' < "$DIR/waiter.pid" 2>/dev/null || true)"
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      cmdline="$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null || true)"
+      if [[ "$cmdline" == *'hermes-moltbot-cloud-tailscale-join-and-apply.sh --wait-login'* ]]; then
+        return 0
+      fi
+    fi
+  fi
+  # Fallback: any live wait-login (exclude our own cmdline via exact script name).
   pgrep -f 'hermes-moltbot-cloud-tailscale-join-and-apply.sh --wait-login' >/dev/null 2>&1
+}
+
+_spawn_wait_login() {
+  # Single-instance: flock + re-check prevents supervisor races / duplicate waiters.
+  (
+    flock -n 200 || {
+      echo "$(date -u +%FT%TZ) wait-login spawn skipped (flock held)"
+      exit 0
+    }
+    if _wait_login_active; then
+      echo "$(date -u +%FT%TZ) wait-login already active — not spawning"
+      exit 0
+    fi
+    if _tailscale_up_wait_running; then
+      echo "$(date -u +%FT%TZ) tailscale up wait running — attaching wait-login (BackendState=${st:-unknown})"
+    else
+      echo "$(date -u +%FT%TZ) starting wait-login (BackendState=${st:-unknown})"
+    fi
+    bash "$DIR/hermes-moltbot-cloud-tailscale-join-and-apply.sh" --wait-login >>"$DIR/wait-login.log" 2>&1 &
+    echo $! >"$DIR/waiter.pid"
+  ) 200>"$DIR/wait-login.flock"
 }
 
 _reload_host_secrets() {
@@ -120,12 +152,7 @@ while true; do
     exit 0
   fi
   if ! _wait_login_active; then
-    if _tailscale_up_wait_running; then
-      echo "$(date -u +%FT%TZ) tailscale up wait running — attaching wait-login (BackendState=${st:-unknown})"
-    else
-      echo "$(date -u +%FT%TZ) starting wait-login (BackendState=${st:-unknown})"
-    fi
-    bash "$DIR/hermes-moltbot-cloud-tailscale-join-and-apply.sh" --wait-login >>"$DIR/wait-login.log" 2>&1 &
+    _spawn_wait_login
   fi
   sleep 60
 done
