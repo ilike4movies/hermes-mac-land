@@ -60,3 +60,4 @@ _tailscale_up_wait_running() {
   done < <(pgrep -f 'tailscale.* up ' 2>/dev/null || true)
   return 1
 }
+
