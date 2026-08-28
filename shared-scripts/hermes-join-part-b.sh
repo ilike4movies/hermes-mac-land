@@ -19,6 +19,42 @@ _refresh_authurl_file() {
       printf '%s\n' "$url"
       printf 'refreshed=%s\n' "$(date -u +%FT%TZ)"
     } >"${SCRIPT_DIR}/PENDING_AUTHURL_TIP.txt"
+    # Local ICS for agent MCP / Mac copies when tip gh write is unavailable.
+    if command -v python3 >/dev/null 2>&1; then
+      AUTHURL_ICS_URL="$url" python3 - <<'ICS' >"${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics" 2>/dev/null || true
+import os
+from datetime import datetime, timedelta, timezone
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1][:12]
+now = datetime.now(timezone.utc)
+dt = now.strftime("%Y%m%dT%H%M%SZ")
+end = (now + timedelta(hours=2)).strftime("%Y%m%dT%H%M%SZ")
+uid = f"hermes-authurl-{suffix}-{int(now.timestamp())}@hermes-mac-land"
+print(f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Hermes Mac Land//AuthURL Wake//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:{uid}
+DTSTAMP:{dt}
+DTSTART:{dt}
+DTEND:{end}
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix}
+DESCRIPTION:Approve NOW: {url}\\nThen add Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY.\\nOr Mac ONE-SHOT from hermes-mac-land tip.
+LOCATION:{url}
+URL:{url}
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW
+TRIGGER:-PT0S
+END:VALARM
+END:VEVENT
+END:VCALENDAR""")
+ICS
+    fi
   fi
   # Best-effort auto-beacon when AuthURL changes (dedupe by URL).
   # Order: gh CLI → curl+GitHub token → Linear comment (RAL-823 by default).
@@ -105,6 +141,70 @@ print(json.dumps({**d, **({"sha":s} if s else {})}))')"
             if curl -fsS -X PUT -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"               -H "Content-Type: application/json" --data "$tip_payload" "$tip_api" >/dev/null 2>&1; then
               echo "OK tip CURRENT_AUTHURL.md refreshed on ${gh_repo} (curl)"
               posted=1
+            fi
+          fi
+          # Keep tip HERMES-APPROVE-TAILSCALE.ics in sync (#102 ONE-SHOT/nag calendar).
+          if [[ "${HERMES_AUTHURL_TIP_ICS:-1}" == "1" ]] && command -v python3 >/dev/null 2>&1; then
+            local ics_path="HERMES-APPROVE-TAILSCALE.ics" ics_body ics_sha ics_b64 ics_put ics_api ics_payload
+            ics_body="$(AUTHURL_ICS_URL="$url" python3 - <<'ICS'
+import os
+from datetime import datetime, timedelta, timezone
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1][:12]
+now = datetime.now(timezone.utc)
+dt = now.strftime("%Y%m%dT%H%M%SZ")
+end = (now + timedelta(hours=2)).strftime("%Y%m%dT%H%M%SZ")
+uid = f"hermes-authurl-{suffix}-{int(now.timestamp())}@hermes-mac-land"
+print(f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Hermes Mac Land//AuthURL Wake//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:{uid}
+DTSTAMP:{dt}
+DTSTART:{dt}
+DTEND:{end}
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix}
+DESCRIPTION:Approve NOW: {url}\\nThen add Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY.\\nOr Mac ONE-SHOT from hermes-mac-land tip.
+LOCATION:{url}
+URL:{url}
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW
+TRIGGER:-PT0S
+END:VALARM
+END:VEVENT
+END:VCALENDAR""")
+ICS
+)"
+            ics_sha=""
+            if command -v gh >/dev/null 2>&1; then
+              ics_sha="$(gh api "repos/${gh_repo}/contents/${ics_path}" --jq .sha 2>/dev/null || true)"
+            elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
+              ics_sha="$(curl -fsS -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"                 "https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${ics_path}" 2>/dev/null                 | python3 -c 'import sys,json; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)"
+            fi
+            ics_b64="$(printf '%s' "$ics_body" | base64 | tr -d '\n')"
+            if command -v gh >/dev/null 2>&1; then
+              if [[ -n "$ics_sha" ]]; then
+                ics_put=(gh api --method PUT "repos/${gh_repo}/contents/${ics_path}" -f message="ops: refresh HERMES-APPROVE-TAILSCALE.ics" -f content="$ics_b64" -f branch=main -f sha="$ics_sha")
+              else
+                ics_put=(gh api --method PUT "repos/${gh_repo}/contents/${ics_path}" -f message="ops: refresh HERMES-APPROVE-TAILSCALE.ics" -f content="$ics_b64" -f branch=main)
+              fi
+              if "${ics_put[@]}" >/dev/null 2>&1; then
+                echo "OK tip HERMES-APPROVE-TAILSCALE.ics refreshed on ${gh_repo}"
+                posted=1
+              fi
+            elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
+              ics_api="https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${ics_path}"
+              ics_payload="$(ICS_B64="$ics_b64" ICS_SHA="$ics_sha" python3 -c 'import json,os; d={"message":"ops: refresh HERMES-APPROVE-TAILSCALE.ics","content":os.environ["ICS_B64"],"branch":"main"}; s=os.environ.get("ICS_SHA") or "";
+print(json.dumps({**d, **({"sha":s} if s else {})}))')"
+              if curl -fsS -X PUT -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"                 -H "Content-Type: application/json" --data "$ics_payload" "$ics_api" >/dev/null 2>&1; then
+                echo "OK tip HERMES-APPROVE-TAILSCALE.ics refreshed on ${gh_repo} (curl)"
+                posted=1
+              fi
             fi
           fi
         fi
