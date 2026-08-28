@@ -81,6 +81,13 @@ bash "$ROOT/shared-scripts/hermes-cloud-bootstrap-waiter.sh" || true
 if [[ -x "$DIR/bridge-secrets-from-env.sh" ]]; then
   bash "$DIR/bridge-secrets-from-env.sh" || true
 fi
+# Mid-session Runtime Secrets often arrive after NeedsLogin starts — keep bridging.
+if [[ -x "$DIR/hermes-cloud-secrets-bridge-poller.sh" ]]; then
+  bash "$DIR/hermes-cloud-secrets-bridge-poller.sh" || true
+elif [[ -x "$ROOT/shared-scripts/hermes-cloud-secrets-bridge-poller.sh" ]]; then
+  install -m 0755 "$ROOT/shared-scripts/hermes-cloud-secrets-bridge-poller.sh" "$DIR/hermes-cloud-secrets-bridge-poller.sh" 2>/dev/null || true
+  bash "$DIR/hermes-cloud-secrets-bridge-poller.sh" || true
+fi
 
 if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
   if [[ "${HERMES_AUTO_DOWNSTREAM:-1}" == "1" ]] && ! _missing_secrets; then
