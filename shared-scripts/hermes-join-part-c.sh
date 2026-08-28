@@ -28,7 +28,13 @@ _ensure_single_tailscale_up_wait() {
       fi
       rm -f "$TS_UP_PIDFILE" 2>/dev/null || true
     else
-      echo "OK tailscale up wait already running (pidfile=$(cat "$TS_UP_PIDFILE" 2>/dev/null || echo none) age_s=${age_s:-?})"
+      # Throttle OK chatter (was every 5s → multi-MB wait-login.log).
+      local every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}" stamp="$SCRIPT_DIR/LAST_UP_OK_ECHO.at" now
+      now="$(date +%s)"
+      if [[ ! -f "$stamp" ]] || (( now - $(cat "$stamp" 2>/dev/null || echo 0) >= every )); then
+        echo "OK tailscale up wait already running (pidfile=$(cat "$TS_UP_PIDFILE" 2>/dev/null || echo none) age_s=${age_s:-?})"
+        echo "$now" >"$stamp"
+      fi
       _refresh_authurl_file
       return 0
     fi
