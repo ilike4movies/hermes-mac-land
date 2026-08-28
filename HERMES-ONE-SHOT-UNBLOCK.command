@@ -2,6 +2,7 @@
 # HERMES-ONE-SHOT-UNBLOCK.command — Right-click → Open on Mac Hermes (not double-click)
 # Single click critical path for stalled canary recovery:
 #   0) Open Tailscale admin + tip CURRENT_AUTHURL (approve cloud waiter) early
+#   0a) Open Linear operator ticket (RAL-823) early
 #   0b) Open Web UI workflow create + Raw paste tabs early (parallel with STALL)
 #   0c) Install 5-min Downstream nag LaunchAgent (auto ONE-SHOT until issue #1 shows Downstream DONE)
 #   1) Try STALL downstream (SSH/Tailscale to .11) — fastest when mesh works
@@ -100,6 +101,20 @@ _open_tailscale_approve_early() {
     osascript -e 'display notification "Approve pending Tailscale machines while STALL runs" with title "Hermes ONE-SHOT Tailscale" sound name "Glass"' 2>/dev/null || true
     open "$ADMIN" 2>/dev/null || true
   fi
+}
+
+_open_operator_linear_early() {
+  # Surface operator wake ticket so Mac session sees current AuthURL + ONE-SHOT paste.
+  # Opt out: HERMES_ONE_SHOT_OPEN_LINEAR=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_LINEAR:-1}" != "1" ]]; then
+    echo "SKIP early Linear operator ticket (HERMES_ONE_SHOT_OPEN_LINEAR=0)"
+    return 0
+  fi
+  local URL="${HERMES_OPERATOR_LINEAR_URL:-https://linear.app/ilike4/issue/RAL-823/operator-mac-one-shot-tailscale-approve-now-canary-2954673-silent-36h}"
+  echo ""
+  echo "=== Parallel: Linear operator ticket ==="
+  echo "$URL"
+  open "$URL" 2>/dev/null || true
 }
 
 _open_webui_workflow_early() {
@@ -274,6 +289,7 @@ chmod +x "$0" 2>/dev/null || true
 _preflight_mac_secrets
 
 _open_tailscale_approve_early
+_open_operator_linear_early
 _open_webui_workflow_early
 _install_downstream_nag
 
