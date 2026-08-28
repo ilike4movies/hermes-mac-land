@@ -2,7 +2,7 @@
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T04:14Z
+**Updated:** 2026-08-28T06:49Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -47,7 +47,9 @@ API tokens often cannot write `.github/workflows/` (missing `workflows` scope). 
    - Runs `gh workflow run downstream-stall.yml`
    - If scope error: `gh auth refresh -h github.com -s workflow` then re-open
 2. **Action secrets** (if not already set): Settings → Secrets and variables → Actions → `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`
-3. Or web UI: copy [`ci/downstream-stall.yml`](ci/downstream-stall.yml) → `.github/workflows/downstream-stall.yml` on main, then Run workflow
+3. Or **web UI deep link** (no Mac / no API scope):
+   - https://github.com/ilike4movies/hermes-mac-land/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml
+   - Paste Raw of [`ci/downstream-stall.yml`](ci/downstream-stall.yml) → commit to `main` → add Action secrets → Run workflow
 
 Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
@@ -63,7 +65,7 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 | **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
 | **RAL-823** | `b444b07b-d9c5-496c-b5b0-79f31dd4d210` | In Progress — Mac ONE-SHOT operator wake (due 2026-08-28) |
 
-## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~28h+)
+## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~31.5h+)
 
 | Item | Status |
 |------|--------|
