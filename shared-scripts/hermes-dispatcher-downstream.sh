@@ -7,9 +7,11 @@
 #   2. governed stack-apply (moltbot main → .11; HERMES_AUTO_STACK_APPLY=0 to skip)
 #   3. DISPATCH-NOW RAL-793 via Linear comment (default on; HERMES_AUTO_DISPATCH_RAL793=0 to skip)
 #      stall_recovery=1 → two DISPATCH-NOW passes (~90s) to clear SLA-stale CLAIM then reopen
+#      FAIL-CLOSED if AUTO_DISPATCH=1 and no DISPATCH-NOW post succeeds (needs LINEAR_API_KEY)
 #   4. RAL-634 starvation verify (--post-linear)
+#   5. optional inventory wait (stall default on) — poll run-inspect until evidence is real
 #
-# Machine status: posts STARTED/DONE/FAILED to hermes-mac-land GitHub issue #1 when `gh` available (preflight skips beacon).
+# Machine status: posts STARTED/DONE/FAILED/PARTIAL to hermes-mac-land GitHub issue #1 when `gh` available (preflight skips beacon).
 #
 # Usage:
 #   HERMES_AUTO_SURGICAL_LAND=0 curl -fsSL .../hermes-dispatcher-downstream.sh | bash
@@ -36,15 +38,20 @@ AUTO_DISPATCH="${HERMES_AUTO_DISPATCH_RAL793:-1}"
 if [[ "${HERMES_RUN_ID:-}" == "$DEFAULT_STALL_RUN_ID" ]]; then
   AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-0}"
   STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
+  WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
 else
   AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-1}"
   STALL_RECOVERY="${HERMES_STALL_RECOVERY:-}"
+  WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-0}"
 fi
 AUTO_INSPECT="${HERMES_AUTO_INSPECT_RAL793:-}"
 INSPECT_OUT="$DIR/ral793-inspect.out"
 GH_STATUS_ISSUE="${HERMES_MAC_LAND_STATUS_ISSUE:-1}"
 GH_STATUS_REPO="${HERMES_MAC_LAND_STATUS_REPO:-ilike4movies/hermes-mac-land}"
 STARVE_RC=0
+INVENTORY_RC=0
+INVENTORY_WAIT_SECS="${HERMES_INVENTORY_WAIT_SECS:-180}"
+INVENTORY_POLL_SECS="${HERMES_INVENTORY_POLL_SECS:-30}"
 
 _contract="$DIR/hermes-ral793-contract-install.sh"
 [[ -x "$_contract" ]] || _contract="$ROOT/shared-scripts/hermes-ral793-contract-install.sh"
@@ -81,6 +88,11 @@ _has_ssh_key() {
   [[ -n "${HERMES_HOST_SSH_PRIVATE_KEY:-}" ]] && return 0
   [[ -s "${DIR}/host-ssh-key" ]] && return 0
   [[ -f "${HOME}/.hermes/.env" ]] && grep -q '^HERMES_HOST_SSH_PRIVATE_KEY=' "${HOME}/.hermes/.env" 2>/dev/null && return 0
+  return 1
+}
+
+_has_linear_key() {
+  [[ -n "${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}" ]] && return 0
   return 1
 }
 
@@ -135,6 +147,32 @@ with urllib.request.urlopen(urllib.request.Request("https://api.linear.app/graph
     ok = (json.load(r).get("data") or {}).get("commentCreate", {}).get("success")
 raise SystemExit(0 if ok else 1)
 PY
+}
+
+# Return 0 if inventory evidence looks real (not missing / not placeholder "pending").
+_inventory_evidence_ok() {
+  local out="$1"
+  if printf '%s\n' "$out" | grep -q 'evidence/RAL-793-inventory.md --- MISSING'; then
+    return 1
+  fi
+  # Capture a short window after the inventory header.
+  local snippet
+  snippet="$(printf '%s\n' "$out" | awk '/evidence\/RAL-793-inventory.md/{flag=1; next} flag{print; if(++n>=12) exit}')"
+  if [[ -z "$snippet" ]]; then
+    return 1
+  fi
+  # Placeholder written by contract-install preflight is not evidence.
+  if printf '%s\n' "$snippet" | grep -Eqi '^(pending|TODO|placeholder)[[:space:]]*$' \
+     && ! printf '%s\n' "$snippet" | grep -Eqi 'EP0[4-9]|EP1[0-4]|artifact|workspace|allow_path|script|tts|remotion'; then
+    return 1
+  fi
+  if printf '%s\n' "$snippet" | grep -Eqi 'EP0[4-9]|EP1[0-4]|artifact|workspace|/opt/moltbot|script|tts|remotion|inventory'; then
+    return 0
+  fi
+  # Any non-trivial multi-line content beyond "pending" counts as progress.
+  local lines
+  lines="$(printf '%s\n' "$snippet" | sed '/^$/d' | wc -l | tr -d ' ')"
+  [[ "$lines" -ge 3 ]]
 }
 
 _fetch_script() {
@@ -193,7 +231,7 @@ fi
 _post_github_status "## Downstream STARTED @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
-chain: inspect(auto=$AUTO_INSPECT) → contract install → stack-apply(auto=$AUTO_STACK_APPLY) → DISPATCH-NOW (auto=$AUTO_DISPATCH) → RAL-634 verify
+chain: inspect(auto=$AUTO_INSPECT) → contract install → stack-apply(auto=$AUTO_STACK_APPLY) → DISPATCH-NOW (auto=$AUTO_DISPATCH) → RAL-634 verify → inventory-wait(auto=$WAIT_INVENTORY)
 stall_recovery=$STALL_RECOVERY run=${HERMES_RUN_ID:-unset}
 log: \`$LOG\`"
 
@@ -243,6 +281,17 @@ fi
 echo "" | tee -a "$LOG"
 if [[ "$AUTO_DISPATCH" == "1" ]]; then
   echo "== Step 3: DISPATCH-NOW $LINEAR_TICKET (Linear interrupt) ==" | tee -a "$LOG"
+  if ! _has_linear_key; then
+    echo "FAIL: AUTO_DISPATCH=1 but LINEAR_API_KEY/LINEAR_API_TOKEN unset — cannot post DISPATCH-NOW" | tee -a "$LOG"
+    echo "  fix: set LINEAR_API_KEY in ~/.hermes/.env (Mac) or Runtime Secrets (cloud)" | tee -a "$LOG"
+    _post_github_status "## Downstream FAILED @ $WHEN
+
+step=DISPATCH-NOW
+reason=missing LINEAR_API_KEY/LINEAR_API_TOKEN
+host=\`$HOST\` user=\`$USER_NAME\`
+See log: \`$LOG\`"
+    exit 1
+  fi
   DISPATCH_BODY="DISPATCH-NOW $LINEAR_TICKET"
   STALL_DISPATCH_PASSES=1
   STALL_DISPATCH_WAIT_SECS="${HERMES_STALL_DISPATCH_WAIT_SECS:-90}"
@@ -276,15 +325,23 @@ Pass 1 may have resumed the claim or failed it as \`claimed_without_executor_mov
       echo "OK posted Linear interrupt comment (pass $_pass/$STALL_DISPATCH_PASSES): $DISPATCH_BODY" | tee -a "$LOG"
       _dispatch_ok=1
     else
-      echo "WARN: could not post DISPATCH-NOW pass $_pass (missing LINEAR_API_KEY?) — post manually on $LINEAR_TICKET" | tee -a "$LOG"
+      echo "WARN: could not post DISPATCH-NOW pass $_pass — Linear API rejected" | tee -a "$LOG"
     fi
     _pass=$((_pass + 1))
   done
-  if [[ "$_dispatch_ok" -eq 1 ]]; then
-    _post_linear_comment "## Auto-dispatch @ $WHEN
+  if [[ "$_dispatch_ok" -ne 1 ]]; then
+    echo "FAIL: DISPATCH-NOW did not post (auto=$AUTO_DISPATCH) — fail-closed" | tee -a "$LOG"
+    _post_github_status "## Downstream FAILED @ $WHEN
+
+step=DISPATCH-NOW
+reason=no successful Linear interrupt post
+host=\`$HOST\` user=\`$USER_NAME\`
+See log: \`$LOG\`"
+    exit 1
+  fi
+  _post_linear_comment "## Auto-dispatch @ $WHEN
 
 Posted \`$DISPATCH_BODY\` ×${STALL_DISPATCH_PASSES} after contract install/readback (stall_recovery=$STALL_RECOVERY). Expect CLAIMED + \`evidence/RAL-793-inventory.md\` — not WORK-PACKET-DONE alone." || true
-  fi
 else
   echo "SKIP Step 3: HERMES_AUTO_DISPATCH_RAL793=0 — post DISPATCH-NOW manually" | tee -a "$LOG"
 fi
@@ -299,11 +356,53 @@ else
 fi
 
 echo "" | tee -a "$LOG"
+INVENTORY_STATUS="skipped"
+if [[ "$WAIT_INVENTORY" == "1" ]]; then
+  echo "== Step 5: wait for inventory evidence (up to ${INVENTORY_WAIT_SECS}s) ==" | tee -a "$LOG"
+  _deadline=$(( $(date +%s) + INVENTORY_WAIT_SECS ))
+  _attempt=0
+  while true; do
+    _attempt=$((_attempt + 1))
+    _now="$(date +%s)"
+    _inspect_args=(--post-linear)
+    [[ -n "${HERMES_RUN_ID:-}" ]] && _inspect_args=(--run "$HERMES_RUN_ID" --post-linear)
+    _poll_out="$DIR/ral793-inventory-poll-$_attempt.out"
+    if bash "$_inspect" "${_inspect_args[@]}" >"$_poll_out" 2>&1; then
+      cat "$_poll_out" | tee -a "$LOG" >/dev/null
+      if _inventory_evidence_ok "$(cat "$_poll_out")"; then
+        echo "OK inventory evidence present (attempt $_attempt)" | tee -a "$LOG"
+        INVENTORY_STATUS="present"
+        INVENTORY_RC=0
+        break
+      fi
+      echo "INFO: inventory still pending/placeholder (attempt $_attempt)" | tee -a "$LOG"
+    else
+      cat "$_poll_out" | tee -a "$LOG" >/dev/null || true
+      echo "WARN: inventory poll inspect failed (attempt $_attempt)" | tee -a "$LOG"
+    fi
+    if [[ "$_now" -ge "$_deadline" ]]; then
+      echo "FAIL: inventory evidence not ready after ${INVENTORY_WAIT_SECS}s" | tee -a "$LOG"
+      INVENTORY_STATUS="missing"
+      INVENTORY_RC=1
+      break
+    fi
+    _sleep="$INVENTORY_POLL_SECS"
+    _remain=$((_deadline - _now))
+    [[ "$_sleep" -gt "$_remain" ]] && _sleep="$_remain"
+    [[ "$_sleep" -lt 1 ]] && _sleep=1
+    echo "WAIT ${_sleep}s before inventory re-inspect" | tee -a "$LOG"
+    sleep "$_sleep"
+  done
+else
+  echo "SKIP Step 5: HERMES_WAIT_INVENTORY=0" | tee -a "$LOG"
+fi
+
+echo "" | tee -a "$LOG"
 echo "DONE downstream @ $WHEN" | tee -a "$LOG"
 echo "  Expect inventory evidence on $LINEAR_TICKET (evidence/RAL-793-inventory.md)" | tee -a "$LOG"
 echo "  Do NOT treat prior WORK-PACKET-DONE as objective closure" | tee -a "$LOG"
 
-if [[ "$STARVE_RC" -eq 0 ]]; then
+if [[ "$STARVE_RC" -eq 0 && "$INVENTORY_RC" -eq 0 ]]; then
   _post_github_status "## Downstream DONE @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
@@ -311,8 +410,9 @@ run inspect: auto=$AUTO_INSPECT
 stall_recovery: $STALL_RECOVERY
 contract install: OK
 stack-apply: auto=$AUTO_STACK_APPLY
-DISPATCH-NOW: auto=$AUTO_DISPATCH (stall dual-pass when stall_recovery=1)
+DISPATCH-NOW: auto=$AUTO_DISPATCH (stall dual-pass when stall_recovery=1; fail-closed)
 RAL-634 verify: PASS
+inventory wait: $INVENTORY_STATUS (auto=$WAIT_INVENTORY)
 
 Watch Linear for inventory evidence on $LINEAR_TICKET — not WORK-PACKET-DONE alone."
 else
@@ -323,9 +423,14 @@ run inspect: auto=$AUTO_INSPECT
 stall_recovery: $STALL_RECOVERY
 contract install: OK
 stack-apply: auto=$AUTO_STACK_APPLY
-DISPATCH-NOW: auto=$AUTO_DISPATCH (stall dual-pass when stall_recovery=1)
-RAL-634 verify: FAIL (rc=$STARVE_RC)
+DISPATCH-NOW: auto=$AUTO_DISPATCH (stall dual-pass when stall_recovery=1; fail-closed)
+RAL-634 verify: $([[ "$STARVE_RC" -eq 0 ]] && echo PASS || echo "FAIL (rc=$STARVE_RC)")
+inventory wait: $INVENTORY_STATUS (auto=$WAIT_INVENTORY)
 
-See log: \`$LOG\`"
-  exit "$STARVE_RC"
+See log: \`$LOG\`
+Do NOT mark canary Done until inventory evidence is real."
+  if [[ "$STARVE_RC" -ne 0 ]]; then
+    exit "$STARVE_RC"
+  fi
+  exit "$INVENTORY_RC"
 fi
