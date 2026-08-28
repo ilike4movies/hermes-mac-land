@@ -2,7 +2,7 @@
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-28T00:46Z
+**Updated:** 2026-08-28T00:53Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -57,6 +57,6 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **Sync** — #59 fail-closed + #60 README/issue #1 |
+| 6 | Operator docs | **DONE** — #59 fail-closed + #60 README/issue #1 + #61 OPERATOR-UNBLOCK |
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse

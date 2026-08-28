@@ -1,5 +1,5 @@
 #!/bin/bash
-# HERMES-DOWNSTREAM-RAL793-STALL.command — double-click on Mac Hermes
+# HERMES-DOWNSTREAM-RAL793-STALL.command — Right-click → Open on Mac Hermes (not double-click)
 # Pins stalled run 20260826T232521106484Z-2954673 and runs full downstream chain:
 # inspect → contract install → (stack-apply skipped — .11 at #110 tip) → dual DISPATCH-NOW
 # → RAL-634 verify → inventory wait (~3 min, fail-closed if DISPATCH/Linear key missing).
