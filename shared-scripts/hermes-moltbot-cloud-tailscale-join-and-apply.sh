@@ -392,4 +392,71 @@ wait_for_jump() {
       echo "OK ping $JUMP_HOST after ${i}s"
       return 0
     fi
-    if timeout 2 b
+    if timeout 2 bash -c "echo >/dev/tcp/${JUMP_HOST}/22" 2>/dev/null; then
+      echo "OK tcp/22 $JUMP_HOST after ${i}s"
+      return 0
+    fi
+    sleep 3
+  done
+  echo "ERROR: jump $JUMP_HOST not reachable after ${WAIT_SECS}s" >&2
+  return 1
+}
+
+reload_cloud_secrets
+install_tailscale
+ensure_daemon
+
+st_now="$(backend_state)"
+if [[ "$ALREADY_UP" -eq 1 || "$st_now" == "Running" ]]; then
+  echo "OK Tailscale already Running (or --already-up); skipping join"
+elif [[ -n "${TS_AUTHKEY:-}" ]]; then
+  join_tailscale_authkey
+  wait_for_running "$WAIT_SECS" || true
+elif [[ "$WAIT_LOGIN" -eq 1 ]]; then
+  echo "== interactive login path (approve AuthURL; single tailscale up) =="
+  _ensure_single_tailscale_up_wait "$LOGIN_WAIT_SECS"
+  ts status 2>&1 | sed -n '1,12p' || true
+  wait_for_running "$LOGIN_WAIT_SECS"
+else
+  echo "ERROR: TS_AUTHKEY unset and not Running. Re-run with TS_AUTHKEY=... or --wait-login / --already-up" >&2
+  exit 2
+fi
+
+# Downstream-only prefers direct host SSH; do not abort the closed-loop path
+# if jump ping fails after Tailscale Running (routes may still reach .11).
+if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
+  if ! wait_for_jump; then
+    echo "WARN jump not reachable — continuing downstream-only (direct host SSH)"
+  fi
+else
+  wait_for_jump
+fi
+
+# When surgical land is disabled (stalled-canary recovery), run dispatcher
+# downstream instead of via-ssh tip land. Still needs host SSH + Linear keys.
+if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
+  echo "== HERMES_AUTO_SURGICAL_LAND=0 — dispatcher downstream (not surgical land) =="
+  wait_for_host_ssh_key || {
+    echo "ERROR: cannot run downstream without HERMES_HOST_SSH_PRIVATE_KEY" >&2
+    exit 1
+  }
+  ds="$SCRIPT_DIR/hermes-dispatcher-downstream.sh"
+  if [[ ! -x "$ds" ]]; then
+    echo "ERROR: missing $ds" >&2
+    exit 1
+  fi
+  export HERMES_RUN_ID="${HERMES_RUN_ID:-20260826T232521106484Z-2954673}"
+  export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
+  export HERMES_WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
+  export HERMES_STALL_ZOMBIE="${HERMES_STALL_ZOMBIE:-1}"
+  export HERMES_STALL_ZOMBIE_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
+  bash "$ds"
+  echo "OK cloud-tailscale-join-and-apply finished (downstream-only)"
+  exit 0
+fi
+
+export HERMES_JUMP_SSH="$JUMP_SSH"
+bash "$SCRIPT_DIR/hermes-moltbot-cloud-apply-install-via-ssh.sh"
+
+echo "OK cloud-tailscale-join-and-apply finished (expect OK INTERRUPT_LABEL hermes-now)"
+exit 0
