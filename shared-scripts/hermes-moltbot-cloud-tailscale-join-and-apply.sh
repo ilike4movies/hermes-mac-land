@@ -167,24 +167,47 @@ _refresh_authurl_file() {
     echo "APPROVE_THIS_URL=$url"
   fi
   # Best-effort auto-beacon to status inbox when AuthURL changes (dedupe by URL).
-  # Skips when GH_TOKEN / gh auth missing — agent MCP can still post.
+  # Tries gh CLI, then curl+token (HERMES_STATUS_GITHUB_TOKEN / GH_TOKEN / GITHUB_TOKEN).
+  # Skips when none work — agent MCP can still post.
   if [[ "${HERMES_AUTHURL_GITHUB_BEACON:-1}" == "1" ]]; then
     if [[ ! -f "$lastfile" ]] || ! grep -qF "$url" "$lastfile" 2>/dev/null; then
-      if command -v gh >/dev/null 2>&1; then
-        local body
-        body="## Fresh Tailscale AuthURL (auto-beacon)
+      local body posted=0
+      body="## Fresh Tailscale AuthURL (auto-beacon)
 
 Approve NOW: ${url}
 
 After approve, add Runtime Secrets \`HERMES_HOST_SSH_PRIVATE_KEY\` + \`LINEAR_API_KEY\` (waiters keep looping until SSH arrives).
 
 Or Mac ONE-SHOT: \`curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command\`"
+      if command -v gh >/dev/null 2>&1; then
         if gh issue comment "$gh_issue" --repo "$gh_repo" --body "$body" >/dev/null 2>&1; then
-          printf '%s\n' "$url" >"$lastfile"
-          echo "OK AuthURL GitHub beacon posted to ${gh_repo}#${gh_issue}"
-        else
-          echo "WARN AuthURL GitHub beacon skipped (gh auth/write unavailable)"
+          posted=1
         fi
+      fi
+      if [[ "$posted" != "1" ]]; then
+        local tok owner name api_url payload
+        tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+        owner="${gh_repo%%/*}"
+        name="${gh_repo#*/}"
+        api_url="https://api.github.com/repos/${owner}/${name}/issues/${gh_issue}/comments"
+        if [[ -n "$tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+          payload="$(AUTHURL_BEACON_BODY="$body" python3 -c 'import json,os; print(json.dumps({"body": os.environ["AUTHURL_BEACON_BODY"]}))')"
+          if curl -fsS -X POST \
+            -H "Authorization: Bearer ${tok}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/json" \
+            --data "$payload" \
+            "$api_url" >/dev/null 2>&1; then
+            posted=1
+          fi
+        fi
+      fi
+      if [[ "$posted" == "1" ]]; then
+        printf '%s\n' "$url" >"$lastfile"
+        echo "OK AuthURL GitHub beacon posted to ${gh_repo}#${gh_issue}"
+      else
+        echo "WARN AuthURL GitHub beacon skipped (gh/token write unavailable)"
       fi
     fi
   fi
@@ -192,7 +215,7 @@ Or Mac ONE-SHOT: \`curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command htt
 
 _ensure_single_tailscale_up_wait() {
   local login_wait_secs="${1:-$LOGIN_WAIT_SECS}"
-  # Proactive AuthURL refresh: if interactive up has been waiting >45m and still
+  # Proactive AuthURL refresh: if interactive up has been waiting ~30m+ and still
   # NeedsLogin, kill and restart so operators get a fresh approve URL (TTL~1h).
   if _tailscale_up_wait_running; then
     local age_s=0 pid
