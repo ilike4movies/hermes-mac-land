@@ -1,23 +1,22 @@
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Hermes Mac Land//AuthURL//EN
+PRODID:-//Hermes Mac Land//AuthURL Wake//EN
 CALSCALE:GREGORIAN
 METHOD:REQUEST
 BEGIN:VEVENT
-UID:hermes-authurl-20260828T172337@hermes-mac-land
-DTSTAMP:20260828T172337Z
-DTSTART:20260828T172337Z
-DTEND:20260828T180837Z
-SUMMARY:ACTION: Approve Hermes Tailscale AuthURL 184fd6d6 NOW
-DESCRIPTION:Approve https://login.tailscale.com/a/184fd6d6015cf0\nOr Mac ONE-SHOT from hermes-mac-land tip.\nAfter approve: Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY.\nExpect Downstream STARTED to DONE on GitHub issue 1.\nNo rockets.
-LOCATION:https://login.tailscale.com/a/184fd6d6015cf0
-URL:https://login.tailscale.com/a/184fd6d6015cf0
+UID:hermes-authurl-12e9ef58@hermes-mac-land
+DTSTAMP:20260828T180849Z
+DTSTART:20260828T180849Z
+DTEND:20260828T185349Z
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL 12e9ef58
+DESCRIPTION:Approve Tailscale AuthURL 12e9ef58 NOW\nhttps://login.tailscale.com/a/12e9ef58016c63\nOr Mac ONE-SHOT from hermes-mac-land tip.\nAfter approve: Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY.\nIgnore stale 184fd6d6 / older.
+URL:https://login.tailscale.com/a/12e9ef58016c63
 STATUS:CONFIRMED
-SEQUENCE:0
+SEQUENCE:1
 BEGIN:VALARM
 TRIGGER:-PT0M
 ACTION:DISPLAY
-DESCRIPTION:Approve Tailscale AuthURL 184fd6d6 NOW
+DESCRIPTION:Approve Hermes Tailscale 12e9ef58 NOW
 END:VALARM
 END:VEVENT
 END:VCALENDAR
