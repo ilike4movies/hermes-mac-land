@@ -30,6 +30,25 @@ _wait_login_active() {
 while true; do
   st="$(backend_state)"
   if [[ "$st" == "Running" ]]; then
+    echo "$(date -u +%FT%TZ) OK Running — Tailscale joined"
+    # Prefer downstream-only when land disabled (stalled-canary recovery path).
+    if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
+      echo "$(date -u +%FT%TZ) land disabled — attempting dispatcher downstream"
+      ds="$DIR/hermes-dispatcher-downstream.sh"
+      [[ -x "$ds" ]] || ds="$(dirname "$0")/hermes-dispatcher-downstream.sh"
+      if [[ -x "$ds" ]]; then
+        export HERMES_RUN_ID="${HERMES_RUN_ID:-20260826T232521106484Z-2954673}"
+        export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
+        export HERMES_WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
+        export HERMES_STALL_ZOMBIE="${HERMES_STALL_ZOMBIE:-1}"
+        export HERMES_STALL_ZOMBIE_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
+        bash "$ds" >>"$DIR/wait-login.log" 2>&1 || true
+        echo "$(date -u +%FT%TZ) downstream attempt finished rc=$?"
+      else
+        echo "$(date -u +%FT%TZ) WARN: hermes-dispatcher-downstream.sh missing"
+      fi
+      exit 0
+    fi
     echo "$(date -u +%FT%TZ) OK Running — landing tip"
     bash "$DIR/hermes-moltbot-cloud-tailscale-join-and-apply.sh" --already-up >>"$DIR/wait-login.log" 2>&1 || true
     echo "$(date -u +%FT%TZ) land attempt finished rc=$?"

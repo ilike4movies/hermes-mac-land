@@ -74,6 +74,14 @@ reload_cloud_secrets() {
     HERMES_JUMP_SSH_PRIVATE_KEY="$(cat "$JUMP_KEY_FILE")"
     export HERMES_JUMP_SSH_PRIVATE_KEY
   fi
+  if [[ -z "${HERMES_HOST_SSH_PRIVATE_KEY:-}" && -f "$HOST_KEY_FILE" ]]; then
+    HERMES_HOST_SSH_PRIVATE_KEY="$(cat "$HOST_KEY_FILE")"
+    export HERMES_HOST_SSH_PRIVATE_KEY
+  fi
+  if [[ -z "${LINEAR_API_KEY:-}" && -f "${HERMES_LINEAR_API_KEY_FILE:-$SCRIPT_DIR/linear-api-key}" ]]; then
+    LINEAR_API_KEY="$(tr -d '\r\n' < "${HERMES_LINEAR_API_KEY_FILE:-$SCRIPT_DIR/linear-api-key}")"
+    export LINEAR_API_KEY
+  fi
 }
 
 ts() {
@@ -248,6 +256,25 @@ else
 fi
 
 wait_for_jump
+
+# When surgical land is disabled (stalled-canary recovery), run dispatcher
+# downstream instead of via-ssh tip land. Still needs host SSH + Linear keys.
+if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
+  echo "== HERMES_AUTO_SURGICAL_LAND=0 — dispatcher downstream (not surgical land) =="
+  ds="$SCRIPT_DIR/hermes-dispatcher-downstream.sh"
+  if [[ ! -x "$ds" ]]; then
+    echo "ERROR: missing $ds" >&2
+    exit 1
+  fi
+  export HERMES_RUN_ID="${HERMES_RUN_ID:-20260826T232521106484Z-2954673}"
+  export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
+  export HERMES_WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
+  export HERMES_STALL_ZOMBIE="${HERMES_STALL_ZOMBIE:-1}"
+  export HERMES_STALL_ZOMBIE_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
+  bash "$ds"
+  echo "OK cloud-tailscale-join-and-apply finished (downstream-only)"
+  exit 0
+fi
 
 export HERMES_JUMP_SSH="$JUMP_SSH"
 bash "$SCRIPT_DIR/hermes-moltbot-cloud-apply-install-via-ssh.sh"
