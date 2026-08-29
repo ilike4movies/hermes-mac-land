@@ -50,25 +50,22 @@ _fetch_script() {
   chmod +x "$dest"
 }
 
-if [[ ! -x "$_contract" ]]; then
-  _fetch_script "hermes-ral793-contract-install.sh" "$DIR/hermes-ral793-contract-install.sh"
-  _contract="$DIR/hermes-ral793-contract-install.sh"
-fi
-
-if [[ ! -x "$_inspect" ]]; then
-  _fetch_script "hermes-ral793-run-inspect.sh" "$DIR/hermes-ral793-run-inspect.sh"
-  _inspect="$DIR/hermes-ral793-run-inspect.sh"
-fi
-
-if [[ ! -x "$_starve" ]]; then
-  _fetch_script "hermes-ral634-starvation-verify.sh" "$DIR/hermes-ral634-starvation-verify.sh"
-  _starve="$DIR/hermes-ral634-starvation-verify.sh"
-fi
-
-if [[ ! -x "$_stack_apply" ]]; then
-  _fetch_script "hermes-moltbot-stack-apply-via-ssh.sh" "$DIR/hermes-moltbot-stack-apply-via-ssh.sh"
-  _stack_apply="$DIR/hermes-moltbot-stack-apply-via-ssh.sh"
-fi
+# Tip #145: fetch on missing file (-f), then chmod +x before bash (0644 curl class).
+_ensure_helper() {
+  # $1=varname $2=basename
+  local _var="$1" _name="$2" _path
+  eval "_path=\"\${$_var}\""
+  if [[ ! -f "$_path" ]]; then
+    _fetch_script "$_name" "$DIR/$_name"
+    eval "$_var=\"\$DIR/$_name\""
+    eval "_path=\"\$DIR/$_name\""
+  fi
+  chmod +x "$_path" 2>/dev/null || true
+}
+_ensure_helper _contract hermes-ral793-contract-install.sh
+_ensure_helper _inspect hermes-ral793-run-inspect.sh
+_ensure_helper _starve hermes-ral634-starvation-verify.sh
+_ensure_helper _stack_apply hermes-moltbot-stack-apply-via-ssh.sh
 
 _load_hermes_ssh_env || true
 export HERMES_RAL793_LINEAR_ISSUE_ID="${LINEAR_ISSUE_ID}"
