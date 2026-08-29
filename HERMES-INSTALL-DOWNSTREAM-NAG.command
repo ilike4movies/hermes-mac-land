@@ -1,6 +1,7 @@
 #!/bin/bash
 # HERMES-INSTALL-DOWNSTREAM-NAG.command — Right-click → Open (not double-click)
-# Installs a LaunchAgent that nags every 5 min until issue #1 shows "## Downstream DONE".
+# Installs a LaunchAgent that nags every 5 min until issue #1 shows a *machine*
+# "## Downstream DONE" first-line beacon with host= (tip #154).
 # Opens issue #1 + ONE-SHOT URL + Web UI + Tailscale admin/AuthURL; auto-downloads+opens ONE-SHOT
 # (HERMES_NAG_AUTO_ONESHOT=0 to require confirm dialog instead). Speaks a short alert when `say` exists.
 # No unattended DISPATCH — ONE-SHOT itself still needs Mac session + LINEAR_API_KEY.
@@ -30,15 +31,69 @@ PLIST="${HOME}/Library/LaunchAgents/com.hermes.downstream-nag.plist"
 ISSUE_URL="https://github.com/${REPO}/issues/1"
 ONESHOT_URL="https://github.com/${REPO}/raw/main/HERMES-ONE-SHOT-UNBLOCK.command"
 WEBUI_WORKFLOW_URL="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
-MARKER="## Downstream DONE"
 
 _fetch_comments() {
+  # Tip #154: paginate; require first-line machine marker (not prose "Expect ## Downstream DONE").
+  # Prefer credentialed DONE with host=; never treat "## Downstream COMPLETE (inventory deferred)" as success.
   if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
     gh api "repos/${REPO}/issues/1/comments" --paginate --jq '.[].body' 2>/dev/null || true
     return 0
   fi
-  curl -fsSL "https://api.github.com/repos/${REPO}/issues/1/comments?per_page=100" 2>/dev/null \
-    | python3 -c 'import json,sys; [print(c.get("body","")) for c in json.load(sys.stdin)]' 2>/dev/null || true
+  # Unauthenticated curl must paginate — issue #1 exceeds 100 comments; page-1-only misses real DONE
+  # and historically false-matched tooling prose on early pages.
+  REPO="$REPO" python3 - <<'PY' 2>/dev/null || true
+import json, os, urllib.request
+repo = os.environ.get("REPO") or "ilike4movies/hermes-mac-land"
+base = f"https://api.github.com/repos/{repo}/issues/1/comments"
+headers = {"Accept": "application/vnd.github+json", "User-Agent": "hermes-downstream-nag"}
+page = 1
+while page <= 30:
+    req = urllib.request.Request(f"{base}?per_page=100&page={page}", headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            batch = json.load(r)
+    except Exception:
+        break
+    if not batch:
+        break
+    for c in batch:
+        print(c.get("body") or "")
+        print("\n---HERMES_NAG_BODY_SEP---\n")
+    if len(batch) < 100:
+        break
+    page += 1
+PY
+}
+
+_machine_downstream_done() {
+  # Tip #154: first line exact "## Downstream DONE" + host= (credentialed machine beacon).
+  # Rejects tip/tooling prose and "## Downstream COMPLETE (inventory deferred)".
+  NAG_COMMENTS="$1" python3 - <<'PY' 2>/dev/null
+import os, sys
+text = os.environ.get("NAG_COMMENTS") or ""
+marker = "## Downstream DONE"
+# Prefer body-separated scan when curl path used separators
+parts = text.split("---HERMES_NAG_BODY_SEP---") if "---HERMES_NAG_BODY_SEP---" in text else [text]
+for part in parts:
+    lines = part.splitlines()
+    # skip leading blanks
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    if not lines:
+        continue
+    if lines[0].strip() == marker and "host=" in part:
+        print("yes")
+        sys.exit(0)
+# Fallback for gh --paginate (no separators): any exact marker line with host= in following 60 lines
+lines = text.splitlines()
+for i, line in enumerate(lines):
+    if line.strip() == marker:
+        window = "\n".join(lines[i:i+60])
+        if "host=" in window:
+            print("yes")
+            sys.exit(0)
+sys.exit(1)
+PY
 }
 
 _open_oneshot() {
@@ -53,9 +108,9 @@ _open_oneshot() {
 }
 
 comments="$(_fetch_comments)"
-if printf '%s' "$comments" | grep -qF "$MARKER"; then
+if _machine_downstream_done "$comments"; then
   launchctl unload "$PLIST" 2>/dev/null || true
-  osascript -e 'display notification "Downstream DONE seen — nag unloaded" with title "Hermes" sound name "Hero"' 2>/dev/null || true
+  osascript -e 'display notification "Downstream DONE (host=) seen — nag unloaded" with title "Hermes" sound name "Hero"' 2>/dev/null || true
   exit 0
 fi
 
@@ -131,7 +186,7 @@ launchctl load "$PLIST"
 echo "OK installed downstream nag LaunchAgent"
 echo "  plist: $PLIST"
 echo "  script: $NAG_BIN"
-echo "  interval: 5 min — notifies until issue #1 has '## Downstream DONE'"
+echo "  interval: 5 min — notifies until issue #1 has machine '## Downstream DONE' + host= (tip #154)"
 echo "  note: auto-opens ONE-SHOT by default (HERMES_NAG_AUTO_ONESHOT=0 for confirm-only); never unattended DISPATCH"
 echo "Uninstall: launchctl unload $PLIST && rm $PLIST $NAG_BIN"
 
