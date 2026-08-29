@@ -1,10 +1,10 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-29T02:50:00Z
+**Last refreshed:** 2026-08-29T02:55Z
 
-**Approve:** https://login.tailscale.com/a/e064be3012df7
+**Approve:** https://login.tailscale.com/a/1d0d805013867
 
-Tip **#135** finite hold-roll near expiry reminted AuthURL **184ff33a→e064be30** (duplicate wait-login race started forever=0). Live up now `--timeout=0s` (forever). Tip through **#135** on main. **Ignore retired:** `184ff33a`, `80d5b860`, `7a69b1a0`, `1f410a53`, `1bcf51f9`, …
+Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip **#136** ships single-flight hold-roll (persist `DESIRED_UP_TIMEOUT` + exclusive lock before kill+re-up; cold-start prefers finite while AuthURL live). **Ignore retired:** `1d0d8050` predecessors above plus `80d5b860`, `7a69b1a0`, `1f410a53`, …
 
 Cloud waiters armed. Prefer **Mac ONE-SHOT** if Runtime Secrets stay unset:
 

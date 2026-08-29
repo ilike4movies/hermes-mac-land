@@ -1,16 +1,21 @@
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Hermes//AuthURL Approve//EN
+PRODID:-//Hermes//AuthURL Hold//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 BEGIN:VEVENT
-UID:hermes-authurl-e064be30@20260829T025000Z
-DTSTAMP:20260829T025000Z
-DTSTART:20260829T025000Z
-DTEND:20260829T085000Z
-SUMMARY:ACTION: Approve Hermes Tailscale e064be30
-DESCRIPTION:Approve NOW: https://login.tailscale.com/a/e064be3012df7\nMac ONE-SHOT from hermes-mac-land tip if secrets unset.\nRetired: 184ff33a (tip#135 roll race remint)
-URL:https://login.tailscale.com/a/e064be3012df7
+UID:hermes-authurl-1d0d8050-1787972085@hermes-mac-land
+DTSTAMP:20260829T025445Z
+DTSTART:20260829T025445Z
+DTEND:20260829T085445Z
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL 1d0d8050
+DESCRIPTION:Approve NOW: https://login.tailscale.com/a/1d0d805013867\nMac ONE-SHOT preferred.\nRetire e064be30 / 6ad13a30 / 184ff33a.\nTip #136 single-flight.
+URL:https://login.tailscale.com/a/1d0d805013867
 STATUS:CONFIRMED
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Approve Tailscale 1d0d8050 NOW
+TRIGGER:-PT0M
+END:VALARM
 END:VEVENT
 END:VCALENDAR
