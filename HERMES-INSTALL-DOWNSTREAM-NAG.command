@@ -1,7 +1,7 @@
 #!/bin/bash
 # HERMES-INSTALL-DOWNSTREAM-NAG.command — Right-click → Open (not double-click)
 # Installs a LaunchAgent that nags every 5 min until issue #1 shows a *machine*
-# "## Downstream DONE" first-line beacon with host= (tip #154).
+# "## Downstream DONE" / "## Downstream DONE @ <ts>" machine beacon with host= (tip #154/#155).
 # Opens issue #1 + ONE-SHOT URL + Web UI + Tailscale admin/AuthURL; auto-downloads+opens ONE-SHOT
 # (HERMES_NAG_AUTO_ONESHOT=0 to require confirm dialog instead). Speaks a short alert when `say` exists.
 # No unattended DISPATCH — ONE-SHOT itself still needs Mac session + LINEAR_API_KEY.
@@ -66,28 +66,36 @@ PY
 }
 
 _machine_downstream_done() {
-  # Tip #154: first line exact "## Downstream DONE" + host= (credentialed machine beacon).
+  # Tip #154/#155: machine beacon first line is "## Downstream DONE" or
+  # "## Downstream DONE @ <timestamp>" (part-c posts the latter) + host=.
   # Rejects tip/tooling prose and "## Downstream COMPLETE (inventory deferred)".
   NAG_COMMENTS="$1" python3 - <<'PY' 2>/dev/null
 import os, sys
 text = os.environ.get("NAG_COMMENTS") or ""
-marker = "## Downstream DONE"
-# Prefer body-separated scan when curl path used separators
+
+def is_done_first_line(line: str) -> bool:
+    s = line.strip()
+    # Tip #155: part-c posts "## Downstream DONE @ $WHEN" — exact "== DONE" never matched.
+    if s == "## Downstream DONE":
+        return True
+    if s.startswith("## Downstream DONE @") or s.startswith("## Downstream DONE@"):
+        return True
+    return False
+
 parts = text.split("---HERMES_NAG_BODY_SEP---") if "---HERMES_NAG_BODY_SEP---" in text else [text]
 for part in parts:
     lines = part.splitlines()
-    # skip leading blanks
     while lines and not lines[0].strip():
         lines.pop(0)
     if not lines:
         continue
-    if lines[0].strip() == marker and "host=" in part:
+    if is_done_first_line(lines[0]) and "host=" in part:
         print("yes")
         sys.exit(0)
-# Fallback for gh --paginate (no separators): any exact marker line with host= in following 60 lines
+# Fallback for gh --paginate (no separators)
 lines = text.splitlines()
 for i, line in enumerate(lines):
-    if line.strip() == marker:
+    if is_done_first_line(line):
         window = "\n".join(lines[i:i+60])
         if "host=" in window:
             print("yes")
