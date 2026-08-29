@@ -19,4 +19,27 @@ _refresh_authurl_file() {
     {
       printf '%s\n' "$url"
       printf 'ACTIVE — approve now (%s).\n' "$(date -u +%FT%TZ)"
-      echo 'Cloud waiters armed; TS_AUTHKEY preferred. Proactive refr
+      echo 'Cloud waiters armed; TS_AUTHKEY preferred. Proactive refresh before prior TTL.'
+    } >"$authfile"
+    echo "APPROVE_THIS_URL=$url"
+  fi
+  # Tip #134: soft-hold ICS rewrite when calendar window is expired/near-expiry
+  # while the same AuthURL is still advertised (avoids mid-approve calendar miss).
+  local ics_need_refresh=0
+  local ics_local="${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics"
+  if [[ ! -f "$ics_local" ]]; then
+    ics_need_refresh=1
+  elif command -v python3 >/dev/null 2>&1; then
+    if ! ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_REFRESH_REMAIN_SECS="${HERMES_AUTHURL_ICS_REFRESH_REMAIN_SECS:-1800}" python3 - <<'PY'
+import os, re
+from datetime import datetime, timezone
+path = os.environ["ICS_PATH"]
+remain = int(os.environ.get("HERMES_AUTHURL_ICS_REFRESH_REMAIN_SECS") or "1800")
+try:
+    text = open(path, encoding="utf-8", errors="replace").read()
+except OSError:
+    raise SystemExit(1)
+m = re.search(r"^DTEND:([0-9]{8}T[0-9]{6}Z)$", text, re.M)
+if not m:
+    raise SystemExit(1)
+end = datetime.strptime(m.group(1), "%Y%m%dT%H%M%SZ").re
