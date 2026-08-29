@@ -118,4 +118,10 @@ PY
     if command -v python3 >/dev/null 2>&1; then
       AUTHURL_ICS_URL="$url" ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" python3 - <<'PY' 2>/dev/null || true
 import os, re
-path = os.environ
+path = os.environ["ICS_PATH"]
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "167"
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "167"
+text = open(path, encoding="utf-8", errors="replace").read()
+summary = f"SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suff
