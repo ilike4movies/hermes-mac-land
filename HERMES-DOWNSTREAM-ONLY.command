@@ -23,7 +23,7 @@ cd "${TMPDIR:-/tmp}"
 echo "=== Hermes DOWNSTREAM ONLY / stall-class (run=$HERMES_RUN_ID) pin=$PIN ==="
 echo "stack-apply=$HERMES_AUTO_STACK_APPLY stall_recovery=$HERMES_STALL_RECOVERY wait_inventory=$HERMES_WAIT_INVENTORY"
 echo "zombie=$HERMES_STALL_ZOMBIE zombie_passes=$HERMES_STALL_ZOMBIE_PASSES"
-echo "tip through #148 (DOWNSTREAM-ONLY stall-class parity with STALL/ONE-SHOT)"
+echo "tip through #162 (ONLY tip-pin parity; #161 ENABLE git-push; #160 FALLBACK b2b5fc4 tip159)"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/ilike4movies/hermes-mac-land/issues/1"
 
@@ -94,8 +94,9 @@ _is_good_downstream() {
   if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
      && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
      && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null \
-     && grep -q '_parts_integrity_ok' "$f" 2>/dev/null; then
-    # Tip #158: entrypoint must reject pre-#156/#150/#151 parts
+     && grep -q '_parts_integrity_ok' "$f" 2>/dev/null \
+     && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
+    # Tip #162: require tip #160 FALLBACK / tip #159 fail-closed markers
     return 0
   fi
   if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
@@ -105,7 +106,8 @@ _is_good_downstream() {
      && grep -q 'HERMES_GH_BEACON_TIMEOUT_SECS' "$f" 2>/dev/null \
      && grep -q 'STALL_DISPATCH_PASSES' "$f" 2>/dev/null \
      && grep -q 'WAIT_INVENTORY' "$f" 2>/dev/null \
-     && grep -q 'fail-closed' "$f" 2>/dev/null; then
+     && grep -q 'fail-closed' "$f" 2>/dev/null \
+     && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
     return 0
   fi
   return 1
