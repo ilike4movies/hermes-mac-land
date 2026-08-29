@@ -60,8 +60,10 @@ export HERMES_PREFER_DIRECT_HOST="${HERMES_PREFER_DIRECT_HOST:-0}"
 export HERMES_UPLOAD_TIP_FROM_CALLER=1
 export HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}"
 
+# Tip #145: -f resolve (0644 curl downloads), not -x-only.
 LAND_SCRIPT="$DIR/hermes-moltbot-cloud-apply-install-via-ssh.sh"
-[[ -x "$LAND_SCRIPT" ]] || LAND_SCRIPT="$ROOT/shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh"
+[[ -f "$LAND_SCRIPT" ]] || LAND_SCRIPT="$ROOT/shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh"
+chmod +x "$LAND_SCRIPT" 2>/dev/null || true
 
 echo "== surgical land (prefer_direct=${HERMES_PREFER_DIRECT_HOST}; jump-first unless 1) ==" | tee -a "$LOG"
 if bash "$LAND_SCRIPT" 2>&1 | tee -a "$LOG"; then
@@ -72,29 +74,32 @@ else
 fi
 
 SRC_PREFLIGHT="$DIR/hermes-stage-a-source-preflight.sh"
-[[ -x "$SRC_PREFLIGHT" ]] || SRC_PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-source-preflight.sh"
+[[ -f "$SRC_PREFLIGHT" ]] || SRC_PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-source-preflight.sh"
 LIVE_PREFLIGHT="$DIR/hermes-stage-a-preflight.sh"
-[[ -x "$LIVE_PREFLIGHT" ]] || LIVE_PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-preflight.sh"
+[[ -f "$LIVE_PREFLIGHT" ]] || LIVE_PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-preflight.sh"
 
 echo "== Stage A source preflight (read-only) ==" | tee -a "$LOG"
-if [[ -x "$SRC_PREFLIGHT" ]]; then
+if [[ -f "$SRC_PREFLIGHT" ]]; then
+  chmod +x "$SRC_PREFLIGHT" 2>/dev/null || true
   bash "$SRC_PREFLIGHT" 2>&1 | tee -a "$LOG" || { echo "FAIL source preflight" >&2; exit 2; }
 else
   echo "WARN: source preflight script missing" >&2
 fi
 
 echo "== Stage A live preflight (read-only) ==" | tee -a "$LOG"
-if [[ -x "$LIVE_PREFLIGHT" ]]; then
+if [[ -f "$LIVE_PREFLIGHT" ]]; then
+  chmod +x "$LIVE_PREFLIGHT" 2>/dev/null || true
   bash "$LIVE_PREFLIGHT" 2>&1 | tee -a "$LOG" || { echo "FAIL live preflight" >&2; exit 3; }
 else
   echo "WARN: live preflight script missing" >&2
 fi
 
 RAL799_VERIFY="$DIR/hermes-ral799-live-verify.sh"
-[[ -x "$RAL799_VERIFY" ]] || RAL799_VERIFY="$ROOT/shared-scripts/hermes-ral799-live-verify.sh"
+[[ -f "$RAL799_VERIFY" ]] || RAL799_VERIFY="$ROOT/shared-scripts/hermes-ral799-live-verify.sh"
 
 echo "== RAL-799 live verify (canary + drift receipt) ==" | tee -a "$LOG"
-if [[ -x "$RAL799_VERIFY" ]]; then
+if [[ -f "$RAL799_VERIFY" ]]; then
+  chmod +x "$RAL799_VERIFY" 2>/dev/null || true
   bash "$RAL799_VERIFY" --post-linear 2>&1 | tee -a "$LOG" || { echo "FAIL RAL-799 live verify" >&2; exit 4; }
 else
   echo "WARN: RAL-799 verify script missing" >&2
@@ -102,14 +107,28 @@ fi
 
 # Downstream gates: RAL-793 contract install + RAL-634 starvation verify.
 # Skippable via HERMES_SKIP_DOWNSTREAM=1 (e.g. land-only smoke).
+# Tip #145: -f + CDN (prefer tip#142 once launcher when present).
 if [[ "${HERMES_SKIP_DOWNSTREAM:-0}" != "1" ]]; then
-  DOWNSTREAM="$DIR/hermes-dispatcher-downstream.sh"
-  [[ -x "$DOWNSTREAM" ]] || DOWNSTREAM="$ROOT/shared-scripts/hermes-dispatcher-downstream.sh"
-  if [[ ! -x "$DOWNSTREAM" ]]; then
+  DOWNSTREAM=""
+  for cand in     "$DIR/hermes-cloud-run-downstream-once.sh"     "$ROOT/shared-scripts/hermes-cloud-run-downstream-once.sh"     "$DIR/hermes-dispatcher-downstream.sh"     "$ROOT/shared-scripts/hermes-dispatcher-downstream.sh"
+  do
+    if [[ -f "$cand" ]]; then
+      chmod +x "$cand" 2>/dev/null || true
+      DOWNSTREAM="$cand"
+      break
+    fi
+  done
+  if [[ -z "$DOWNSTREAM" ]]; then
+    curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-run-downstream-once.sh \
+      -o "$DIR/hermes-cloud-run-downstream-once.sh" || \
     curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh \
       -o "$DIR/hermes-dispatcher-downstream.sh"
-    chmod +x "$DIR/hermes-dispatcher-downstream.sh"
-    DOWNSTREAM="$DIR/hermes-dispatcher-downstream.sh"
+    if [[ -f "$DIR/hermes-cloud-run-downstream-once.sh" ]]; then
+      DOWNSTREAM="$DIR/hermes-cloud-run-downstream-once.sh"
+    else
+      DOWNSTREAM="$DIR/hermes-dispatcher-downstream.sh"
+    fi
+    chmod +x "$DOWNSTREAM" 2>/dev/null || true
   fi
   echo "== downstream gates (RAL-793 contract + RAL-634 verify) ==" | tee -a "$LOG"
   bash "$DOWNSTREAM" 2>&1 | tee -a "$LOG" || echo "WARN: downstream gates failed — see $LOG" | tee -a "$LOG"
