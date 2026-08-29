@@ -220,7 +220,12 @@ Or Mac ONE-SHOT: \`curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command htt
 
 Do **not** use older AuthURLs. Prefer Mac ONE-SHOT if Runtime Secrets stay unset.
 
-After approve, cloud still needs \`HERMES_HOST_SSH_PRIVATE_KEY\` (+ preferably \`LINEAR_API_KEY\` / \`TS_AUTHKEY\`) unless Mac ONE-SHOT completes Downstream DONE.\n\nHostname to approve: \`cursor-cloud-hermes\`\n\nAdmin: https://login.tailscale.com/admin/machines\n"
+After approve, cloud still needs \`HERMES_HOST_SSH_PRIVATE_KEY\` (+ preferably \`LINEAR_API_KEY\` / \`TS_AUTHKEY\`) unless Mac ONE-SHOT completes Downstream DONE.
+
+Hostname to approve: \`cursor-cloud-hermes\`
+
+Admin: https://login.tailscale.com/admin/machines
+"
           tip_tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
           tip_owner="${gh_repo%%/*}"
           tip_name="${gh_repo#*/}"
