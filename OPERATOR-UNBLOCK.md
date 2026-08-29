@@ -75,8 +75,8 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 | **RAL-634** | `1b5a7e86-1d14-456f-b0d1-39a02df243c2` | **Done** |
 | **RAL-798** | `52e94e17-69e6-4688-a60e-aea25b090ebf` | In Progress — WIP-park **#110 LIVE** on `.11` (canary PASS @ 00:05Z) |
 | **RAL-799** | `0d76e06f-bf49-4587-a733-1b6f397f1392` | **Done** |
-| **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
 | **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** |
+| **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
 | **RAL-823** | `b444b07b-d9c5-496c-b5b0-79f31dd4d210` | In Progress — Mac ONE-SHOT operator wake (due 2026-08-28) |
 
 ## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~44h+)
