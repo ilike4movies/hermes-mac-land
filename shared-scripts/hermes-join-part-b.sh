@@ -1,1 +1,1 @@
-LOAD_FROM:/tmp/cou_18000_now.json
+@file:///tmp/repair_4000_content.txt
