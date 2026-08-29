@@ -135,7 +135,8 @@ fi
 # WAIT_INVENTORY=0 used to leave INVENTORY_RC=0 and post DONE with
 # "inventory wait: skipped" — that false-counts obj5 cred_DONE gates.
 if [[ "$STARVE_RC" -eq 0 && "$INVENTORY_STATUS" == "present" && "$INVENTORY_RC" -eq 0 ]]; then
-  _post_github_status "## Downstream DONE @ $WHEN
+  # Tip #159: fail-closed if issue #1 Downstream DONE beacon did not post (obj5/NAG depend on it).
+  if ! _post_github_status "## Downstream DONE @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
 run inspect: auto=$AUTO_INSPECT
@@ -146,7 +147,10 @@ DISPATCH-NOW: auto=$AUTO_DISPATCH ($_DISPATCH_MODE when stall_recovery=1; fail-c
 RAL-634 verify: PASS
 inventory wait: present (auto=$WAIT_INVENTORY)
 
-Watch Linear for inventory evidence on $LINEAR_TICKET — not WORK-PACKET-DONE alone."
+Watch Linear for inventory evidence on $LINEAR_TICKET — not WORK-PACKET-DONE alone."; then
+    echo "FAIL: Downstream DONE beacon did not post to ${GH_STATUS_REPO}#${GH_STATUS_ISSUE} (tip #159 fail-closed)" | tee -a "$LOG"
+    exit 2
+  fi
 elif [[ "$STARVE_RC" -eq 0 && "$WAIT_INVENTORY" != "1" ]]; then
   _post_github_status "## Downstream COMPLETE (inventory deferred) @ $WHEN
 

@@ -6,7 +6,7 @@
 # If tip CDN for HERMES_DOWNSTREAM_REF fails, falls back to known-good
 # HERMES_DOWNSTREAM_FALLBACK_REF (default ff0ccac = tip #156 DONE-post curl/gh + tip #150/#151 inventory integrity).
 # Tip #152: do NOT fall back to pre-#150/#151 SHAs (SEED false-pass / deferred=DONE).
-# Tip #158: reject assembled parts missing tip #156 DONE-post + #150/#151 inventory markers
+# Tip #158/#159: reject parts missing tip #156 DONE-post + #150/#151 inventory + #159 fail-closed status
 # (stale CDN/local co-located parts that still fetch OK but silent-fail GitHub status).
 # Do NOT replace this with a local-only cat of parts — that breaks Mac ONE-SHOT.
 set -euo pipefail
@@ -47,8 +47,10 @@ _parts_integrity_ok() {
   local d="$1"
   grep -q 'HERMES_GH_BEACON_TIMEOUT_SECS' "$d/hermes-dispatcher-part-a.sh" 2>/dev/null \
     && grep -q 'HERMES_STATUS_GITHUB_TOKEN' "$d/hermes-dispatcher-part-a.sh" 2>/dev/null \
+    && grep -q 'FAIL GitHub status post failed' "$d/hermes-dispatcher-part-a.sh" 2>/dev/null \
     && grep -q '_inventory_evidence_ok' "$d/hermes-dispatcher-part-b.sh" 2>/dev/null \
-    && grep -q 'inventory deferred' "$d/hermes-dispatcher-part-c.sh" 2>/dev/null
+    && grep -q 'inventory deferred' "$d/hermes-dispatcher-part-c.sh" 2>/dev/null \
+    && grep -q 'Downstream DONE beacon did not post' "$d/hermes-dispatcher-part-c.sh" 2>/dev/null
 }
 
 _ensure_parts() {
