@@ -118,4 +118,100 @@ PY
     if command -v python3 >/dev/null 2>&1; then
       AUTHURL_ICS_URL="$url" ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" python3 - <<'PY' 2>/dev/null || true
 import os, re
-path = os.environ
+path = os.environ["ICS_PATH"]
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "167"
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "167"
+text = open(path, encoding="utf-8", errors="replace").read()
+summary = f"SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})"
+desc = (
+    f"DESCRIPTION:Approve NOW: {url}\\n"
+    f"Then Mac ONE-SHOT tip #{tip} (launcher banners #164; ICS tip-stale soft-hold; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). "
+    "Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11."
+)
+valarm = f"DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #{tip}"
+out = []
+in_valarm = False
+for line in text.splitlines():
+    if line.startswith("BEGIN:VALARM"):
+        in_valarm = True
+        out.append(line)
+        continue
+    if line.startswith("END:VALARM"):
+        in_valarm = False
+        out.append(line)
+        continue
+    if line.startswith("SUMMARY:"):
+        out.append(summary)
+    elif line.startswith("DESCRIPTION:"):
+        out.append(valarm if in_valarm else desc)
+    else:
+        out.append(line)
+open(path, "w", encoding="utf-8").write("\n".join(out) + ("\n" if text.endswith("\n") else ""))
+print(f"OK tip #{tip} ICS tip-pin soft-hold (DTEND preserved)")
+PY
+      echo "OK tip #${ics_expected_tip} local ICS tip-pin soft-hold (AuthURL/DTEND unchanged)"
+    fi
+  fi
+  # Keep PENDING + local ICS aligned even if CURRENT was written out-of-band
+  # (hard wipe / agent MCP) so cloud agents do not read a stale AuthURL marker.
+  # Tip #134: also rewrite when ICS hold window is nearly expired (soft AuthURL hold).
+  if [[ "$auth_changed" == "1" || "$pending_stale" == "1" || "$ics_need_refresh" == "1" ]]; then
+    {
+      printf '%s\n' "$url"
+      printf 'refreshed=%s\n' "$(date -u +%FT%TZ)"
+    } >"$pending"
+    if command -v python3 >/dev/null 2>&1; then
+      AUTHURL_ICS_URL="$url" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" HERMES_AUTHURL_ICS_HOLD_HOURS="${HERMES_AUTHURL_ICS_HOLD_HOURS:-6}" python3 - <<'ICS' >"${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics" 2>/dev/null || true
+import os
+from datetime import datetime, timedelta, timezone
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "167"
+now = datetime.now(timezone.utc)
+dt = now.strftime("%Y%m%dT%H%M%SZ")
+hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
+end = (now + timedelta(hours=hold_h)).strftime("%Y%m%dT%H%M%SZ")
+uid = f"hermes-authurl-{suffix}-{int(now.timestamp())}@hermes-mac-land"
+print(f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Hermes Mac Land//AuthURL Wake//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:{uid}
+DTSTAMP:{dt}
+DTSTART:{dt}
+DTEND:{end}
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (launcher banners #164; ICS tip-stale soft-hold; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
+LOCATION:{url}
+URL:{url}
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #{tip}
+TRIGGER:-PT0S
+END:VALARM
+END:VEVENT
+END:VCALENDAR""")
+ICS
+    fi
+  fi
+  # Tip #167: ICS tip-stale soft-hold + dynamic expected tip (TIP_PIN / CURRENT_AUTHURL.md).
+  # Tip #134: when AuthURL is unchanged but ICS hold expired, still refresh tip ICS
+  # (does not remint AuthURL; throttled by local rewrite above).
+  if [[ "$ics_need_refresh" == "1" && "$auth_changed" != "1" && "${HERMES_AUTHURL_TIP_ICS:-1}" == "1" ]]; then
+    if command -v python3 >/dev/null 2>&1; then
+      local tip_tok="${GITHUB_TOKEN:-${GH_TOKEN:-${HERMES_GH_WORKFLOW_PAT:-}}}"
+      local tip_owner tip_name gh_repo="${HERMES_STATUS_GITHUB_REPO:-ilike4movies/hermes-mac-land}"
+      tip_owner="${gh_repo%%/*}"
+      tip_name="${gh_repo#*/}"
+      local ics_path="HERMES-APPROVE-TAILSCALE.ics" ics_body ics_sha ics_b64 ics_api ics_payload
+      ics_body="$(AUTHURL_ICS_URL="$url" HERMES_AUTHURL_ICS_EXPECTED_TIP="${ics_expected_tip:-$(_resolve_ics_expected_tip)}" HERMES_AUTHURL_ICS_HOLD_HOURS="${HERMES_AUTHURL_ICS_HOLD_HOURS:-6}" python3 - <<'ICS'
+import os
+from datetime import datetime, timedelta, timezone
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [
