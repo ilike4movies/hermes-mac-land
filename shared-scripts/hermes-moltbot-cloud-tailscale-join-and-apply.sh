@@ -70,9 +70,12 @@ fi
 
 reload_cloud_secrets() {
   # Prefer bridge so cursor-secrets mounts + env land in key files first
-  if [[ -x "$SCRIPT_DIR/bridge-secrets-from-env.sh" ]]; then
+  # Tip #144: -f + bash (0644 curl downloads), not -x-only.
+  if [[ -f "$SCRIPT_DIR/bridge-secrets-from-env.sh" ]]; then
+    chmod +x "$SCRIPT_DIR/bridge-secrets-from-env.sh" 2>/dev/null || true
     bash "$SCRIPT_DIR/bridge-secrets-from-env.sh" >/dev/null 2>&1 || true
-  elif [[ -x "$SCRIPT_DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" ]]; then
+  elif [[ -f "$SCRIPT_DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" ]]; then
+    chmod +x "$SCRIPT_DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" 2>/dev/null || true
     bash "$SCRIPT_DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" >/dev/null 2>&1 || true
   fi
   if [[ -f "$SECRETS_ENV" ]]; then

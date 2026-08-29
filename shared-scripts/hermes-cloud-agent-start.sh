@@ -78,14 +78,21 @@ _preflight || exit 0
 
 bash "$ROOT/shared-scripts/hermes-cloud-bootstrap-waiter.sh" || true
 
-if [[ -x "$DIR/bridge-secrets-from-env.sh" ]]; then
+# Tip #144: -f + bash for bridge + poller (0644 curl downloads).
+if [[ -f "$DIR/bridge-secrets-from-env.sh" ]]; then
+  chmod +x "$DIR/bridge-secrets-from-env.sh" 2>/dev/null || true
   bash "$DIR/bridge-secrets-from-env.sh" || true
+elif [[ -f "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" ]]; then
+  chmod +x "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" 2>/dev/null || true
+  bash "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" || true
 fi
 # Mid-session Runtime Secrets often arrive after NeedsLogin starts — keep bridging.
-if [[ -x "$DIR/hermes-cloud-secrets-bridge-poller.sh" ]]; then
+if [[ -f "$DIR/hermes-cloud-secrets-bridge-poller.sh" ]]; then
+  chmod +x "$DIR/hermes-cloud-secrets-bridge-poller.sh" 2>/dev/null || true
   bash "$DIR/hermes-cloud-secrets-bridge-poller.sh" || true
-elif [[ -x "$ROOT/shared-scripts/hermes-cloud-secrets-bridge-poller.sh" ]]; then
-  install -m 0755 "$ROOT/shared-scripts/hermes-cloud-secrets-bridge-poller.sh" "$DIR/hermes-cloud-secrets-bridge-poller.sh" 2>/dev/null || true
+elif [[ -f "$ROOT/shared-scripts/hermes-cloud-secrets-bridge-poller.sh" ]]; then
+  install -m 0755 "$ROOT/shared-scripts/hermes-cloud-secrets-bridge-poller.sh" "$DIR/hermes-cloud-secrets-bridge-poller.sh" 2>/dev/null ||     cp "$ROOT/shared-scripts/hermes-cloud-secrets-bridge-poller.sh" "$DIR/hermes-cloud-secrets-bridge-poller.sh"
+  chmod +x "$DIR/hermes-cloud-secrets-bridge-poller.sh" 2>/dev/null || true
   bash "$DIR/hermes-cloud-secrets-bridge-poller.sh" || true
 fi
 
