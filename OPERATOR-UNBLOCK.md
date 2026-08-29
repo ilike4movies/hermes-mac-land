@@ -1,9 +1,3 @@
 ## Cloud wait-login → downstream (after Tailscale approve)
 
-When a cloud agent is waiting on interactive Tailscale login and `HERMES_AUTO_SURGICAL_LAND=0`,
-joining the mesh (`BackendState=Running`) auto-runs `hermes-dispatcher-downstream.sh`
-(stalled-canary defaults) instead of surgical land — **only after** `HERMES_HOST_SSH_PRIVATE_KEY`
-(+ `LINEAR_API_KEY`) is present. Waiters keep looping if Tailscale joins before secrets arrive
-(Runtime Secrets / `/tmp/hermes-cloud-apply/host-ssh-key` / `/tmp/cursor/cloud-agent-secrets`); they do not one-shot-and-exit on Running alone. Tip **#103–#133**: on-join exports `COMPOSER_REPO_URL=hermes-mac-land`; join/supervisor/bridge poll `/tmp/cursor/cloud-agent-secrets`; on-join posts a one-shot #1 beacon when SSH arrives while still NeedsLogin (Linear RAL-823 fallback when `gh` blocked — #109); bridge default poll 10s; PENDING AuthURL tip sync (#110); hard AuthURL rotate helper when soft refresh reissues the same URL; wait-login single-instance flock + throttled NeedsLogin status (#112/#113); skip dead GH_TOKEN + AUTHURL_MCP_SURFACE_NEEDED (#114); ~45m refresh soft keep-alive by default (#123; hard opt-in); soft restart young-up guard (#117); curl|bash/ONE-SHOT-safe downstream entrypoint fetches part-a/b/c when missing (#118); Mac ONE-SHOT/STALL accept entrypoint (#119); tip-CDN pin fallback to known-good commit (#120); ONE-SHOT/STALL pin to #120 entrypoint SHA (#121). Jump-host ping is warn-only on the downstream-only path (direct `.11` SSH).
-
-Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`HERMES_TAILSCALE_AUTHURL_REFRESH_SECS`, default 2700) — see pod `CURRENT_AUTHURL.txt` and tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md). Soft `restart-authurl.sh` often **reissues the same** login URL — tip **#123** makes wait-login ~45m refresh **default SOFT keep-alive**; tip **#124** exports that soft default on supervisor wait-login respawn; tip **#125** skips soft remint while status still advertises a live
+PROBE_TIP167_DO_NOT_KEEP
