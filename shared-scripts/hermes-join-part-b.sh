@@ -148,4 +148,5 @@ for line in text.splitlines():
         out.append(valarm if in_valarm else desc)
     else:
         out.append(line)
-open(path, "w", encoding="utf-8").write("
+open(path, "w", encoding="utf-8").write("\n".join(out) + ("\n" if text.endswith("\n") else ""))
+print(f"OK tip #{tip} ICS tip-pin soft-hold (
