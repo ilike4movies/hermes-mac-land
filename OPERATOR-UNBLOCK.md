@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #143 (on-join/supervisor/join-part-c `-f` once+CDN; #142 dispatcher resolve; #141 secrets-bridge `-f`+heartbeat; #140 Running-no-SSH)|
+| 6 | Operator docs | **DONE** — tip through #144 (supervisor/start/join `-f` bridge+poller; #143 once callers; #142 dispatcher; #141 secrets-bridge; #140 Running-no-SSH)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -149,3 +149,9 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 - [`hermes-downstream-on-join-watcher.sh`](shared-scripts/hermes-downstream-on-join-watcher.sh), [`hermes-cloud-wait-login-supervisor.sh`](shared-scripts/hermes-cloud-wait-login-supervisor.sh), [`hermes-join-part-c.sh`](shared-scripts/hermes-join-part-c.sh): resolve `hermes-cloud-run-downstream-once.sh` with `-f` (+ tip CDN fetch), not `-x`-only.
 - Closes the tip#141/#142 class gap at the caller: 0644 once launcher no longer skips post-approve stall.
+
+### Tip #144 (supervisor/start/join `-f` for bridge + poller)
+
+- `hermes-cloud-wait-login-supervisor.sh`, `hermes-cloud-bootstrap-waiter.sh`, `hermes-cloud-agent-start.sh`, join/wait-join, and `hermes-credentialed-resume-land.sh` now start bridge + secrets-bridge-poller via **`-f` + bash (+ CDN)**, not `-x`-only.
+- Closes the tip#141 class gap at the **caller**: a 0644 poller/bridge download no longer silently skips mid-session Runtime Secrets while AuthURL is held.
+
