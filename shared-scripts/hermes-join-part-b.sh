@@ -155,7 +155,7 @@ END:VCALENDAR""")
 ICS
     fi
   fi
-  # Tip #166: ICS tip-stale soft-hold + tip-refresh pin tip through #166 (was #165).
+  # Tip #166: ICS tip-stale soft-hold + soft-refresh pin tip through #166 (was #165).
   # Tip #134: when AuthURL is unchanged but ICS hold expired, still refresh tip ICS
   # (does not remint AuthURL; throttled by local rewrite above).
   if [[ "$ics_need_refresh" == "1" && "$auth_changed" != "1" && "${HERMES_AUTHURL_TIP_ICS:-1}" == "1" ]]; then
