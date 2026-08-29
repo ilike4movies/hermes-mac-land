@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #156 (DONE post gh timeout+curl; #155 NAG DONE@ts; #154 prose reject; #153–#150)|
+| 6 | Operator docs | **DONE** — tip through #157 (FALLBACK→ff0ccac tip156; #156 DONE post; #155 NAG DONE@ts; #154–#150)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -223,3 +223,10 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 - [`hermes-dispatcher-part-a.sh`](shared-scripts/hermes-dispatcher-part-a.sh) `_post_github_status`: was gh-only, silent fail — Mac ONE-SHOT/STALL could finish inventory wait and still leave issue #1 without `## Downstream DONE @ …` (obj5 gates + tip#154/#155 NAG never see success).
 - Now: `timeout` around `gh issue comment` (default 8s); curl+token fallback (`HERMES_STATUS_GITHUB_TOKEN` / `GH_TOKEN` / `GITHUB_TOKEN` / `gh auth token`); OK/WARN log lines.
+
+### Tip #157 (FALLBACK pin includes tip #156 DONE-post)
+
+- [`hermes-dispatcher-downstream.sh`](shared-scripts/hermes-dispatcher-downstream.sh): default `HERMES_DOWNSTREAM_FALLBACK_REF` bumped `6c6881a` (#151) → **`ff0ccac`** (tip #156 OPERATOR restore / tip156 part-a on main).
+- CDN fail on `main` must not assemble pre-#156 parts (silent `gh` status fail → Mac success without issue #1 Downstream DONE).
+- Still includes tip #150/#151 inventory-integrity (SEED reject + DONE only when inventory present).
+
