@@ -163,4 +163,22 @@ print(json.dumps({**d, **({"sha":s} if s else {})}))')"
   # Best-effort auto-beacon when AuthURL changes (dedupe by URL).
   # Order: gh CLI → curl+GitHub token → Linear comment (RAL-823 by default).
   # Skips when none work — agent MCP can still post.
-  if [[ "${HERMES_AUTHURL_GITHUB_BEACON:-1}" == "1" || "${HERMES_AUTHURL_LINEAR_BEACON:-1}" 
+  if [[ "${HERMES_AUTHURL_GITHUB_BEACON:-1}" == "1" || "${HERMES_AUTHURL_LINEAR_BEACON:-1}" == "1" ]]; then
+    if [[ ! -f "$lastfile" ]] || ! grep -qF "$url" "$lastfile" 2>/dev/null; then
+      local body posted=0
+      body="## Fresh Tailscale AuthURL (auto-beacon)
+
+Approve NOW: ${url}
+
+After approve, add Runtime Secrets \`HERMES_HOST_SSH_PRIVATE_KEY\` + \`LINEAR_API_KEY\` (waiters keep looping until SSH arrives).
+
+Or Mac ONE-SHOT: \`curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command\`"
+      if [[ "${HERMES_AUTHURL_GITHUB_BEACON:-1}" == "1" ]]; then
+        if command -v gh >/dev/null 2>&1; then
+          if gh issue comment "$gh_issue" --repo "$gh_repo" --body "$body" >/dev/null 2>&1; then
+            posted=1
+          fi
+        fi
+        if [[ "$posted" != "1" ]]; then
+          local tok owner name api_url payload
+          tok="${HERMES_STATUS_GIT
