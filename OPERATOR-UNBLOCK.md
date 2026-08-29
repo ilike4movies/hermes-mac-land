@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #144 (supervisor/start/join `-f` bridge+poller; #143 once callers; #142 dispatcher; #141 secrets-bridge; #140 Running-no-SSH)|
+| 6 | Operator docs | **DONE** — tip through #145 (dispatcher helpers `-f`+CDN; #144 bridge/poller callers; #143 once; #142/#141; #140 Running-no-SSH)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -154,4 +154,10 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 - `hermes-cloud-wait-login-supervisor.sh`, `hermes-cloud-bootstrap-waiter.sh`, `hermes-cloud-agent-start.sh`, join/wait-join, and `hermes-credentialed-resume-land.sh` now start bridge + secrets-bridge-poller via **`-f` + bash (+ CDN)**, not `-x`-only.
 - Closes the tip#141 class gap at the **caller**: a 0644 poller/bridge download no longer silently skips mid-session Runtime Secrets while AuthURL is held.
+
+### Tip #145 (dispatcher helpers `-f` + CDN)
+
+- `hermes-dispatcher-part-a.sh` / `part-b.sh`: resolve contract/inspect/starve/stack-apply via **`-f`**, fetch on missing, always `chmod +x` before `bash` (0644 curl class).
+- `hermes-cloud-agent-start.sh` + `hermes-credentialed-resume-land.sh`: prefer tip#142 once launcher; `-f`+CDN for downstream helpers.
+- Closes the tip#141–#144 class gap on the **credentialed stall chain** itself so Mac ONE-SHOT / post-approve once launcher cannot skip helpers that landed mode 0644.
 
