@@ -54,17 +54,42 @@ _missing_secrets() {
 }
 
 _run_downstream_chain() {
-  local ral799 downstream
+  # Tip #145: prefer tip#142 once launcher; resolve via -f + CDN (not -x-only).
+  local ral799 once downstream
   ral799="$DIR/hermes-ral799-live-verify.sh"
-  [[ -x "$ral799" ]] || ral799="$ROOT/shared-scripts/hermes-ral799-live-verify.sh"
-  downstream="$ROOT/shared-scripts/hermes-dispatcher-downstream.sh"
+  [[ -f "$ral799" ]] || ral799="$ROOT/shared-scripts/hermes-ral799-live-verify.sh"
 
-  if [[ "${HERMES_AUTO_RAL799_VERIFY:-1}" == "1" ]] && [[ -x "$ral799" ]]; then
+  if [[ "${HERMES_AUTO_RAL799_VERIFY:-1}" == "1" ]] && [[ -f "$ral799" ]]; then
+    chmod +x "$ral799" 2>/dev/null || true
     echo "OK running RAL-799 live verify (canary + drift)"
     bash "$ral799" --post-linear >>"$LOG" 2>&1 || echo "WARN: RAL-799 verify failed — see $LOG" >&2
   fi
 
-  if [[ -x "$downstream" ]]; then
+  once=""
+  for cand in     "$DIR/hermes-cloud-run-downstream-once.sh"     "$ROOT/shared-scripts/hermes-cloud-run-downstream-once.sh"
+  do
+    if [[ -f "$cand" ]]; then
+      chmod +x "$cand" 2>/dev/null || true
+      once="$cand"
+      break
+    fi
+  done
+  if [[ -n "$once" ]]; then
+    echo "OK tip#145 launching tip#142/#133 once downstream"
+    [[ -n "${HERMES_RUN_ID:-}" ]] && echo "INFO: downstream pinned to run $HERMES_RUN_ID"
+    bash "$once" >>"$LOG" 2>&1 || echo "WARN: downstream gates failed — see $LOG" >&2
+    echo "NEXT: watch Linear for contract readback + CLAIMED + inventory evidence (not WORK-PACKET-DONE alone)"
+    return 0
+  fi
+
+  downstream="$DIR/hermes-dispatcher-downstream.sh"
+  [[ -f "$downstream" ]] || downstream="$ROOT/shared-scripts/hermes-dispatcher-downstream.sh"
+  if [[ ! -f "$downstream" ]]; then
+    curl -fsSL "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh"       -o "$DIR/hermes-dispatcher-downstream.sh" || true
+    downstream="$DIR/hermes-dispatcher-downstream.sh"
+  fi
+  if [[ -f "$downstream" ]]; then
+    chmod +x "$downstream" 2>/dev/null || true
     echo "OK running downstream gates (RAL-793 contract + auto DISPATCH-NOW + RAL-634 verify)"
     [[ -n "${HERMES_RUN_ID:-}" ]] && echo "INFO: downstream pinned to run $HERMES_RUN_ID"
     bash "$downstream" >>"$LOG" 2>&1 || echo "WARN: downstream gates failed — see $LOG" >&2
