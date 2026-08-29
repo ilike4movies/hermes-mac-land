@@ -172,3 +172,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - [`HERMES-DOWNSTREAM-RAL793-STALL.command`](HERMES-DOWNSTREAM-RAL793-STALL.command): same tip#146 class fix — prefer tip#142 once launcher, then tip/`main`; drop stale `a657c617…` pin default.
 - Closes the alternate Mac double-click path that still skipped tip#145 `-f` helpers.
 
+### Tip #148 (DOWNSTREAM-ONLY stall-class parity)
+
+- [`HERMES-DOWNSTREAM-ONLY.command`](HERMES-DOWNSTREAM-ONLY.command): now matches STALL/ONE-SHOT stall-class defaults — pin run `2954673`, `HERMES_AUTO_SURGICAL_LAND=0`, zombie=`1`/`3`, `WAIT_INVENTORY=1`, Linear key preflight, tip#142 once launcher first.
+- Closes the third Mac entrypoint that previously ran bare dispatcher without stall recovery / inventory wait.
