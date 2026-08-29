@@ -79,15 +79,15 @@ UID:{uid}
 DTSTAMP:{dt}
 DTSTART:{dt}
 DTEND:{end}
-SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix}
-DESCRIPTION:Approve NOW: {url}\\nThen add Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY.\\nOr Mac ONE-SHOT from hermes-mac-land tip.
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #163)
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #163 (STALL/ONLY tip-pin; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
 LOCATION:{url}
 URL:{url}
 STATUS:CONFIRMED
 SEQUENCE:0
 BEGIN:VALARM
 ACTION:DISPLAY
-DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #163
 TRIGGER:-PT0S
 END:VALARM
 END:VEVENT
@@ -95,6 +95,7 @@ END:VCALENDAR""")
 ICS
     fi
   fi
+  # Tip #163: ICS soft-hold SUMMARY/DESCRIPTION pin tip through #163 (was tip-less generic).
   # Tip #134: when AuthURL is unchanged but ICS hold expired, still refresh tip ICS
   # (does not remint AuthURL; throttled by local rewrite above).
   if [[ "$ics_need_refresh" == "1" && "$auth_changed" != "1" && "${HERMES_AUTHURL_TIP_ICS:-1}" == "1" ]]; then
@@ -124,15 +125,15 @@ UID:{uid}
 DTSTAMP:{dt}
 DTSTART:{dt}
 DTEND:{end}
-SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix}
-DESCRIPTION:Approve NOW: {url}\\nThen add Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY.\\nOr Mac ONE-SHOT from hermes-mac-land tip.
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #163)
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #163 (STALL/ONLY tip-pin; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
 LOCATION:{url}
 URL:{url}
 STATUS:CONFIRMED
 SEQUENCE:0
 BEGIN:VALARM
 ACTION:DISPLAY
-DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #163
 TRIGGER:-PT0S
 END:VALARM
 END:VEVENT
@@ -310,15 +311,15 @@ UID:{uid}
 DTSTAMP:{dt}
 DTSTART:{dt}
 DTEND:{end}
-SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix}
-DESCRIPTION:Approve NOW: {url}\\nThen add Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY.\\nOr Mac ONE-SHOT from hermes-mac-land tip.
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #163)
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #163 (STALL/ONLY tip-pin; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
 LOCATION:{url}
 URL:{url}
 STATUS:CONFIRMED
 SEQUENCE:0
 BEGIN:VALARM
 ACTION:DISPLAY
-DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #163
 TRIGGER:-PT0S
 END:VALARM
 END:VEVENT
