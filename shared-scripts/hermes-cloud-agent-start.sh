@@ -154,16 +154,19 @@ export HERMES_POST_APPLY_CANARY="${HERMES_POST_APPLY_CANARY:-RAL-820}"
 if bash "$ROOT/shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh" >>"$LOG" 2>&1; then
   echo "OK surgical land — see $LOG"
   if [[ "${HERMES_AUTO_STAGE_A_PREFLIGHT:-1}" == "1" ]]; then
+    # Tip #149: -f resolve (0644 curl downloads), not -x-only — matches tip#145 credentialed-resume.
     PREFLIGHT="$DIR/hermes-stage-a-preflight.sh"
-    [[ -x "$PREFLIGHT" ]] || PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-preflight.sh"
-    if [[ -x "$PREFLIGHT" ]]; then
+    [[ -f "$PREFLIGHT" ]] || PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-preflight.sh"
+    if [[ -f "$PREFLIGHT" ]]; then
       SRC_PREFLIGHT="$DIR/hermes-stage-a-source-preflight.sh"
-      [[ -x "$SRC_PREFLIGHT" ]] || SRC_PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-source-preflight.sh"
-      if [[ -x "$SRC_PREFLIGHT" ]] && [[ "${HERMES_AUTO_STAGE_A_SOURCE_PREFLIGHT:-1}" == "1" ]]; then
+      [[ -f "$SRC_PREFLIGHT" ]] || SRC_PREFLIGHT="$ROOT/shared-scripts/hermes-stage-a-source-preflight.sh"
+      if [[ -f "$SRC_PREFLIGHT" ]] && [[ "${HERMES_AUTO_STAGE_A_SOURCE_PREFLIGHT:-1}" == "1" ]]; then
         echo "OK running read-only Stage A source preflight (cos-local@5bcb257e)"
+        chmod +x "$SRC_PREFLIGHT" 2>/dev/null || true
         bash "$SRC_PREFLIGHT" >>"$LOG" 2>&1 || echo "WARN: Stage A source preflight blocked — see $LOG" >&2
       fi
       echo "OK running read-only Stage A live preflight (cos-local@5bcb257e)"
+      chmod +x "$PREFLIGHT" 2>/dev/null || true
       bash "$PREFLIGHT" >>"$LOG" 2>&1 || echo "WARN: Stage A preflight blocked — see $LOG" >&2
     else
       echo "WARN: hermes-stage-a-preflight.sh missing — run bootstrap waiter first" >&2
