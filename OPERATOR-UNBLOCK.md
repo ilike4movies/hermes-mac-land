@@ -13,7 +13,7 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-29T04:45Z
+**Updated:** 2026-08-29T04:52Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #142 (run-downstream-once bash+CDN fetch; #141 secrets-bridge `-f`+heartbeat; #140 Running-no-SSH; #139 ONE-SHOT RAL-823 slug; #138 attach flock) |
+| 6 | Operator docs | **DONE** — tip through #143 (on-join/supervisor/join-part-c `-f` once+CDN; #142 dispatcher resolve; #141 secrets-bridge `-f`+heartbeat; #140 Running-no-SSH)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -144,3 +144,8 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 - [`hermes-cloud-run-downstream-once.sh`](shared-scripts/hermes-cloud-run-downstream-once.sh): resolve dispatcher with `-f`+`bash` (not `-x`-only); if missing locally, curl tip CDN `shared-scripts/hermes-dispatcher-downstream.sh` before fail-closed exit 127.
 - Prevents post-approve on-join/wait-login stall from aborting after AuthURL join when apply-dir scripts are 0644 or not yet synced.
+
+### Tip #143 (on-join/supervisor once `-f` + CDN)
+
+- [`hermes-downstream-on-join-watcher.sh`](shared-scripts/hermes-downstream-on-join-watcher.sh), [`hermes-cloud-wait-login-supervisor.sh`](shared-scripts/hermes-cloud-wait-login-supervisor.sh), [`hermes-join-part-c.sh`](shared-scripts/hermes-join-part-c.sh): resolve `hermes-cloud-run-downstream-once.sh` with `-f` (+ tip CDN fetch), not `-x`-only.
+- Closes the tip#141/#142 class gap at the caller: 0644 once launcher no longer skips post-approve stall.
