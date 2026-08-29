@@ -44,3 +44,10 @@ ONE-SHOT opens **Linear RAL-823** + **Tailscale admin + tip [`CURRENT_AUTHURL.md
 2. **Mac Terminal paste (same ONE-SHOT)** — when Finder Right-click is awkward:
    ```bash
    curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-S
+
+### Tip #153 (AuthURL beacon: skip dead gh + MCP handoff dedupe)
+
+- [`hermes-join-part-b.sh`](shared-scripts/hermes-join-part-b.sh): auto-beacon **skips `gh`** when `GH_TOKEN_INVALID.flag` is set; wraps `gh` in `timeout` (default 8s); first gh 401 sets the invalid flag.
+- Tip CURRENT_AUTHURL.md / ICS tip puts also skip `gh` when the flag is set (curl path already did).
+- When beacon cannot post (dead ghs_/no Linear key), writing `AUTHURL_MCP_SURFACE_NEEDED.txt` also records the URL into `LAST_POSTED_AUTHURL.txt` so wait-login does **not** re-run dead `gh` every poll while `LAST_POSTED` still holds a retired remint (e.g. `80d5b860` vs live `1d0d8050`).
+- Remint still re-beacons (URL change ≠ lastfile). Agent clears MCP surface after tip/#1/RAL-823 MCP post.
