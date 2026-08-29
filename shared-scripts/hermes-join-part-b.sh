@@ -383,4 +383,16 @@ PY
           warn_age=$(( now - $(stat -c %Y "$warnfile" 2>/dev/null || echo 0) ))
         fi
         if (( warn_age >= ${HERMES_AUTHURL_BEACON_WARN_SECS:-60} )); then
-   
+          echo "WARN AuthURL beacon skipped (gh/token/Linear write unavailable)"
+          {
+            printf '%s\n' "$url"
+            printf 'needs_mcp_surface=%s\n' "$(date -u +%FT%TZ)"
+            echo 'Cloud GH_TOKEN often expired (ghs_ → 401). Agent: GitHub MCP tip CURRENT_AUTHURL.md + ICS + #1 + RAL-823.'
+          } >"${SCRIPT_DIR}/AUTHURL_MCP_SURFACE_NEEDED.txt"
+          printf '%s\n' "$url" >"$warnfile"
+        fi
+      fi
+    fi
+  fi
+}
+
