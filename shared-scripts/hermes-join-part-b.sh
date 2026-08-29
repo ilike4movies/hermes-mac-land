@@ -149,4 +149,18 @@ for line in text.splitlines():
     else:
         out.append(line)
 open(path, "w", encoding="utf-8").write("\n".join(out) + ("\n" if text.endswith("\n") else ""))
-print(f"OK tip #{tip} ICS tip-pin soft-hold (
+print(f"OK tip #{tip} ICS tip-pin soft-hold (DTEND preserved)")
+PY
+      echo "OK tip #${ics_expected_tip} local ICS tip-pin soft-hold (AuthURL/DTEND unchanged)"
+    fi
+  fi
+  # Keep PENDING + local ICS aligned even if CURRENT was written out-of-band
+  # (hard wipe / agent MCP) so cloud agents do not read a stale AuthURL marker.
+  # Tip #134: also rewrite when ICS hold window is nearly expired (soft AuthURL hold).
+  if [[ "$auth_changed" == "1" || "$pending_stale" == "1" || "$ics_need_refresh" == "1" ]]; then
+    {
+      printf '%s\n' "$url"
+      printf 'refreshed=%s\n' "$(date -u +%FT%TZ)"
+    } >"$pending"
+    if command -v python3 >/dev/null 2>&1; then
+      AUTHURL_ICS_URL="$url" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" HERMES_AUTHURL_ICS_HOLD_HOURS="${HER
