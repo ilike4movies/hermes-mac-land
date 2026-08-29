@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #145 (dispatcher helpers `-f`+CDN; #144 bridge/poller callers; #143 once; #142/#141; #140 Running-no-SSH)|
+| 6 | Operator docs | **DONE** — tip through #146 (ONE-SHOT tip once+main first; #145 dispatcher `-f`; #144–#140)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -160,4 +160,10 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - `hermes-dispatcher-part-a.sh` / `part-b.sh`: resolve contract/inspect/starve/stack-apply via **`-f`**, fetch on missing, always `chmod +x` before `bash` (0644 curl class).
 - `hermes-cloud-agent-start.sh` + `hermes-credentialed-resume-land.sh`: prefer tip#142 once launcher; `-f`+CDN for downstream helpers.
 - Closes the tip#141–#144 class gap on the **credentialed stall chain** itself so Mac ONE-SHOT / post-approve once launcher cannot skip helpers that landed mode 0644.
+
+### Tip #146 (ONE-SHOT prefers tip once + main)
+
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command): Phase 1 STALL now prefers tip **#142** `hermes-cloud-run-downstream-once.sh`, then tip/`main` dispatcher entrypoint.
+- Removes default stale `HERMES_DOWNSTREAM_PIN` that pinned a pre-#145 SHA ahead of tip (set explicitly only if needed).
+- Banner pinned through **#145+**. Ensures Mac ONE-SHOT picks up tip#145 `-f` helper resolve without CDN-lag pin games.
 
