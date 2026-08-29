@@ -1,10 +1,10 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-29T05:55Z
+**Last refreshed:** 2026-08-29T06:13Z
 
 **Approve:** https://login.tailscale.com/a/1d0d805013867
 
-Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#145** (dispatcher helpers `-f`+CDN; #144 bridge/poller callers; #143/#142/#141). **Ignore retired** predecessors + `80d5b860`, `7a69b1a0`, …
+Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#146** (ONE-SHOT prefers tip once+main; #145 dispatcher `-f`; #144–#141). **Ignore retired** predecessors + `80d5b860`, `7a69b1a0`, …
 
 Prefer **Mac ONE-SHOT** if Runtime Secrets stay unset:
 
