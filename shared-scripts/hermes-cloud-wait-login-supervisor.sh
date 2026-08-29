@@ -2,8 +2,10 @@
 # Keep wait-login alive until Tailscale Running, then auto-land / downstream.
 # When HERMES_AUTO_SURGICAL_LAND=0: wait for host SSH key (mid-wait secrets) before
 # running dispatcher downstream — do not one-shot-and-exit on Running alone.
-# Tip #137: spawn inherits tip#131 forever up default + tip#136 DESIRED_UP_TIMEOUT
+# Tip #137/#138: spawn inherits tip#131 forever up default + tip#136 DESIRED_UP_TIMEOUT
 # persist. Prefer hermes-cloud-attach-wait-login.sh over restart-authurl when AuthURL live.
+# Tip #138: _spawn_wait_login uses $DIR/wait-login.flock (shared with attach) + re-check
+# so attach↔supervisor cannot both spawn wait-login and remint AuthURL.
 set -euo pipefail
 DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 SOCK="${HERMES_TAILSCALE_SOCKET:-/var/run/tailscale/tailscaled.sock}"
@@ -45,7 +47,7 @@ _wait_login_active() {
 }
 
 _spawn_wait_login() {
-  # Single-instance: flock + re-check prevents supervisor races / duplicate waiters.
+  # Tip #138 shared flock + re-check: attach and supervisor cannot both spawn.
   (
     flock -n 200 || {
       echo "$(date -u +%FT%TZ) wait-login spawn skipped (flock held)"
