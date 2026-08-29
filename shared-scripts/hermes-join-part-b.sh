@@ -122,7 +122,6 @@ METHOD:REQUEST
 BEGIN:VEVENT
 UID:{uid}
 DTSTAMP:{dt}
-DTSTART:{dt}
 DTEND:{end}
 SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix}
 DESCRIPTION:Approve NOW: {url}\\nThen add Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY.\\nOr Mac ONE-SHOT from hermes-mac-land tip.
@@ -234,4 +233,30 @@ Admin: https://login.tailscale.com/admin/machines
           elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
             _code="$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json" https://api.github.com/rate_limit 2>/dev/null || echo 000)"
             if [[ "$_code" == "401" || "$_code" == "403" ]]; then
-              echo "$_code $(date -u +%FT%TZ)" >"$
+              echo "$_code $(date -u +%FT%TZ)" >"${SCRIPT_DIR}/GH_TOKEN_INVALID.flag"
+              echo "WARN GH_TOKEN unusable (HTTP ${_code}) — skip tip curl path"
+              tip_tok=""
+            fi
+          fi
+          tip_sha=""
+          if command -v gh >/dev/null 2>&1; then
+            tip_sha="$(gh api "repos/${gh_repo}/contents/${tip_path}" --jq .sha 2>/dev/null || true)"
+          elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+            tip_sha="$(curl -fsS -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"               "https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${tip_path}" 2>/dev/null               | python3 -c 'import sys,json; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)"
+          fi
+          tip_b64="$(printf '%s' "$tip_body" | base64 | tr -d '\n')"
+          if command -v gh >/dev/null 2>&1; then
+            if [[ -n "$tip_sha" ]]; then
+              tip_put=(gh api --method PUT "repos/${gh_repo}/contents/${tip_path}" -f message="ops: refresh CURRENT_AUTHURL.md" -f content="$tip_b64" -f branch=main -f sha="$tip_sha")
+            else
+              tip_put=(gh api --method PUT "repos/${gh_repo}/contents/${tip_path}" -f message="ops: refresh CURRENT_AUTHURL.md" -f content="$tip_b64" -f branch=main)
+            fi
+            if "${tip_put[@]}" >/dev/null 2>&1; then
+              echo "OK tip CURRENT_AUTHURL.md refreshed on ${gh_repo}"
+              posted=1
+            fi
+          elif [[ -n "$tip_tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+            tip_api="https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${tip_path}"
+            tip_payload="$(TIP_B64="$tip_b64" TIP_SHA="$tip_sha" python3 -c 'import json,os; d={"message":"ops: refresh CURRENT_AUTHURL.md","content":os.environ["TIP_B64"],"branch":"main"}; s=os.environ.get("TIP_SHA") or "";
+print(json.dumps({**d, **({"sha":s} if s else {})}))')"
+           
