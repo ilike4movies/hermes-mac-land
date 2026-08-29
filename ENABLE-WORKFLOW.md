@@ -19,7 +19,9 @@ curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ili
 
 Watch [issue #1](../../issues/1) for `## Downstream DONE`.
 
-Tip through **#159** on main (Downstream DONE GitHub post: timed `gh` + curl/token fallback; #155 NAG DONE@ts; #154 prose reject). STALL/ONE-SHOT still prefer tip-first fetch.
+Tip through **#160** on main (Downstream DONE GitHub post: timed `gh` + curl/token fallback; #155 NAG DONE@ts; #154 prose reject). STALL/ONE-SHOT still prefer tip-first fetch.
+
+Tip **#160**: default `HERMES_DOWNSTREAM_FALLBACK_REF` → `b2b5fc4` (includes tip #159 fail-closed DONE beacon).
 
 Tip **#159**: Downstream DONE GitHub beacon fail-closed (exit 2 if issue #1 post fails after live inventory).
 
