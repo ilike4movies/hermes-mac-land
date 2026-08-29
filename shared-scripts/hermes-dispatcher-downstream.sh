@@ -4,7 +4,7 @@
 # Assembles part-a/b/c then execs. If co-located parts are missing (piped bash,
 # or ONE-SHOT/STALL download into /tmp), fetches parts from tip raw URLs.
 # If tip CDN for HERMES_DOWNSTREAM_REF fails, falls back to known-good
-# HERMES_DOWNSTREAM_FALLBACK_REF (default ff0ccac = tip #156 DONE-post curl/gh + tip #150/#151 inventory integrity).
+# HERMES_DOWNSTREAM_FALLBACK_REF (default b2b5fc4 = tip #159 fail-closed DONE beacon + tip #156/#150/#151).
 # Tip #152: do NOT fall back to pre-#150/#151 SHAs (SEED false-pass / deferred=DONE).
 # Tip #158/#159: reject parts missing tip #156 DONE-post + #150/#151 inventory + #159 fail-closed status
 # (stale CDN/local co-located parts that still fetch OK but silent-fail GitHub status).
@@ -13,7 +13,7 @@ set -euo pipefail
 
 REPO="${HERMES_DOWNSTREAM_REPO:-ilike4movies/hermes-mac-land}"
 REF="${HERMES_DOWNSTREAM_REF:-main}"
-FALLBACK="${HERMES_DOWNSTREAM_FALLBACK_REF:-ff0ccac}"
+FALLBACK="${HERMES_DOWNSTREAM_FALLBACK_REF:-b2b5fc4}"
 
 SCRIPT_DIR=""
 if [[ -n "${BASH_SOURCE[0]:-}" && "${BASH_SOURCE[0]}" != *"/dev/fd/"* ]]; then
