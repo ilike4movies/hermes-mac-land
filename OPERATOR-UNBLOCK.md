@@ -49,7 +49,7 @@ ONE-SHOT opens **Linear RAL-823** + **Tailscale admin + tip [`CURRENT_AUTHURL.md
    ```
 3. **Mac STALL only** — [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) when Tailscale+SSH already known-good.
 4. **Mac downstream nag** — installed automatically by ONE-SHOT (above). Standalone: **Right-click → Open** [`HERMES-INSTALL-DOWNSTREAM-NAG.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-INSTALL-DOWNSTREAM-NAG.command). LaunchAgent every 5 min: checks [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) for `## Downstream DONE`; if missing, spoken alert + macOS notification + opens issue #1 / ONE-SHOT / Web UI / Tailscale admin+tip AuthURL (`HERMES_NAG_OPEN_TAILSCALE=0` to skip), and **auto-downloads+opens ONE-SHOT** (`HERMES_NAG_AUTO_ONESHOT=0` for confirm dialog only). Never unattended DISPATCH. Auto-unloads on DONE. Uninstall: `launchctl unload ~/Library/LaunchAgents/com.hermes.downstream-nag.plist` then remove the plist and `~/.hermes/bin/hermes-downstream-nag.sh`.
-5. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11**, secrets at boot (`TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`)
+5. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11`, secrets at boot (`TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`)
 6. **GitHub Actions** (durable; once enabled) — see [docs/CI-DOWNSTREAM-STALL.md](docs/CI-DOWNSTREAM-STALL.md) / [`ci/downstream-stall.yml`](ci/downstream-stall.yml)
 
 ### Enable GitHub Actions path (one-time, ~2 min)
@@ -155,4 +155,16 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - `hermes-cloud-wait-login-supervisor.sh`, `hermes-cloud-bootstrap-waiter.sh`, `hermes-cloud-agent-start.sh`, join/wait-join, and `hermes-credentialed-resume-land.sh` now start bridge + secrets-bridge-poller via **`-f` + bash (+ CDN)**, not `-x`-only.
 - Closes the tip#141 class gap at the **caller**: a 0644 poller/bridge download no longer silently skips mid-session Runtime Secrets while AuthURL is held.
 
-### Tip #145 (dispatcher helper
+### Tip #145 (dispatcher helpers `-f` + CDN)
+
+- `hermes-dispatcher-part-a.sh` / `part-b.sh`: resolve contract/inspect/starve/stack-apply via **`-f`**, fetch on missing, always `chmod +x` before `bash` (0644 curl class).
+- `hermes-cloud-agent-start.sh` + `hermes-credentialed-resume-land.sh`: prefer tip#142 once launcher; `-f`+CDN for downstream helpers.
+- Closes the tip#141–#144 class gap on the **credentialed stall chain** itself so Mac ONE-SHOT / post-approve once launcher cannot skip helpers that landed mode 0644.
+
+### Tip #146 (ONE-SHOT prefers tip once + main)
+
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command): Phase 1 STALL now prefers tip **#142** `hermes-cloud-run-downstream-once.sh`, then tip/`main` dispatcher entrypoint.
+- Removes default stale `HERMES_DOWNSTREAM_PIN` that pinned a pre-#145 SHA ahead of tip (set explicitly only if needed).
+- Banner pinned through **#145+**. Ensures Mac ONE-SHOT picks up tip#145 `-f` helper resolve without CDN-lag pin games.
+
+### Tip #147 (STALL.command 
