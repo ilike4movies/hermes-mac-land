@@ -90,7 +90,7 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 
 Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait default 15 min** (`HERMES_INVENTORY_WAIT_SECS=900`). Runtime ~15–20 min (STALL inventory wait 900s) or Actions ~10–15 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
 
-**Zombie reclaim (#72):** when stall age ≥1h (auto-detected from `HERMES_RUN_ID` prefix), downstream escalates to **3× DISPATCH-NOW @ 120s** for ultra-stale CLAIM — fail stale CLAIM → reopen → second reopen if still stuck. Mac launchers + `ci/downstream-stall.yml` (GHA template) default `HERMES_STALL_ZOMBIE=1` + `HERMES_STALL_ZOMBIE_PASSES=3` for run `2954673`. Track operator work on **RAL-823**.
+**Zombie reclaim (#72):** when stall age ≥1h (auto-detected from `HERMES_RUN_ID` prefix), downstream escalates to **3× DISPATCH-NOW @ 120s** for ultra-stale CLAIM — fail stale CLAIM → reopen → second reopen if still stuck. Mac launchers + `ci/downstream-stall.yml` (GHA template) default `HERMES_STALL_ZOMBIE=1` + `HERMES_STALL_ZOMBIE_PASSES=3` for run `2954673`. Track operator work on **RAL-823`.
 
 ## Program gates
 
@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #150 (inventory-wait rejects SEED; #149 stage-a `-f`; #148 DOWNSTREAM-ONLY; #147/#146 tip once+main)|
+| 6 | Operator docs | **DONE** — tip through #151 (DONE requires live inventory; #150 SEED reject; #149–#146)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -187,3 +187,9 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - [`hermes-dispatcher-part-b.sh`](shared-scripts/hermes-dispatcher-part-b.sh) `_inventory_evidence_ok`: reject `pending` first line + `SEED` / `NOT live inventory` markers **before** accepting EP04/workspace/tts keywords.
 - Proven false-pass: tip#97 SEED embeds `/opt/moltbot`, `tts`, `EP04` in comments → old check returned OK and could mark Downstream DONE without live inventory.
 - Live accept requires dated LIVE / sha / host-verify signals (or EP + real `work/ep` artifact paths), not archaeology prose.
+
+### Tip #151 (DONE requires live inventory present)
+
+- [`hermes-dispatcher-part-c.sh`](shared-scripts/hermes-dispatcher-part-c.sh): bare `## Downstream DONE` only when `inventory wait: present` (INVENTORY_STATUS=present + STARVE_RC=0).
+- `HERMES_WAIT_INVENTORY=0` no longer posts bare DONE with `skipped` — posts `## Downstream COMPLETE (inventory deferred)` instead so obj5 cred_DONE gates cannot false-count.
+- Inventory miss/timeout still posts `## Downstream PARTIAL` + non-zero exit (tip#150 SEED reject remains the wait gate).
