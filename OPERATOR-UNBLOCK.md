@@ -100,3 +100,29 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 | 5 | Media Studio canary + inventory | **OPEN** |
 | 6 | Operator docs | **DONE** — tip through #167 (ICS tip from TIP_PIN/CURRENT_AUTHURL; #166–#160)|
 
+## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
+
+
+### Tip #136 (AuthURL single-flight hold-roll)
+
+- Persist `DESIRED_UP_TIMEOUT.txt` on tip#135 finite hold-roll so sibling wait-login does not cold-start `forever=0` mid-roll (proven remint `184ff33a→e064be30`).
+- Take exclusive `tailscale-up` flock **before** kill+re-up.
+- Cold-start while AuthURL still advertised prefers finite `LOGIN_WAIT` (14400s) over forever unless `HERMES_AUTHURL_FORCE_FOREVER_START=1` (forever cold-start reminted `e064be30→6ad13a30`).
+
+### Tip #137 (attach-only wait-login)
+
+- Prefer [`shared-scripts/hermes-cloud-attach-wait-login.sh`](shared-scripts/hermes-cloud-attach-wait-login.sh) over `restart-authurl.sh` / manual `tailscale up` while NeedsLogin still advertises a live AuthURL.
+- Kills wait-login by exact PID only (no `pkill -f` self-match). Never kills interactive `up` unless `HERMES_FORCE_KILL_UP=1`.
+- Refuses cold-start when AuthURL is live and no up is running (`HERMES_FORCE_COLD_UP=1` to override — expect remint).
+- Supervisor spawn adopts `DESIRED_UP_TIMEOUT.txt` (tip #136) so respawns do not reintroduce forever=0 mid-roll.
+
+### Tip #138 (attach+supervisor share wait-login flock)
+
+- [`hermes-cloud-attach-wait-login.sh`](shared-scripts/hermes-cloud-attach-wait-login.sh) and [`hermes-cloud-wait-login-supervisor.sh`](shared-scripts/hermes-cloud-wait-login-supervisor.sh) both take `$DIR/wait-login.flock` before spawning `--wait-login`.
+- Attach is a **no-op** when exactly one healthy wait-login + forever/`timeout=0s` up already holds a live AuthURL (no kill, no remint). Force with `HERMES_FORCE_REATTACH=1`.
+- Supervisor skips spawn when the flock is busy or a waiter is already active under the flock.
+- Stops the attach↔supervisor race that reminted AuthURLs after tip #137 (duplicate wait-logins @ ~03:17Z).
+
+### Tip #139 (ONE-SHOT RAL-823 URL + tip banner)
+
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command) Linear default URL point
