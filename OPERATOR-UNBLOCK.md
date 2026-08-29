@@ -13,7 +13,7 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 
 **Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-**Updated:** 2026-08-29T04:38Z
+**Updated:** 2026-08-29T04:45Z
 
 ## ⚠️ Linear auto-Done hygiene
 
@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #141 (secrets-bridge runs via bash even when not +x + heartbeat; #140 Running-no-SSH beacon; #139 ONE-SHOT RAL-823 slug; #138 attach flock; AuthURL ICS 6h hold; #133 single-flight downstream) |
+| 6 | Operator docs | **DONE** — tip through #142 (run-downstream-once bash+CDN fetch; #141 secrets-bridge `-f`+heartbeat; #140 Running-no-SSH; #139 ONE-SHOT RAL-823 slug; #138 attach flock) |
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -139,3 +139,8 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - [`hermes-cloud-secrets-bridge-poller.sh`](shared-scripts/hermes-cloud-secrets-bridge-poller.sh): run bridge scripts with `bash` when the file **exists**, not only when `+x` (curl|raw downloads often land `0644`). Prefer tip-named `hermes-moltbot-cloud-bridge-secrets-from-env.sh`.
 - Heartbeat every `HERMES_SECRETS_BRIDGE_HEARTBEAT_EVERY` polls (default 30 ≈5m at 10s interval) so log mtime proves the poller is alive.
 - Live bug: poller pid stayed up for 12h+ but never invoked the bridge because `-x` failed — mid-session Runtime Secrets would not arm waiters until this tip.
+
+### Tip #142 (run-downstream-once bash + tip CDN fetch)
+
+- [`hermes-cloud-run-downstream-once.sh`](shared-scripts/hermes-cloud-run-downstream-once.sh): resolve dispatcher with `-f`+`bash` (not `-x`-only); if missing locally, curl tip CDN `shared-scripts/hermes-dispatcher-downstream.sh` before fail-closed exit 127.
+- Prevents post-approve on-join/wait-login stall from aborting after AuthURL join when apply-dir scripts are 0644 or not yet synced.
