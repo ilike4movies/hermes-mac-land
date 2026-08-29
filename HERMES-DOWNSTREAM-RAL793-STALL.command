@@ -60,6 +60,17 @@ _preflight_mac_secrets() {
   if [[ -z "${HERMES_HOST_SSH_PRIVATE_KEY:-}" ]]; then
     echo "WARN: HERMES_HOST_SSH_PRIVATE_KEY not loaded — ensure ~/.hermes/.env has the host key or SSH agent works."
   fi
+  # Tip #159: pre-export GitHub status token so curl fallback works if gh hangs mid-post.
+  if [[ -z "${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}" ]] && command -v gh >/dev/null 2>&1; then
+    _tok="$(timeout 5 gh auth token 2>/dev/null || true)"
+    if [[ -n "$_tok" ]]; then
+      export HERMES_STATUS_GITHUB_TOKEN="$_tok"
+      echo "OK tip #159 status token exported from gh auth"
+    else
+      echo "WARN tip #159: no gh auth token — Downstream DONE beacon may fail-closed; run: gh auth login"
+    fi
+  fi
+
 }
 
 _preflight_mac_secrets
