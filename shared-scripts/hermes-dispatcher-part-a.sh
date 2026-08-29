@@ -54,17 +54,18 @@ INVENTORY_RC=0
 INVENTORY_WAIT_SECS="${HERMES_INVENTORY_WAIT_SECS:-900}"
 INVENTORY_POLL_SECS="${HERMES_INVENTORY_POLL_SECS:-30}"
 
+# Tip #145: resolve helpers via -f (0644 curl downloads), not -x-only.
 _contract="$DIR/hermes-ral793-contract-install.sh"
-[[ -x "$_contract" ]] || _contract="$ROOT/shared-scripts/hermes-ral793-contract-install.sh"
+[[ -f "$_contract" ]] || _contract="$ROOT/shared-scripts/hermes-ral793-contract-install.sh"
 
 _inspect="$DIR/hermes-ral793-run-inspect.sh"
-[[ -x "$_inspect" ]] || _inspect="$ROOT/shared-scripts/hermes-ral793-run-inspect.sh"
+[[ -f "$_inspect" ]] || _inspect="$ROOT/shared-scripts/hermes-ral793-run-inspect.sh"
 
 _starve="$DIR/hermes-ral634-starvation-verify.sh"
-[[ -x "$_starve" ]] || _starve="$ROOT/shared-scripts/hermes-ral634-starvation-verify.sh"
+[[ -f "$_starve" ]] || _starve="$ROOT/shared-scripts/hermes-ral634-starvation-verify.sh"
 
 _stack_apply="$DIR/hermes-moltbot-stack-apply-via-ssh.sh"
-[[ -x "$_stack_apply" ]] || _stack_apply="$ROOT/shared-scripts/hermes-moltbot-stack-apply-via-ssh.sh"
+[[ -f "$_stack_apply" ]] || _stack_apply="$ROOT/shared-scripts/hermes-moltbot-stack-apply-via-ssh.sh"
 
 _stall_age_secs() {
   local run_id="${1:-${HERMES_RUN_ID:-}}"
