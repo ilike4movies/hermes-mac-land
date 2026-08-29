@@ -19,6 +19,8 @@ curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ili
 
 Watch [issue #1](../../issues/1) for `## Downstream DONE`.
 
-Tip through **#154** on main (AuthURL beacon skips dead `gh` + MCP handoff dedupe). STALL/ONE-SHOT still prefer tip-first fetch.
+Tip through **#155** on main (AuthURL beacon skips dead `gh` + MCP handoff dedupe). STALL/ONE-SHOT still prefer tip-first fetch.
 
-Tip **#154**: Downstream nag only unloads on machine `## Downstream DONE` + `host=` (paginated); ignores tooling prose / inventory-deferred COMPLETE.
+Tip **#155**: Downstream nag only unloads on machine `## Downstream DONE` + `host=` (paginated); ignores tooling prose / inventory-deferred COMPLETE.
+
+Tip **#155**: NAG matches `## Downstream DONE @ <ts>` + `host=` (part-c beacon form).
