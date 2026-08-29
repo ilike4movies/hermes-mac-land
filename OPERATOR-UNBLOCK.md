@@ -113,4 +113,46 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 - Prefer [`shared-scripts/hermes-cloud-attach-wait-login.sh`](shared-scripts/hermes-cloud-attach-wait-login.sh) over `restart-authurl.sh` / manual `tailscale up` while NeedsLogin still advertises a live AuthURL.
 - Kills wait-login by exact PID only (no `pkill -f` self-match). Never kills interactive `up` unless `HERMES_FORCE_KILL_UP=1`.
-- Refuses cold-start when AuthURL is live and no up is running (`HERME
+- Refuses cold-start when AuthURL is live and no up is running (`HERMES_FORCE_COLD_UP=1` to override — expect remint).
+- Supervisor spawn adopts `DESIRED_UP_TIMEOUT.txt` (tip #136) so respawns do not reintroduce forever=0 mid-roll.
+
+### Tip #138 (attach+supervisor share wait-login flock)
+
+- [`hermes-cloud-attach-wait-login.sh`](shared-scripts/hermes-cloud-attach-wait-login.sh) and [`hermes-cloud-wait-login-supervisor.sh`](shared-scripts/hermes-cloud-wait-login-supervisor.sh) both take `$DIR/wait-login.flock` before spawning `--wait-login`.
+- Attach is a **no-op** when exactly one healthy wait-login + forever/`timeout=0s` up already holds a live AuthURL (no kill, no remint). Force with `HERMES_FORCE_REATTACH=1`.
+- Supervisor skips spawn when the flock is busy or a waiter is already active under the flock.
+- Stops the attach↔supervisor race that reminted AuthURLs after tip #137 (duplicate wait-logins @ ~03:17Z).
+
+### Tip #139 (ONE-SHOT RAL-823 URL + tip banner)
+
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command) Linear default URL points at live RAL-823 slug (`…authurl-1d0d8050-canary`), not the retired `…silent-36h` slug.
+- Banner notes tip through #138 AuthURL hold flock so Mac operators open CURRENT_AUTHURL / RAL-823 first.
+- `.github/workflows/downstream-stall.yml` still requires Mac/`HERMES_GH_WORKFLOW_PAT`/Web UI (GitHub App 404 on workflows scope). Source of truth remains [`ci/downstream-stall.yml`](ci/downstream-stall.yml).
+
+### Tip #140 (Running-without-SSH beacon)
+
+- [`hermes-downstream-on-join-watcher.sh`](shared-scripts/hermes-downstream-on-join-watcher.sh): when BackendState is `Running` but `HERMES_HOST_SSH_PRIVATE_KEY` is still missing, post **once** to GitHub #1 / Linear RAL-823 (and write `RUNNING_NO_SSH_MCP_SURFACE_NEEDED.txt` for agents when gh/token blocked).
+- Makes approve-without-secrets visible instead of silent 30s wait loops. Mac ONE-SHOT remains preferred when Runtime Secrets stay unset on Ooterverse.
+
+### Tip #141 (secrets-bridge `-f` + heartbeat)
+
+- [`hermes-cloud-secrets-bridge-poller.sh`](shared-scripts/hermes-cloud-secrets-bridge-poller.sh): run bridge scripts with `bash` when the file **exists**, not only when `+x` (curl|raw downloads often land `0644`). Prefer tip-named `hermes-moltbot-cloud-bridge-secrets-from-env.sh`.
+- Heartbeat every `HERMES_SECRETS_BRIDGE_HEARTBEAT_EVERY` polls (default 30 ≈5m at 10s interval) so log mtime proves the poller is alive.
+- Live bug: poller pid stayed up for 12h+ but never invoked the bridge because `-x` failed — mid-session Runtime Secrets would not arm waiters until this tip.
+
+### Tip #142 (run-downstream-once bash + tip CDN fetch)
+
+- [`hermes-cloud-run-downstream-once.sh`](shared-scripts/hermes-cloud-run-downstream-once.sh): resolve dispatcher with `-f`+`bash` (not `-x`-only); if missing locally, curl tip CDN `shared-scripts/hermes-dispatcher-downstream.sh` before fail-closed exit 127.
+- Prevents post-approve on-join/wait-login stall from aborting after AuthURL join when apply-dir scripts are 0644 or not yet synced.
+
+### Tip #143 (on-join/supervisor once `-f` + CDN)
+
+- [`hermes-downstream-on-join-watcher.sh`](shared-scripts/hermes-downstream-on-join-watcher.sh), [`hermes-cloud-wait-login-supervisor.sh`](shared-scripts/hermes-cloud-wait-login-supervisor.sh), [`hermes-join-part-c.sh`](shared-scripts/hermes-join-part-c.sh): resolve `hermes-cloud-run-downstream-once.sh` with `-f` (+ tip CDN fetch), not `-x`-only.
+- Closes the tip#141/#142 class gap at the caller: 0644 once launcher no longer skips post-approve stall.
+
+### Tip #144 (supervisor/start/join `-f` for bridge + poller)
+
+- `hermes-cloud-wait-login-supervisor.sh`, `hermes-cloud-bootstrap-waiter.sh`, `hermes-cloud-agent-start.sh`, join/wait-join, and `hermes-credentialed-resume-land.sh` now start bridge + secrets-bridge-poller via **`-f` + bash (+ CDN)**, not `-x`-only.
+- Closes the tip#141 class gap at the **caller**: a 0644 poller/bridge download no longer silently skips mid-session Runtime Secrets while AuthURL is held.
+
+### Tip #145 (dispatcher helper
