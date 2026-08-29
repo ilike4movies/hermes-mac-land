@@ -1,1 +1,1 @@
-PLACEHOLDER_LOAD_FROM_/tmp/tip156_push_one_0.json
+LOAD_VIA_PYTHON_FROM_/tmp/tip156_CALL_PARTA.json
