@@ -321,7 +321,7 @@ wait_for_running() {
       last_status_echo=$i
       last_st="$st"
       if [[ "$st" == "NeedsLogin" || "$st" == "NoState" || -z "$st" ]]; then
-        # Throttle verbose `ts status` (Logged out / AuthURL) — was every 5–8s → multi-MB logs.
+        # Throttle verbose `ts status` (Logged out / AuthURL) — was every 5s → multi-MB logs.
         ts status 2>&1 | sed -n '1,8p' || true
       fi
     fi
