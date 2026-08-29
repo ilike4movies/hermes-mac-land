@@ -75,8 +75,8 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 | **RAL-634** | `1b5a7e86-1d14-456f-b0d1-39a02df243c2` | **Done** |
 | **RAL-798** | `52e94e17-69e6-4688-a60e-aea25b090ebf` | In Progress — WIP-park **#110 LIVE** on `.11` (canary PASS @ 00:05Z) |
 | **RAL-799** | `0d76e06f-bf49-4587-a733-1b6f397f1392` | **Done** |
-| **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** |
 | **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
+| **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** |
 | **RAL-823** | `b444b07b-d9c5-496c-b5b0-79f31dd4d210` | In Progress — Mac ONE-SHOT operator wake (due 2026-08-28) |
 
 ## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~44h+)
@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #157 (FALLBACK→ff0ccac tip156; #156 DONE post; #155 NAG DONE@ts; #154–#150)|
+| 6 | Operator docs | **DONE** — tip through #158 (reject pre-#156 parts; FALLBACK ff0ccac; #157–#150)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -230,3 +230,8 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - CDN fail on `main` must not assemble pre-#156 parts (silent `gh` status fail → Mac success without issue #1 Downstream DONE).
 - Still includes tip #150/#151 inventory-integrity (SEED reject + DONE only when inventory present).
 
+### Tip #158 (reject pre-#156/#150/#151 assembled parts)
+
+- [`hermes-dispatcher-downstream.sh`](shared-scripts/hermes-dispatcher-downstream.sh): `_parts_integrity_ok` requires tip #156 DONE-post markers + tip #150/#151 inventory markers before assemble; stale co-located/CDN parts fall back to `ff0ccac`.
+- Mac STALL / DOWNSTREAM-ONLY / ONE-SHOT: entrypoint integrity requires `_parts_integrity_ok`; legacy monolithic check requires `HERMES_GH_BEACON_TIMEOUT_SECS` (not bare `_post_github_status`).
+- Closes: Mac could accept pre-#156 silent-fail status post when tip fetch "succeeded" with stale parts.
