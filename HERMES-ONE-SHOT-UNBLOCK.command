@@ -26,7 +26,7 @@ FALLBACK_ACTIONS="${HERMES_ONE_SHOT_FALLBACK_ACTIONS:-1}"
 cd "${TMPDIR:-/tmp}"
 echo "=== Hermes ONE-SHOT UNBLOCK (run=$HERMES_RUN_ID) pin=$PIN ==="
 echo "zombie=$HERMES_STALL_ZOMBIE zombie_passes=$HERMES_STALL_ZOMBIE_PASSES stall_recovery=$HERMES_STALL_RECOVERY"
-echo "tip through #158 (reject pre-#156 status post; FALLBACK ff0ccac); approve tip CURRENT_AUTHURL or RAL-823"
+echo "tip through #159 (fail-closed if Downstream DONE beacon missing; #158 integrity); approve tip CURRENT_AUTHURL or RAL-823"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/${REPO}/issues/1"
 echo "Path: Web UI early + STALL first; on fail → ENABLE-ACTIONS (fallback=$FALLBACK_ACTIONS)"
@@ -63,6 +63,17 @@ _preflight_mac_secrets() {
     read -r -p "Press Enter to close…" _
     exit 1
   fi
+  # Tip #159: pre-export GitHub status token so curl fallback works if gh hangs mid-post.
+  if [[ -z "${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}" ]] && command -v gh >/dev/null 2>&1; then
+    _tok="$(timeout 5 gh auth token 2>/dev/null || true)"
+    if [[ -n "$_tok" ]]; then
+      export HERMES_STATUS_GITHUB_TOKEN="$_tok"
+      echo "OK tip #159 status token exported from gh auth"
+    else
+      echo "WARN tip #159: no gh auth token — Downstream DONE beacon may fail-closed; run: gh auth login"
+    fi
+  fi
+
 }
 
 
