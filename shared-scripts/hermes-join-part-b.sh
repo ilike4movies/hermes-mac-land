@@ -450,4 +450,83 @@ ICS
                 echo "OK tip HERMES-APPROVE-TAILSCALE.ics refreshed on ${gh_repo}"
                 posted=1
               fi
-           
+            elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
+              ics_api="https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${ics_path}"
+              ics_payload="$(ICS_B64="$ics_b64" ICS_SHA="$ics_sha" python3 -c 'import json,os; d={"message":"ops: refresh HERMES-APPROVE-TAILSCALE.ics","content":os.environ["ICS_B64"],"branch":"main"}; s=os.environ.get("ICS_SHA") or "";
+print(json.dumps({**d, **({"sha":s} if s else {})}))')"
+              if curl -fsS -X PUT -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"                 -H "Content-Type: application/json" --data "$ics_payload" "$ics_api" >/dev/null 2>&1; then
+                echo "OK tip HERMES-APPROVE-TAILSCALE.ics refreshed on ${gh_repo} (curl)"
+                posted=1
+              fi
+            fi
+          fi
+        fi
+      fi
+      if [[ "$posted" != "1" && "${HERMES_AUTHURL_LINEAR_BEACON:-1}" == "1" ]]; then
+        local lkey="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
+        if [[ -n "$lkey" ]] && command -v python3 >/dev/null 2>&1; then
+          if LINEAR_KEY="$lkey" LINEAR_TICKET="$linear_ticket" AUTHURL_BEACON_BODY="$body" python3 - <<'PY' >/dev/null 2>&1
+import json, os, urllib.request
+key = os.environ["LINEAR_KEY"]
+ticket = os.environ["LINEAR_TICKET"]
+body = os.environ["AUTHURL_BEACON_BODY"]
+q1 = {
+    "query": "query($q:String!){issueSearch(query:$q,first:1){nodes{id identifier}}}",
+    "variables": {"q": ticket},
+}
+req = urllib.request.Request(
+    "https://api.linear.app/graphql",
+    data=json.dumps(q1).encode(),
+    headers={"Content-Type": "application/json", "Authorization": key},
+)
+with urllib.request.urlopen(req, timeout=8) as r:
+    nodes = (json.load(r).get("data") or {}).get("issueSearch", {}).get("nodes") or []
+if not nodes:
+    raise SystemExit(1)
+iid = nodes[0]["id"]
+q2 = {
+    "query": "mutation($id:String!,$b:String!){commentCreate(input:{issueId:$id,body:$b}){success}}",
+    "variables": {"id": iid, "b": body},
+}
+req2 = urllib.request.Request(
+    "https://api.linear.app/graphql",
+    data=json.dumps(q2).encode(),
+    headers={"Content-Type": "application/json", "Authorization": key},
+)
+urllib.request.urlopen(req2, timeout=8).read()
+print("ok")
+PY
+          then
+            posted=1
+            echo "OK AuthURL Linear beacon posted to ${linear_ticket}"
+          fi
+        fi
+      fi
+      if [[ "$posted" == "1" ]]; then
+        printf '%s\n' "$url" >"$lastfile"
+      else
+        # Throttle skip warnings (wait loop polls every ~5s).
+        local warnfile="${SCRIPT_DIR}/LAST_AUTHURL_BEACON_WARN.txt"
+        local now warn_age=99999
+        now="$(date +%s)"
+        if [[ -f "$warnfile" ]]; then
+          warn_age=$(( now - $(stat -c %Y "$warnfile" 2>/dev/null || echo 0) ))
+        fi
+        if (( warn_age >= ${HERMES_AUTHURL_BEACON_WARN_SECS:-60} )); then
+          echo "WARN AuthURL beacon skipped (gh/token/Linear write unavailable)"
+          {
+            printf '%s\n' "$url"
+            printf 'needs_mcp_surface=%s\n' "$(date -u +%FT%TZ)"
+            echo 'Cloud GH_TOKEN often expired (ghs_ → 401). Agent: GitHub MCP tip CURRENT_AUTHURL.md + ICS + #1 + RAL-823.'
+          } >"${SCRIPT_DIR}/AUTHURL_MCP_SURFACE_NEEDED.txt"
+          printf '%s\n' "$url" >"$warnfile"
+          # Tip #153: MCP handoff ends the retry loop for this URL (agent owns tip/#1/RAL-823).
+          # Without this, LAST_POSTED stays on a retired remint and every poll re-runs dead gh.
+          printf '%s\n' "$url" >"$lastfile"
+          echo "OK AuthURL MCP handoff recorded for $(printf '%s' "$url" | sed 's|.*/a/||' | cut -c1-12) — stop gh retry until remint"
+        fi
+      fi
+    fi
+  fi
+}
+
