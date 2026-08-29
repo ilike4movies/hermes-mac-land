@@ -65,13 +65,31 @@ try:
 except Exception:
   print("")' 2>/dev/null || true)"
         if [[ -n "${_live_for_upgrade}" ]]; then
-          local every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}" stamp="$SCRIPT_DIR/LAST_UP_OK_ECHO.at" now
-          now="$(date +%s)"
-          if [[ ! -f "$stamp" ]] || (( now - $(cat "$stamp" 2>/dev/null || echo 0) >= every )); then
-            echo "OK tip#132 skip finite→forever upgrade — live AuthURL still advertised (timeout=${_up_timeout}s remain_s=${_remain}; hold until AuthURL gone)"
-            echo "$now" >"$stamp"
+          # Tip #135: tip#132 skip avoids forever remint, but finite up still expires
+          # and a post-expiry forever start remints anyway. Near expiry, soft-roll to
+          # another *finite* long timeout (default LOGIN_WAIT 14400). Soft remint
+          # often keeps the same AuthURL (tip#123); forever upgrade remints (tip#130).
+          local roll="${HERMES_TAILSCALE_AUTHURL_FINITE_ROLL_SECS:-${HERMES_TAILSCALE_LOGIN_WAIT_SECS:-14400}}"
+          local roll_lead="${HERMES_TAILSCALE_AUTHURL_FINITE_ROLL_LEAD_SECS:-1800}"
+          if [[ "${HERMES_TAILSCALE_AUTHURL_FINITE_ROLL:-1}" == "1" ]] \
+            && [[ "${roll}" =~ ^[0-9]+$ ]] && (( roll > 0 )) \
+            && (( _remain <= roll_lead )); then
+            echo "WARN tip#135 finite AuthURL hold-roll ${_up_timeout}s → ${roll}s (live AuthURL remain_s=${_remain} ≤ roll_lead=${roll_lead}; avoid forever/expiry remint)"
+            echo "roll=$(date -u +%FT%TZ) from=${_up_timeout} to=${roll} age_s=${age_s} remain_s=${_remain}" \
+              >>"${SCRIPT_DIR}/LAST_UP_TIMEOUT_UPGRADE.txt" 2>/dev/null || true
+            desired_up_timeout="$roll"
+            _do_restart=1
+            _upgrade_short=1
+            _trigger=0
+          else
+            local every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}" stamp="$SCRIPT_DIR/LAST_UP_OK_ECHO.at" now
+            now="$(date +%s)"
+            if [[ ! -f "$stamp" ]] || (( now - $(cat "$stamp" 2>/dev/null || echo 0) >= every )); then
+              echo "OK tip#132 skip finite→forever upgrade — live AuthURL still advertised (timeout=${_up_timeout}s remain_s=${_remain}; tip#135 roll when remain≤${roll_lead:-1800})"
+              echo "$now" >"$stamp"
+            fi
+            _trigger=0
           fi
-          _trigger=0
         fi
       fi
       if (( _trigger == 1 )); then
