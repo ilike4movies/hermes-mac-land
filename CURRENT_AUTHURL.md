@@ -1,10 +1,10 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-29T04:34Z
+**Last refreshed:** 2026-08-29T04:38Z
 
 **Approve:** https://login.tailscale.com/a/1d0d805013867
 
-Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#140** (Running-without-SSH once-beacon; #139 ONE-SHOT RAL-823 slug; #138 attach+supervisor wait-login flock). ICS soft-hold refreshed (+6h). **Ignore retired:** predecessors above plus `80d5b860`, `7a69b1a0`, …
+Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#141** (secrets-bridge `-f` bash + heartbeat; #140 Running-without-SSH once-beacon; #139 ONE-SHOT RAL-823 slug; #138 attach+supervisor wait-login flock). ICS soft-hold refreshed (+6h). **Ignore retired:** predecessors above plus `80d5b860`, `7a69b1a0`, …
 
 Cloud waiters armed. Prefer **Mac ONE-SHOT** if Runtime Secrets stay unset:
 
