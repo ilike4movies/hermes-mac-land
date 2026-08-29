@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #165 (ICS soft-hold tip-pin current; #164 launcher banners; #163/#162/#161/#160)|
+| 6 | Operator docs | **DONE** — tip through #166 (ICS tip-stale soft-hold; #165/#164/#163/#162/#161/#160)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -275,3 +275,8 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - Soft-hold ICS rewrite in [`hermes-join-part-b.sh`](shared-scripts/hermes-join-part-b.sh) was still pinning tip **#163** after tip #164 launcher banners shipped — soft-refresh would regress calendar SUMMARY/DESCRIPTION.
 - Now pins tip through **#165** (launcher banners #164 + ENABLE/FALLBACK guidance).
 
+### Tip #166 (ICS tip-stale soft-hold without DTEND remint)
+
+- Soft-hold previously only rewrote ICS when `remain_s < 1800`, so local/calendar SUMMARY could stay stuck on an old tip (e.g. #162) for hours after tip #165 shipped.
+- [`hermes-join-part-b.sh`](shared-scripts/hermes-join-part-b.sh): if SUMMARY tip pin is behind `HERMES_AUTHURL_ICS_EXPECTED_TIP` (default **166**), rewrite SUMMARY/DESCRIPTION/VALARM **in place** and preserve UID/DTEND/URL (no AuthURL remint).
+- Soft-refresh templates + AuthURL suffix display use the **full** AuthURL id (no `[:12]` truncate).
