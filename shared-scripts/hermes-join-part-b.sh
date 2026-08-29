@@ -332,4 +332,55 @@ print(json.dumps({**d, **({"sha":s} if s else {})}))')"
           fi
         fi
       fi
- 
+      if [[ "$posted" != "1" && "${HERMES_AUTHURL_LINEAR_BEACON:-1}" == "1" ]]; then
+        local lkey="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
+        if [[ -n "$lkey" ]] && command -v python3 >/dev/null 2>&1; then
+          if LINEAR_KEY="$lkey" LINEAR_TICKET="$linear_ticket" AUTHURL_BEACON_BODY="$body" python3 - <<'PY' >/dev/null 2>&1
+import json, os, urllib.request
+key = os.environ["LINEAR_KEY"]
+ticket = os.environ["LINEAR_TICKET"]
+body = os.environ["AUTHURL_BEACON_BODY"]
+q1 = {
+    "query": "query($q:String!){issueSearch(query:$q,first:1){nodes{id identifier}}}",
+    "variables": {"q": ticket},
+}
+req = urllib.request.Request(
+    "https://api.linear.app/graphql",
+    data=json.dumps(q1).encode(),
+    headers={"Content-Type": "application/json", "Authorization": key},
+)
+with urllib.request.urlopen(req, timeout=8) as r:
+    nodes = (json.load(r).get("data") or {}).get("issueSearch", {}).get("nodes") or []
+if not nodes:
+    raise SystemExit(1)
+iid = nodes[0]["id"]
+q2 = {
+    "query": "mutation($id:String!,$b:String!){commentCreate(input:{issueId:$id,body:$b}){success}}",
+    "variables": {"id": iid, "b": body},
+}
+req2 = urllib.request.Request(
+    "https://api.linear.app/graphql",
+    data=json.dumps(q2).encode(),
+    headers={"Content-Type": "application/json", "Authorization": key},
+)
+urllib.request.urlopen(req2, timeout=8).read()
+print("ok")
+PY
+          then
+            posted=1
+            echo "OK AuthURL Linear beacon posted to ${linear_ticket}"
+          fi
+        fi
+      fi
+      if [[ "$posted" == "1" ]]; then
+        printf '%s\n' "$url" >"$lastfile"
+      else
+        # Throttle skip warnings (wait loop polls every ~5s).
+        local warnfile="${SCRIPT_DIR}/LAST_AUTHURL_BEACON_WARN.txt"
+        local now warn_age=99999
+        now="$(date +%s)"
+        if [[ -f "$warnfile" ]]; then
+          warn_age=$(( now - $(stat -c %Y "$warnfile" 2>/dev/null || echo 0) ))
+        fi
+        if (( warn_age >= ${HERMES_AUTHURL_BEACON_WARN_SECS:-60} )); then
+   
