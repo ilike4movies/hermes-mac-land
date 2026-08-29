@@ -1,1 +1,1 @@
-PLACEHOLDER_LOAD_FROM_/tmp/hermes-cloud-apply/tip143_parts/file_3.content
+LOAD_FROM_FILE:/tmp/hermes-cloud-apply/FIX_partc_NOW.content
