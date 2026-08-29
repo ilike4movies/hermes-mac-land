@@ -19,8 +19,10 @@ curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ili
 
 Watch [issue #1](../../issues/1) for `## Downstream DONE`.
 
-Tip through **#155** on main (AuthURL beacon skips dead `gh` + MCP handoff dedupe). STALL/ONE-SHOT still prefer tip-first fetch.
+Tip through **#156** on main (Downstream DONE GitHub post: timed `gh` + curl/token fallback; #155 NAG DONE@ts; #154 prose reject). STALL/ONE-SHOT still prefer tip-first fetch.
 
-Tip **#155**: Downstream nag only unloads on machine `## Downstream DONE` + `host=` (paginated); ignores tooling prose / inventory-deferred COMPLETE.
+Tip **#156**: dispatcher `_post_github_status` uses timed `gh` + curl/token fallback so Mac Downstream DONE reaches issue #1.
 
-Tip **#155**: NAG matches `## Downstream DONE @ <ts>` + `host=` (part-c beacon form).
+Tip **#155**: NAG matches `## Downstream DONE` or `## Downstream DONE @ <ts>` + `host=` (part-c beacon form).
+
+Tip **#154**: Downstream nag only unloads on machine DONE + `host=` (paginated); ignores tooling prose / inventory-deferred COMPLETE.
