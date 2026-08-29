@@ -261,10 +261,28 @@ except Exception:
       sleep 30
       continue
     fi
-    echo "$(date -u +%FT%TZ) watcher: Running + host SSH — tip#133 single-flight downstream" | tee -a "$DIR/wait-login.log"
-    once="$DIR/hermes-cloud-run-downstream-once.sh"
-    [[ -x "$once" ]] || once="$(dirname "$0")/hermes-cloud-run-downstream-once.sh"
-    if [[ -x "$once" ]]; then
+    echo "$(date -u +%FT%TZ) watcher: Running + host SSH — tip#143/#133 single-flight downstream" | tee -a "$DIR/wait-login.log"
+    # Tip #143: resolve once launcher via -f (+ CDN), not -x-only (0644 curl downloads).
+    once=""
+    for cand in \
+      "$DIR/hermes-cloud-run-downstream-once.sh" \
+      "$(dirname "$0")/hermes-cloud-run-downstream-once.sh" \
+      "$(dirname "$0")/shared-scripts/hermes-cloud-run-downstream-once.sh"
+    do
+      if [[ -f "$cand" ]]; then
+        chmod +x "$cand" 2>/dev/null || true
+        once="$cand"
+        break
+      fi
+    done
+    if [[ -z "$once" ]]; then
+      once="$DIR/hermes-cloud-run-downstream-once.sh"
+      echo "$(date -u +%FT%TZ) watcher: tip#143 fetching hermes-cloud-run-downstream-once.sh" | tee -a "$DIR/wait-login.log"
+      curl -fsSL "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${HERMES_MAC_LAND_PIN:-main}/shared-scripts/hermes-cloud-run-downstream-once.sh" -o "$once" \
+        || curl -fsSL "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-run-downstream-once.sh" -o "$once" || true
+      chmod +x "$once" 2>/dev/null || true
+    fi
+    if [[ -f "$once" ]]; then
       export HERMES_CLOUD_APPLY_DIR="$DIR"
       if bash "$once"; then
         echo "$(date -u +%FT%TZ) watcher: tip#133 downstream SUCCESS" | tee -a "$DIR/wait-login.log"
@@ -274,7 +292,7 @@ except Exception:
       sleep 60
       continue
     fi
-    echo "$(date -u +%FT%TZ) watcher: ERROR missing hermes-cloud-run-downstream-once.sh" | tee -a "$DIR/wait-login.log"
+    echo "$(date -u +%FT%TZ) watcher: ERROR missing hermes-cloud-run-downstream-once.sh (tip#143)" | tee -a "$DIR/wait-login.log"
     sleep 60
     continue
   fi
