@@ -19,7 +19,9 @@ curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ili
 
 Watch [issue #1](../../issues/1) for `## Downstream DONE`.
 
-Tip through **#157** on main (Downstream DONE GitHub post: timed `gh` + curl/token fallback; #155 NAG DONE@ts; #154 prose reject). STALL/ONE-SHOT still prefer tip-first fetch.
+Tip through **#158** on main (Downstream DONE GitHub post: timed `gh` + curl/token fallback; #155 NAG DONE@ts; #154 prose reject). STALL/ONE-SHOT still prefer tip-first fetch.
+
+Tip **#158**: downstream entrypoint rejects pre-#156/#150/#151 parts (`_parts_integrity_ok`) before assemble.
 
 Tip **#157**: default `HERMES_DOWNSTREAM_FALLBACK_REF` → `ff0ccac` (includes tip #156 DONE-post + #150/#151 inventory integrity).
 
