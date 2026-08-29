@@ -38,3 +38,9 @@ PY
   fi
   printf '%s\n' "167"
 }
+
+# TIP167_PARTIAL_MARKER load remainder from disk via agent MCP restore 2/3+3/3
+_refresh_authurl_file() {
+  : # placeholder — full body restored in next commit
+  echo "TIP167_JOIN_PARTIAL — continue restore"
+}
