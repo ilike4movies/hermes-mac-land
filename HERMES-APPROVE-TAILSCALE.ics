@@ -4,13 +4,13 @@ PRODID:-//Hermes//AuthURL Approve//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 BEGIN:VEVENT
-UID:hermes-authurl-184ff33a@20260828T235328Z
-DTSTAMP:20260828T235328Z
-DTSTART:20260828T235328Z
-DTEND:20260829T055328Z
-SUMMARY:ACTION: Approve Hermes Tailscale 184ff33a
-DESCRIPTION:Approve NOW: https://login.tailscale.com/a/184ff33a01912a\nMac ONE-SHOT from hermes-mac-land tip if secrets unset.\nRetired: 80d5b860\nTip #134: 6h ICS hold + soft-hold refresh.
-URL:https://login.tailscale.com/a/184ff33a01912a
+UID:hermes-authurl-e064be30@20260829T025000Z
+DTSTAMP:20260829T025000Z
+DTSTART:20260829T025000Z
+DTEND:20260829T085000Z
+SUMMARY:ACTION: Approve Hermes Tailscale e064be30
+DESCRIPTION:Approve NOW: https://login.tailscale.com/a/e064be3012df7\nMac ONE-SHOT from hermes-mac-land tip if secrets unset.\nRetired: 184ff33a (tip#135 roll race remint)
+URL:https://login.tailscale.com/a/e064be3012df7
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR
