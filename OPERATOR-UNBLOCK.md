@@ -48,4 +48,69 @@ ONE-SHOT opens **Linear RAL-823** + **Tailscale admin + tip [`CURRENT_AUTHURL.md
      ; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
    ```
 3. **Mac STALL only** — [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) when Tailscale+SSH already known-good.
-4. **Mac downstream nag** — installed automatically by ONE-SHOT (above). Standalone: **Right-click → Open** [`HERMES-INSTALL-DOWNSTREAM-NAG.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-INSTALL-DOWNSTREAM-NAG.command). LaunchAgent every 5 min: checks [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) for `## Downstream DONE`; if missing, spoken alert + macOS notification + opens issue #1 / ONE-SHOT / Web UI / Tailscale admin+tip AuthURL (`HERMES_NAG_OPEN_TAILSCALE=0` to skip), and **auto-downloads+opens ONE-SHOT** (`HERMES_NAG_AUTO_ONESHOT=0` for confirm dialog only). Never u
+4. **Mac downstream nag** — installed automatically by ONE-SHOT (above). Standalone: **Right-click → Open** [`HERMES-INSTALL-DOWNSTREAM-NAG.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-INSTALL-DOWNSTREAM-NAG.command). LaunchAgent every 5 min: checks [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) for `## Downstream DONE`; if missing, spoken alert + macOS notification + opens issue #1 / ONE-SHOT / Web UI / Tailscale admin+tip AuthURL (`HERMES_NAG_OPEN_TAILSCALE=0` to skip), and **auto-downloads+opens ONE-SHOT** (`HERMES_NAG_AUTO_ONESHOT=0` for confirm dialog only). Never unattended DISPATCH. Auto-unloads on DONE. Uninstall: `launchctl unload ~/Library/LaunchAgents/com.hermes.downstream-nag.plist` then remove the plist and `~/.hermes/bin/hermes-downstream-nag.sh`.
+5. **Web UI cloud agent** — repo `ilike4movies/hermes-mac-land`, env **LEGACY Hermes .11`, secrets at boot (`TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`)
+6. **GitHub Actions** (durable; once enabled) — see [docs/CI-DOWNSTREAM-STALL.md](docs/CI-DOWNSTREAM-STALL.md) / [`ci/downstream-stall.yml`](ci/downstream-stall.yml)
+
+### Enable GitHub Actions path (one-time, ~2 min)
+
+API tokens often cannot write `.github/workflows/` (missing `workflows` scope). Prefer Mac local `gh` (ONE-SHOT Phase 2, or ENABLE launcher):
+
+1. **Right-click → Open** [`HERMES-ONE-SHOT-UNBLOCK.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command) **or** [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ENABLE-DOWNSTREAM-ACTIONS.command)
+   - Installs `ci/downstream-stall.yml` → `.github/workflows/downstream-stall.yml` on main
+   - Runs `gh workflow run downstream-stall.yml`
+   - If scope error: set `HERMES_GH_WORKFLOW_PAT` in `~/.hermes/.env` (tip **#126**/ONE-SHOT **#127**) or `gh auth refresh -h github.com -s workflow` then re-open
+2. **Action secrets** (if not already set): Settings → Secrets and variables → Actions → `TS_AUTHKEY` + `HERMES_HOST_SSH_PRIVATE_KEY` + `LINEAR_API_KEY`
+3. Or **web UI deep link** (no Mac / no API scope):
+   - https://github.com/ilike4movies/hermes-mac-land/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml
+   - Paste Raw of [`ci/downstream-stall.yml`](ci/downstream-stall.yml) → commit to `main` → add Action secrets → Run workflow
+
+Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
+
+## Linear issue UUIDs (MCP / API comment posting)
+
+| Ticket | UUID | Status |
+|--------|------|--------|
+| **RAL-793** | `963472c8-cc84-426a-9ed6-79e08566353a` | In Progress — **sole remaining program blocker** (stall `2954673`) |
+| **RAL-634** | `1b5a7e86-1d14-456f-b0d1-39a02df243c2` | **Done** |
+| **RAL-798** | `52e94e17-69e6-4688-a60e-aea25b090ebf` | In Progress — WIP-park **#110 LIVE** on `.11` (canary PASS @ 00:05Z) |
+| **RAL-799** | `0d76e06f-bf49-4587-a733-1b6f397f1392` | **Done** |
+| **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** |
+| **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
+| **RAL-823** | `b444b07b-d9c5-496c-b5b0-79f31dd4d210` | In Progress — Mac ONE-SHOT operator wake (due 2026-08-28) |
+
+## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~44h+)
+
+| Item | Status |
+|------|--------|
+| Contract / inventory / Downstream DONE | **MISSING** |
+| False Done @ 00:17Z | **REVERTED** — still open |
+
+**Fastest tonight:** Mac Right-click → Open **ONE-SHOT**.command (STALL → Actions fallback), or Terminal paste above.
+
+Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait default 15 min** (`HERMES_INVENTORY_WAIT_SECS=900`). Runtime ~15–20 min (STALL inventory wait 900s) or Actions ~10–15 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
+
+**Zombie reclaim (#72):** when stall age ≥1h (auto-detected from `HERMES_RUN_ID` prefix), downstream escalates to **3× DISPATCH-NOW @ 120s** for ultra-stale CLAIM — fail stale CLAIM → reopen → second reopen if still stuck. Mac launchers + `ci/downstream-stall.yml` (GHA template) default `HERMES_STALL_ZOMBIE=1` + `HERMES_STALL_ZOMBIE_PASSES=3` for run `2954673`. Track operator work on **RAL-823**.
+
+## Program gates
+
+| # | Requirement | Status |
+|---|-------------|--------|
+| 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
+| 5 | Media Studio canary + inventory | **OPEN** |
+| 6 | Operator docs | **DONE** — tip through #167 (ICS tip from TIP_PIN/CURRENT_AUTHURL; #166–#160)|
+
+## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
+
+
+### Tip #136 (AuthURL single-flight hold-roll)
+
+- Persist `DESIRED_UP_TIMEOUT.txt` on tip#135 finite hold-roll so sibling wait-login does not cold-start `forever=0` mid-roll (proven remint `184ff33a→e064be30`).
+- Take exclusive `tailscale-up` flock **before** kill+re-up.
+- Cold-start while AuthURL still advertised prefers finite `LOGIN_WAIT` (14400s) over forever unless `HERMES_AUTHURL_FORCE_FOREVER_START=1` (forever cold-start reminted `e064be30→6ad13a30`).
+
+### Tip #137 (attach-only wait-login)
+
+- Prefer [`shared-scripts/hermes-cloud-attach-wait-login.sh`](shared-scripts/hermes-cloud-attach-wait-login.sh) over `restart-authurl.sh` / manual `tailscale up` while NeedsLogin still advertises a live AuthURL.
+- Kills wait-login by exact PID only (no `pkill -f` self-match). Never kills interactive `up` unless `HERMES_FORCE_KILL_UP=1`.
+- Refuses cold-start when AuthURL is live and no up is running (`HERME
