@@ -65,13 +65,31 @@ try:
 except Exception:
   print("")' 2>/dev/null || true)"
         if [[ -n "${_live_for_upgrade}" ]]; then
-          local every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}" stamp="$SCRIPT_DIR/LAST_UP_OK_ECHO.at" now
-          now="$(date +%s)"
-          if [[ ! -f "$stamp" ]] || (( now - $(cat "$stamp" 2>/dev/null || echo 0) >= every )); then
-            echo "OK tip#132 skip finite→forever upgrade — live AuthURL still advertised (timeout=${_up_timeout}s remain_s=${_remain}; hold until AuthURL gone)"
-            echo "$now" >"$stamp"
+          # Tip #135: tip#132 skip avoids forever remint, but finite up still expires
+          # and a post-expiry forever start remints anyway. Near expiry, soft-roll to
+          # another *finite* long timeout (default LOGIN_WAIT 14400). Soft remint
+          # often keeps the same AuthURL (tip#123); forever upgrade remints (tip#130).
+          local roll="${HERMES_TAILSCALE_AUTHURL_FINITE_ROLL_SECS:-${HERMES_TAILSCALE_LOGIN_WAIT_SECS:-14400}}"
+          local roll_lead="${HERMES_TAILSCALE_AUTHURL_FINITE_ROLL_LEAD_SECS:-1800}"
+          if [[ "${HERMES_TAILSCALE_AUTHURL_FINITE_ROLL:-1}" == "1" ]] \
+            && [[ "${roll}" =~ ^[0-9]+$ ]] && (( roll > 0 )) \
+            && (( _remain <= roll_lead )); then
+            echo "WARN tip#135 finite AuthURL hold-roll ${_up_timeout}s → ${roll}s (live AuthURL remain_s=${_remain} ≤ roll_lead=${roll_lead}; avoid forever/expiry remint)"
+            echo "roll=$(date -u +%FT%TZ) from=${_up_timeout} to=${roll} age_s=${age_s} remain_s=${_remain}" \
+              >>"${SCRIPT_DIR}/LAST_UP_TIMEOUT_UPGRADE.txt" 2>/dev/null || true
+            desired_up_timeout="$roll"
+            _do_restart=1
+            _upgrade_short=1
+            _trigger=0
+          else
+            local every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}" stamp="$SCRIPT_DIR/LAST_UP_OK_ECHO.at" now
+            now="$(date +%s)"
+            if [[ ! -f "$stamp" ]] || (( now - $(cat "$stamp" 2>/dev/null || echo 0) >= every )); then
+              echo "OK tip#132 skip finite→forever upgrade — live AuthURL still advertised (timeout=${_up_timeout}s remain_s=${_remain}; tip#135 roll when remain≤${roll_lead:-1800})"
+              echo "$now" >"$stamp"
+            fi
+            _trigger=0
           fi
-          _trigger=0
         fi
       fi
       if (( _trigger == 1 )); then
@@ -196,153 +214,4 @@ PY
   fi
   # Tip #131: interactive up --timeout default 0s (forever). Script wait uses LOGIN_WAIT_SECS.
   echo "== starting single tailscale up wait (up_timeout=${desired_up_timeout}s; 0=forever; script_wait=${login_wait_secs}s) =="
-  nohup sudo tailscale --socket="$SOCK" up --timeout="${desired_up_timeout}s" \
-    --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true \
-    >/tmp/tailscale-up-wait.log 2>&1 &
-  echo $! >"$TS_UP_PIDFILE"
-  echo "OK started tailscale up wait pid=$(cat "$TS_UP_PIDFILE")"
-  sleep 2
-  _refresh_authurl_file
-}
-
-install_tailscale() {
-  if command -v tailscale >/dev/null 2>&1; then
-    echo "OK tailscale already installed: $(command -v tailscale)"
-    return 0
-  fi
-  echo "== installing Tailscale =="
-  if [[ "$(uname -s)" != "Linux" ]]; then
-    echo "ERROR: auto-install only implemented for Linux cloud agents" >&2
-    exit 1
-  fi
-  curl -fsSL https://tailscale.com/install.sh | sh
-  command -v tailscale >/dev/null 2>&1
-}
-
-ensure_daemon() {
-  if pgrep -x tailscaled >/dev/null 2>&1; then
-    return 0
-  fi
-  sudo mkdir -p /var/run/tailscale /var/lib/tailscale /var/cache/tailscale
-  if [[ -e /dev/net/tun ]]; then
-    sudo tailscaled --state=/var/lib/tailscale/tailscaled.state --socket="$SOCK" --port=41641 >/tmp/tailscaled.log 2>&1 &
-  else
-    echo "WARN: /dev/net/tun missing — userspace networking"
-    sudo tailscaled --tun=userspace-networking --state=/var/lib/tailscale/tailscaled.state --socket="$SOCK" >/tmp/tailscaled-userspace.log 2>&1 &
-  fi
-  sleep 2
-}
-
-join_tailscale_authkey() {
-  echo "== joining Tailscale mesh with TS_AUTHKEY =="
-  ts up --authkey="$TS_AUTHKEY" --hostname="${HERMES_TS_HOSTNAME:-cursor-cloud-hermes}" --accept-routes=true
-  ts status || true
-}
-
-wait_for_running() {
-  local max="$1" i=0 st last_st="" last_status_echo=-999
-  local status_every="${HERMES_WAIT_LOGIN_STATUS_EVERY_SECS:-60}"
-  echo "== waiting up to ${max}s for BackendState=Running (status every ${status_every}s) =="
-  while (( i < max )); do
-    reload_cloud_secrets
-    st="$(backend_state)"
-    if [[ "$st" != "$last_st" ]] || (( i - last_status_echo >= status_every )); then
-      echo "  t=${i}s BackendState=${st:-unknown} authkey=${TS_AUTHKEY:+set}"
-      last_status_echo=$i
-      last_st="$st"
-      if [[ "$st" == "NeedsLogin" || "$st" == "NoState" || -z "$st" ]]; then
-        # Throttle verbose `ts status` (Logged out / AuthURL) — was every 5s → multi-MB logs.
-        ts status 2>&1 | sed -n '1,8p' || true
-      fi
-    fi
-    if [[ "$st" == "Running" ]]; then
-      return 0
-    fi
-    if [[ -n "${TS_AUTHKEY:-}" && "$st" != "Running" ]]; then
-      echo "  mid-wait TS_AUTHKEY present — joining"
-      join_tailscale_authkey || true
-    fi
-    if [[ "$st" == "NeedsLogin" || "$st" == "NoState" || -z "$st" ]]; then
-      _ensure_single_tailscale_up_wait "$max" || true
-      _refresh_authurl_file || true
-    fi
-    sleep 5
-    i=$((i + 5))
-  done
-  echo "ERROR: Tailscale not Running after ${max}s" >&2
-  return 1
-}
-
-wait_for_jump() {
-  local i
-  echo "== waiting up to ${WAIT_SECS}s for jump $JUMP_HOST =="
-  for ((i=0; i<WAIT_SECS; i+=3)); do
-    if ping -c 1 -W 2 "$JUMP_HOST" >/dev/null 2>&1; then
-      echo "OK ping $JUMP_HOST after ${i}s"
-      return 0
-    fi
-    if timeout 2 bash -c "echo >/dev/tcp/${JUMP_HOST}/22" 2>/dev/null; then
-      echo "OK tcp/22 $JUMP_HOST after ${i}s"
-      return 0
-    fi
-    sleep 3
-  done
-  echo "ERROR: jump $JUMP_HOST not reachable after ${WAIT_SECS}s" >&2
-  return 1
-}
-
-reload_cloud_secrets
-install_tailscale
-ensure_daemon
-
-st_now="$(backend_state)"
-if [[ "$ALREADY_UP" -eq 1 || "$st_now" == "Running" ]]; then
-  echo "OK Tailscale already Running (or --already-up); skipping join"
-elif [[ -n "${TS_AUTHKEY:-}" ]]; then
-  join_tailscale_authkey
-  wait_for_running "$WAIT_SECS" || true
-elif [[ "$WAIT_LOGIN" -eq 1 ]]; then
-  echo "== interactive login path (approve AuthURL; single tailscale up) =="
-  _ensure_single_tailscale_up_wait "$LOGIN_WAIT_SECS"
-  ts status 2>&1 | sed -n '1,12p' || true
-  wait_for_running "$LOGIN_WAIT_SECS"
-else
-  echo "ERROR: TS_AUTHKEY unset and not Running. Re-run with TS_AUTHKEY=... or --wait-login / --already-up" >&2
-  exit 2
-fi
-
-# Downstream-only prefers direct host SSH; do not abort the closed-loop path
-# if jump ping fails after Tailscale Running (routes may still reach .11).
-if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
-  if ! wait_for_jump; then
-    echo "WARN jump not reachable — continuing downstream-only (direct host SSH)"
-  fi
-else
-  wait_for_jump
-fi
-
-# When surgical land is disabled (stalled-canary recovery), run dispatcher
-# downstream instead of via-ssh tip land. Still needs host SSH + Linear keys.
-if [[ "${HERMES_AUTO_SURGICAL_LAND:-1}" != "1" ]]; then
-  echo "== HERMES_AUTO_SURGICAL_LAND=0 — dispatcher downstream (not surgical land) =="
-  wait_for_host_ssh_key || {
-    echo "ERROR: cannot run downstream without HERMES_HOST_SSH_PRIVATE_KEY" >&2
-    exit 1
-  }
-  # Tip #133: single-flight downstream (flock + success-only marker).
-  once="$SCRIPT_DIR/hermes-cloud-run-downstream-once.sh"
-  if [[ ! -x "$once" ]]; then
-    echo "ERROR: missing $once" >&2
-    exit 1
-  fi
-  export HERMES_CLOUD_APPLY_DIR="${HERMES_CLOUD_APPLY_DIR:-$SCRIPT_DIR}"
-  bash "$once"
-  echo "OK cloud-tailscale-join-and-apply finished (downstream-only)"
-  exit 0
-fi
-
-export HERMES_JUMP_SSH="$JUMP_SSH"
-bash "$SCRIPT_DIR/hermes-moltbot-cloud-apply-install-via-ssh.sh"
-
-echo "OK cloud-tailscale-join-and-apply finished (expect OK INTERRUPT_LABEL hermes-now)"
-exit 0
+  nohup sudo
