@@ -25,8 +25,12 @@ _refresh_authurl_file() {
   fi
   # Tip #134: soft-hold ICS rewrite when calendar window is expired/near-expiry
   # while the same AuthURL is still advertised (avoids mid-approve calendar miss).
+  # Tip #166: also rewrite SUMMARY/DESCRIPTION in-place when tip pin is stale even if
+  # DTEND remain_s is still healthy (no AuthURL remint; preserve UID/DTEND).
   local ics_need_refresh=0
+  local ics_tip_stale=0
   local ics_local="${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics"
+  local ics_expected_tip="${HERMES_AUTHURL_ICS_EXPECTED_TIP:-166}"
   if [[ ! -f "$ics_local" ]]; then
     ics_need_refresh=1
   elif command -v python3 >/dev/null 2>&1; then
@@ -49,6 +53,62 @@ PY
     then
       ics_need_refresh=1
     fi
+    if ! ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" python3 - <<'PY'
+import os, re
+path = os.environ["ICS_PATH"]
+expect = int(os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "166")
+try:
+    text = open(path, encoding="utf-8", errors="replace").read()
+except OSError:
+    raise SystemExit(1)
+m = re.search(r"^SUMMARY:.*\(tip #(\d+)\)", text, re.M)
+if not m:
+    raise SystemExit(1)
+raise SystemExit(0 if int(m.group(1)) >= expect else 1)
+PY
+    then
+      ics_tip_stale=1
+    fi
+  fi
+  # Tip #166: tip-pin soft-hold — rewrite SUMMARY/DESCRIPTION/VALARM only; keep DTEND/UID/URL.
+  if [[ "$ics_tip_stale" == "1" && "$ics_need_refresh" != "1" && "$auth_changed" != "1" ]]; then
+    if command -v python3 >/dev/null 2>&1; then
+      AUTHURL_ICS_URL="$url" ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" python3 - <<'PY' 2>/dev/null || true
+import os, re
+path = os.environ["ICS_PATH"]
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166: full AuthURL id (no [:12] truncate)
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "166"
+text = open(path, encoding="utf-8", errors="replace").read()
+summary = f"SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})"
+desc = (
+    f"DESCRIPTION:Approve NOW: {url}\\n"
+    f"Then Mac ONE-SHOT tip #{tip} (launcher banners #164; ICS tip-stale soft-hold; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). "
+    "Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11."
+)
+valarm = f"DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #{tip}"
+out = []
+in_valarm = False
+for line in text.splitlines():
+    if line.startswith("BEGIN:VALARM"):
+        in_valarm = True
+        out.append(line)
+        continue
+    if line.startswith("END:VALARM"):
+        in_valarm = False
+        out.append(line)
+        continue
+    if line.startswith("SUMMARY:"):
+        out.append(summary)
+    elif line.startswith("DESCRIPTION:"):
+        out.append(valarm if in_valarm else desc)
+    else:
+        out.append(line)
+open(path, "w", encoding="utf-8").write("\n".join(out) + ("\n" if text.endswith("\n") else ""))
+print(f"OK tip #{tip} ICS tip-pin soft-hold (DTEND preserved)")
+PY
+      echo "OK tip #166 local ICS tip-pin soft-hold (AuthURL/DTEND unchanged)"
+    fi
   fi
   # Keep PENDING + local ICS aligned even if CURRENT was written out-of-band
   # (hard wipe / agent MCP) so cloud agents do not read a stale AuthURL marker.
@@ -63,7 +123,7 @@ PY
 import os
 from datetime import datetime, timedelta, timezone
 url = os.environ["AUTHURL_ICS_URL"]
-suffix = url.rstrip("/").rsplit("/", 1)[-1][:12]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166: full AuthURL id (no [:12] truncate)
 now = datetime.now(timezone.utc)
 dt = now.strftime("%Y%m%dT%H%M%SZ")
 hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
@@ -79,15 +139,15 @@ UID:{uid}
 DTSTAMP:{dt}
 DTSTART:{dt}
 DTEND:{end}
-SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #165)
-DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #165 (launcher banners #164; ICS soft-hold; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #166)
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #166 (launcher banners #164; ICS tip-stale soft-hold; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
 LOCATION:{url}
 URL:{url}
 STATUS:CONFIRMED
 SEQUENCE:0
 BEGIN:VALARM
 ACTION:DISPLAY
-DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #165
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #166
 TRIGGER:-PT0S
 END:VALARM
 END:VEVENT
@@ -95,7 +155,7 @@ END:VCALENDAR""")
 ICS
     fi
   fi
-  # Tip #165: ICS soft-hold SUMMARY/DESCRIPTION pin tip through #165 (was #163; keep soft-refresh current).
+  # Tip #166: ICS tip-stale soft-hold + tip-refresh pin tip through #166 (was #165).
   # Tip #134: when AuthURL is unchanged but ICS hold expired, still refresh tip ICS
   # (does not remint AuthURL; throttled by local rewrite above).
   if [[ "$ics_need_refresh" == "1" && "$auth_changed" != "1" && "${HERMES_AUTHURL_TIP_ICS:-1}" == "1" ]]; then
@@ -109,7 +169,7 @@ ICS
 import os
 from datetime import datetime, timedelta, timezone
 url = os.environ["AUTHURL_ICS_URL"]
-suffix = url.rstrip("/").rsplit("/", 1)[-1][:12]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166: full AuthURL id (no [:12] truncate)
 now = datetime.now(timezone.utc)
 dt = now.strftime("%Y%m%dT%H%M%SZ")
 hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
@@ -125,15 +185,15 @@ UID:{uid}
 DTSTAMP:{dt}
 DTSTART:{dt}
 DTEND:{end}
-SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #165)
-DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #165 (launcher banners #164; ICS soft-hold; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #166)
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #166 (launcher banners #164; ICS tip-stale soft-hold; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
 LOCATION:{url}
 URL:{url}
 STATUS:CONFIRMED
 SEQUENCE:0
 BEGIN:VALARM
 ACTION:DISPLAY
-DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #165
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #166
 TRIGGER:-PT0S
 END:VALARM
 END:VEVENT
@@ -295,7 +355,7 @@ print(json.dumps({**d, **({"sha":s} if s else {})}))')"
 import os
 from datetime import datetime, timedelta, timezone
 url = os.environ["AUTHURL_ICS_URL"]
-suffix = url.rstrip("/").rsplit("/", 1)[-1][:12]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166: full AuthURL id (no [:12] truncate)
 now = datetime.now(timezone.utc)
 dt = now.strftime("%Y%m%dT%H%M%SZ")
 hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
@@ -311,15 +371,15 @@ UID:{uid}
 DTSTAMP:{dt}
 DTSTART:{dt}
 DTEND:{end}
-SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #165)
-DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #165 (launcher banners #164; ICS soft-hold; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #166)
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #166 (launcher banners #164; ICS tip-stale soft-hold; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
 LOCATION:{url}
 URL:{url}
 STATUS:CONFIRMED
 SEQUENCE:0
 BEGIN:VALARM
 ACTION:DISPLAY
-DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #165
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #166
 TRIGGER:-PT0S
 END:VALARM
 END:VEVENT
