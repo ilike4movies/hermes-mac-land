@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Poll until Tailscale Running AND host SSH key present, then run downstream once.
 # Does not mark done while secrets are still missing (avoids one-shot race after approve).
+# Tip #140: when Running but host SSH still missing, beacon once to GitHub #1 / Linear RAL-823
+# so approve-without-secrets is visible (Mac ONE-SHOT still preferred).
 set -euo pipefail
 DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 SOCK="${HERMES_TAILSCALE_SOCKET:-/var/run/tailscale/tailscaled.sock}"
@@ -147,6 +149,100 @@ PY
 }
 
 
+_beacon_running_no_ssh_once() {
+  # Tip #140: Tailscale joined but Runtime Secrets still missing — wake operator once.
+  local mark="$DIR/running-no-ssh.beacon"
+  [[ -f "$mark" ]] && return 0
+  local body
+  body=$(cat <<EOF
+## Cloud Tailscale Running — host SSH still missing
+
+host=\`cursor-cloud\` user=\`ubuntu\`
+agent=\`${CURSOR_AGENT_ID:-bc-01a02142}\`
+state=Running + HERMES_HOST_SSH_PRIVATE_KEY **absent**
+
+Approve succeeded, but this Ooterverse pod cannot SSH to \`.11\` without Runtime Secrets.
+
+**Do one:**
+1. Prefer Mac ONE-SHOT (has \`LINEAR_API_KEY\` locally) — tip \`HERMES-ONE-SHOT-UNBLOCK.command\`
+2. Or inject Runtime Secrets here: \`HERMES_HOST_SSH_PRIVATE_KEY\` + \`LINEAR_API_KEY\` (prefer also \`TS_AUTHKEY\`)
+3. Or LEGACY Hermes \`.11\` cloud agent with secrets at boot
+
+Expect next: \`## Downstream STARTED\` → \`## Downstream DONE\` on this issue + RAL-793 inventory.
+EOF
+)
+  local posted=0
+  if command -v gh >/dev/null 2>&1; then
+    if gh issue comment 1 --repo ilike4movies/hermes-mac-land --body "$body" >/dev/null 2>&1; then
+      posted=1
+    fi
+  fi
+  if [[ "$posted" != "1" ]]; then
+    local tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+    if [[ -n "$tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+      local payload
+      payload="$(RUNNING_NO_SSH_BODY="$body" python3 -c 'import json,os; print(json.dumps({"body": os.environ["RUNNING_NO_SSH_BODY"]}))')"
+      if curl -fsS -X POST \
+        -H "Authorization: Bearer ${tok}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "Content-Type: application/json" \
+        --data "$payload" \
+        "https://api.github.com/repos/ilike4movies/hermes-mac-land/issues/1/comments" >/dev/null 2>&1; then
+        posted=1
+      fi
+    fi
+  fi
+  # Always write MCP surface file so agents can post when gh/token blocked (Ooterverse).
+  printf '%s\n' "$body" >"$DIR/RUNNING_NO_SSH_MCP_SURFACE_NEEDED.txt" 2>/dev/null || true
+  if [[ "$posted" != "1" && "${HERMES_RUNNING_NO_SSH_LINEAR_BEACON:-1}" == "1" ]]; then
+    local lkey="${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}"
+    local linear_ticket="${HERMES_RUNNING_NO_SSH_LINEAR_ISSUE:-RAL-823}"
+    if [[ -n "$lkey" ]] && command -v python3 >/dev/null 2>&1; then
+      if LINEAR_KEY="$lkey" LINEAR_TICKET="$linear_ticket" RUNNING_NO_SSH_BODY="$body" python3 - <<'PY' >/dev/null 2>&1
+import json, os, urllib.request
+key = os.environ["LINEAR_KEY"]
+ticket = os.environ["LINEAR_TICKET"]
+body = os.environ["RUNNING_NO_SSH_BODY"]
+q1 = {
+    "query": "query($q:String!){issueSearch(query:$q,first:1){nodes{id identifier}}}",
+    "variables": {"q": ticket},
+}
+req = urllib.request.Request(
+    "https://api.linear.app/graphql",
+    data=json.dumps(q1).encode(),
+    headers={"Content-Type": "application/json", "Authorization": key},
+)
+with urllib.request.urlopen(req, timeout=8) as r:
+    nodes = (json.load(r).get("data") or {}).get("issueSearch", {}).get("nodes") or []
+if not nodes:
+    raise SystemExit(1)
+iid = nodes[0]["id"]
+q2 = {
+    "query": "mutation($id:String!,$b:String!){commentCreate(input:{issueId:$id,body:$b}){success}}",
+    "variables": {"id": iid, "b": body},
+}
+req2 = urllib.request.Request(
+    "https://api.linear.app/graphql",
+    data=json.dumps(q2).encode(),
+    headers={"Content-Type": "application/json", "Authorization": key},
+)
+urllib.request.urlopen(req2, timeout=8).read()
+print("ok")
+PY
+      then
+        posted=1
+        echo "$(date -u +%FT%TZ) watcher: tip#140 running-no-ssh Linear beacon → ${linear_ticket}" | tee -a "$DIR/wait-login.log"
+      fi
+    fi
+  fi
+  date -u +%FT%TZ > "$mark"
+  if [[ "$posted" == "1" ]]; then
+    echo "$(date -u +%FT%TZ) watcher: tip#140 posted running-no-ssh beacon" | tee -a "$DIR/wait-login.log"
+  else
+    echo "$(date -u +%FT%TZ) watcher: tip#140 running-no-ssh beacon skipped (wrote RUNNING_NO_SSH_MCP_SURFACE_NEEDED.txt)" | tee -a "$DIR/wait-login.log"
+  fi
+}
+
 while true; do
   st=$(sudo tailscale --socket="$SOCK" status --json 2>/dev/null | python3 -c 'import json,sys
 try:
@@ -160,7 +256,8 @@ except Exception:
   fi
   if [[ "$st" == "Running" ]]; then
     if ! _host_ready; then
-      echo "$(date -u +%FT%TZ) watcher: Running but host SSH missing — waiting" | tee -a "$DIR/wait-login.log"
+      echo "$(date -u +%FT%TZ) watcher: Running but host SSH missing — waiting (tip#140 beacon)" | tee -a "$DIR/wait-login.log"
+      _beacon_running_no_ssh_once || true
       sleep 30
       continue
     fi
