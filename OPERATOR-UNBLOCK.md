@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #154 (NAG machine DONE+host=; #153 skip dead gh; #152 FALLBACK; #151/#150 inventory integrity)|
+| 6 | Operator docs | **DONE** — tip through #155 (NAG DONE @ ts + host=; #154 prose reject; #153 skip dead gh; #152/#151/#150 inventory)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -212,3 +212,9 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - Require **first line exact** `## Downstream DONE` **and** `host=` in body (credentialed machine beacon).
 - Curl path **paginates** all comment pages (issue #1 >100 comments); `gh --paginate` unchanged.
 - Explicitly ignores `## Downstream COMPLETE (inventory deferred)` (tip #151) so nag keeps firing until live inventory DONE.
+
+### Tip #155 (NAG matches timestamped Downstream DONE)
+
+- Part-c machine beacons post `## Downstream DONE @ $WHEN` (not bare `## Downstream DONE`).
+- Tip #154 exact-line match would **never unload** after real success — tip #155 accepts `## Downstream DONE` **or** `## Downstream DONE @ …` first line + `host=`.
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command): nag install requires `_machine_downstream_done` + `Downstream DONE @` so stale pre-#154/#155 NAG is not reinstalled from CDN.
