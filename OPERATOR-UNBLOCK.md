@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #162 (STALL/ONLY tip-pin; #161 ENABLE git-push; #160 FALLBACK→b2b5fc4 tip159)|
+| 6 | Operator docs | **DONE** — tip through #163 (ICS soft-hold tip-pin; #162 STALL/ONLY; #161 ENABLE git-push; #160 FALLBACK→b2b5fc4)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -259,3 +259,9 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - [`HERMES-DOWNSTREAM-RAL793-STALL.command`](HERMES-DOWNSTREAM-RAL793-STALL.command) + [`HERMES-DOWNSTREAM-ONLY.command`](HERMES-DOWNSTREAM-ONLY.command): tip banners were stale at #147/#148; now tip through **#162**.
 - `_is_good_downstream` requires tip #160 FALLBACK (`b2b5fc4`) / tip #159 fail-closed markers so Mac STALL/ONLY cannot accept pre-#159 silent-WARN entrypoints.
 - ONE-SHOT `_is_good_downstream` aligned.
+
+### Tip #163 (ICS soft-hold tip-pin)
+
+- Soft-hold / AuthURL tip ICS rewrite in [`hermes-join-part-b.sh`](shared-scripts/hermes-join-part-b.sh) now pins SUMMARY/DESCRIPTION/VALARM through **#163** (Mac ONE-SHOT + ENABLE git-push + FALLBACK `b2b5fc4`) instead of tip-less generic text.
+- Prevents ICS soft-refresh from erasing tip #161/#162 operator guidance while AuthURL is held.
+
