@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #161 (ENABLE git-push fallback; #160 FALLBACK→b2b5fc4 tip159; #159–#150)|
+| 6 | Operator docs | **DONE** — tip through #162 (STALL/ONLY tip-pin; #161 ENABLE git-push; #160 FALLBACK→b2b5fc4 tip159)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -253,3 +253,9 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](HERMES-ENABLE-DOWNSTREAM-ACTIONS.command) + ONE-SHOT Phase 2: when `gh api PUT` to `.github/workflows/downstream-stall.yml` fails (OAuth missing `workflow` scope → 404), fall back to shallow **git clone (SSH first) + commit + push** of `ci/downstream-stall.yml`.
 - Closes: Mac ENABLE dead-ends on cloud/API-style tokens even when the operator's SSH git identity can push workflow files.
 - Prefer Mac ONE-SHOT / STALL first; Path C Web UI paste remains last resort. Cloud Zapier/Github App still cannot write workflows.
+
+### Tip #162 (STALL / DOWNSTREAM-ONLY tip-pin + fetch integrity)
+
+- [`HERMES-DOWNSTREAM-RAL793-STALL.command`](HERMES-DOWNSTREAM-RAL793-STALL.command) + [`HERMES-DOWNSTREAM-ONLY.command`](HERMES-DOWNSTREAM-ONLY.command): tip banners were stale at #147/#148; now tip through **#162**.
+- `_is_good_downstream` requires tip #160 FALLBACK (`b2b5fc4`) / tip #159 fail-closed markers so Mac STALL/ONLY cannot accept pre-#159 silent-WARN entrypoints.
+- ONE-SHOT `_is_good_downstream` aligned.
