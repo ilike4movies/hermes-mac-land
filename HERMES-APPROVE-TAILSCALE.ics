@@ -5,11 +5,14 @@ CALSCALE:GREGORIAN
 METHOD:PUBLISH
 BEGIN:VEVENT
 UID:hermes-authurl-1d0d8050-1787978269@hermes-mac-land
-DTSTAMP:20260829T075742Z
+DTSTAMP:20260829T082111Z
 DTSTART:20260829T043749Z
 DTEND:20260829T103749Z
 SUMMARY:ACTION: Approve Hermes Tailscale AuthURL 1d0d8050
-DESCRIPTION:Approve NOW: https://login.tailscale.com/a/1d0d805013867\nMac ONE-SHOT preferred.\nRetire e064be30 / 6ad13a30 / 184ff33a.\nTip through #151 (DONE requires live inventory present; #150 SEED reject; #149 stage-a -f).
+DESCRIPTION:Approve NOW: https://login.tailscale.com/a/1d0d805013867
+Mac ONE-SHOT preferred.
+Retire e064be30 / 6ad13a30 / 184ff33a.
+Tip through #152 (FALLBACK pin tip#151; DONE requires live inventory; #150 SEED reject).
 URL:https://login.tailscale.com/a/1d0d805013867
 STATUS:CONFIRMED
 BEGIN:VALARM

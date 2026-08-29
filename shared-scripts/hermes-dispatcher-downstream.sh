@@ -4,13 +4,14 @@
 # Assembles part-a/b/c then execs. If co-located parts are missing (piped bash,
 # or ONE-SHOT/STALL download into /tmp), fetches parts from tip raw URLs.
 # If tip CDN for HERMES_DOWNSTREAM_REF fails, falls back to known-good
-# HERMES_DOWNSTREAM_FALLBACK_REF (default dc1980b = #118 self-healing commit).
+# HERMES_DOWNSTREAM_FALLBACK_REF (default 6c6881a = tip #151 inventory-integrity DONE).
+# Tip #152: do NOT fall back to pre-#150/#151 SHAs (SEED false-pass / deferred=DONE).
 # Do NOT replace this with a local-only cat of parts — that breaks Mac ONE-SHOT.
 set -euo pipefail
 
 REPO="${HERMES_DOWNSTREAM_REPO:-ilike4movies/hermes-mac-land}"
 REF="${HERMES_DOWNSTREAM_REF:-main}"
-FALLBACK="${HERMES_DOWNSTREAM_FALLBACK_REF:-dc1980b}"
+FALLBACK="${HERMES_DOWNSTREAM_FALLBACK_REF:-6c6881a}"
 
 SCRIPT_DIR=""
 if [[ -n "${BASH_SOURCE[0]:-}" && "${BASH_SOURCE[0]}" != *"/dev/fd/"* ]]; then
