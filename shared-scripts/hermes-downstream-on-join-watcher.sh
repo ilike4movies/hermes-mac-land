@@ -78,13 +78,16 @@ Or Mac ONE-SHOT from tip. Expect \`## Downstream STARTED\` → \`DONE\` next.
 EOF
 )
   # GitHub #1 (gh → token curl). Often 403 on Ooterverse pods.
-  if command -v gh >/dev/null 2>&1; then
-    if gh issue comment 1 --repo ilike4movies/hermes-mac-land --body "$body" >/dev/null 2>&1; then
+  # Tip #153: skip gh when GH_TOKEN_INVALID.flag; timeout gh.
+  local _dir="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
+  if command -v gh >/dev/null 2>&1 && [[ ! -f "${_dir}/GH_TOKEN_INVALID.flag" ]]; then
+    if timeout "${HERMES_GH_BEACON_TIMEOUT_SECS:-8}" gh issue comment 1 --repo ilike4movies/hermes-mac-land --body "$body" >/dev/null 2>&1; then
       posted=1
     fi
   fi
   if [[ "$posted" != "1" ]]; then
     local tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+    if [[ -f "${_dir}/GH_TOKEN_INVALID.flag" ]]; then tok=""; fi
     if [[ -n "$tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
       local payload
       payload="$(SECRETS_BEACON_BODY="$body" python3 -c 'import json,os; print(json.dumps({"body": os.environ["SECRETS_BEACON_BODY"]}))')"
@@ -172,13 +175,15 @@ Expect next: \`## Downstream STARTED\` → \`## Downstream DONE\` on this issue 
 EOF
 )
   local posted=0
-  if command -v gh >/dev/null 2>&1; then
-    if gh issue comment 1 --repo ilike4movies/hermes-mac-land --body "$body" >/dev/null 2>&1; then
+  local _dir="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
+  if command -v gh >/dev/null 2>&1 && [[ ! -f "${_dir}/GH_TOKEN_INVALID.flag" ]]; then
+    if timeout "${HERMES_GH_BEACON_TIMEOUT_SECS:-8}" gh issue comment 1 --repo ilike4movies/hermes-mac-land --body "$body" >/dev/null 2>&1; then
       posted=1
     fi
   fi
   if [[ "$posted" != "1" ]]; then
     local tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+    if [[ -f "${_dir}/GH_TOKEN_INVALID.flag" ]]; then tok=""; fi
     if [[ -n "$tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
       local payload
       payload="$(RUNNING_NO_SSH_BODY="$body" python3 -c 'import json,os; print(json.dumps({"body": os.environ["RUNNING_NO_SSH_BODY"]}))')"
