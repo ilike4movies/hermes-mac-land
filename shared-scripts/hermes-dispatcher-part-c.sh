@@ -131,7 +131,10 @@ if [[ "$STALL_RECOVERY" == "1" ]]; then
   fi
 fi
 
-if [[ "$STARVE_RC" -eq 0 && "$INVENTORY_RC" -eq 0 ]]; then
+# Tip #151: bare "## Downstream DONE" only when live inventory is present.
+# WAIT_INVENTORY=0 used to leave INVENTORY_RC=0 and post DONE with
+# "inventory wait: skipped" — that false-counts obj5 cred_DONE gates.
+if [[ "$STARVE_RC" -eq 0 && "$INVENTORY_STATUS" == "present" && "$INVENTORY_RC" -eq 0 ]]; then
   _post_github_status "## Downstream DONE @ $WHEN
 
 host=\`$HOST\` user=\`$USER_NAME\`
@@ -141,9 +144,22 @@ contract install: OK
 stack-apply: auto=$AUTO_STACK_APPLY
 DISPATCH-NOW: auto=$AUTO_DISPATCH ($_DISPATCH_MODE when stall_recovery=1; fail-closed)
 RAL-634 verify: PASS
-inventory wait: $INVENTORY_STATUS (auto=$WAIT_INVENTORY)
+inventory wait: present (auto=$WAIT_INVENTORY)
 
 Watch Linear for inventory evidence on $LINEAR_TICKET — not WORK-PACKET-DONE alone."
+elif [[ "$STARVE_RC" -eq 0 && "$WAIT_INVENTORY" != "1" ]]; then
+  _post_github_status "## Downstream COMPLETE (inventory deferred) @ $WHEN
+
+host=\`$HOST\` user=\`$USER_NAME\`
+run inspect: auto=$AUTO_INSPECT
+stall_recovery: $STALL_RECOVERY zombie: $ZOMBIE stall_age: ${STALL_AGE_SECS}s
+contract install: OK
+stack-apply: auto=$AUTO_STACK_APPLY
+DISPATCH-NOW: auto=$AUTO_DISPATCH ($_DISPATCH_MODE when stall_recovery=1; fail-closed)
+RAL-634 verify: PASS
+inventory wait: skipped (auto=$WAIT_INVENTORY)
+
+Tip #151: not counted as obj5 Downstream DONE — set HERMES_WAIT_INVENTORY=1 for canary."
 else
   _post_github_status "## Downstream PARTIAL @ $WHEN
 
@@ -161,5 +177,6 @@ Do NOT mark canary Done until inventory evidence is real."
   if [[ "$STARVE_RC" -ne 0 ]]; then
     exit "$STARVE_RC"
   fi
-  exit "$INVENTORY_RC"
+  # deferred path above already returned; inventory miss/timeout → non-zero
+  exit "${INVENTORY_RC:-1}"
 fi
