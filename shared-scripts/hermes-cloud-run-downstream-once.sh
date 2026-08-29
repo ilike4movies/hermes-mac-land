@@ -3,12 +3,19 @@
 # Shared by wait-login (join-part-c), wait-login-supervisor, and on-join watcher so
 # Running+SSH does not triple-run stall recovery. Marker written only on success
 # so a transient FAIL can retry (prior on-join wrote done even after || true).
+#
+# Tip #142: resolve dispatcher via `bash` when the file exists even if not +x
+# (same class as tip #141 secrets-bridge). If missing locally, fetch tip CDN
+# `shared-scripts/hermes-dispatcher-downstream.sh` before failing closed —
+# post-approve on-join must not exit 127 with AuthURL already approved.
 set -euo pipefail
 DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 LOCK="${HERMES_DOWNSTREAM_LAUNCH_LOCK:-$DIR/downstream-launch.lock}"
 MARKER="${HERMES_DOWNSTREAM_DONE_MARKER:-$DIR/downstream-on-join.done}"
 LOG="${HERMES_DOWNSTREAM_LAUNCH_LOG:-$DIR/wait-login.log}"
 DS="${HERMES_DISPATCHER_DOWNSTREAM_SH:-$DIR/hermes-dispatcher-downstream.sh}"
+PIN="${HERMES_MAC_LAND_PIN:-main}"
+REPO="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
 
 export HERMES_AUTO_SURGICAL_LAND="${HERMES_AUTO_SURGICAL_LAND:-0}"
 export HERMES_RUN_ID="${HERMES_RUN_ID:-20260826T232521106484Z-2954673}"
@@ -30,20 +37,37 @@ if [[ -f "$MARKER" && "${HERMES_DOWNSTREAM_FORCE:-0}" != "1" ]]; then
   exit 0
 fi
 
-if [[ ! -x "$DS" && -f "$DS" ]]; then
-  chmod +x "$DS" 2>/dev/null || true
-fi
-if [[ ! -x "$DS" ]]; then
-  alt="$(cd "$(dirname "$0")" && pwd)/hermes-dispatcher-downstream.sh"
-  if [[ -x "$alt" ]]; then
+_resolve_ds() {
+  local cand alt
+  for cand in \
+    "$DS" \
+    "$DIR/hermes-dispatcher-downstream.sh" \
+    "$(cd "$(dirname "$0")" && pwd)/hermes-dispatcher-downstream.sh" \
+    "$(cd "$(dirname "$0")" && pwd)/shared-scripts/hermes-dispatcher-downstream.sh"
+  do
+    if [[ -f "$cand" ]]; then
+      chmod +x "$cand" 2>/dev/null || true
+      DS="$cand"
+      return 0
+    fi
+  done
+  alt="$DIR/hermes-dispatcher-downstream.sh"
+  echo "$(date -u +%FT%TZ) tip#142 fetching hermes-dispatcher-downstream.sh from ${REPO}@${PIN}" | tee -a "$LOG"
+  if curl -fsSL "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-dispatcher-downstream.sh" -o "$alt" \
+    || curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-dispatcher-downstream.sh" -o "$alt"; then
+    chmod +x "$alt" 2>/dev/null || true
     DS="$alt"
-  else
-    echo "$(date -u +%FT%TZ) ERROR tip#133 missing hermes-dispatcher-downstream.sh" | tee -a "$LOG" >&2
-    exit 127
+    return 0
   fi
+  return 1
+}
+
+if ! _resolve_ds; then
+  echo "$(date -u +%FT%TZ) ERROR tip#142 missing hermes-dispatcher-downstream.sh (local+CDN)" | tee -a "$LOG" >&2
+  exit 127
 fi
 
-echo "$(date -u +%FT%TZ) tip#133 launching downstream run_id=$HERMES_RUN_ID zombie=${HERMES_STALL_ZOMBIE}/${HERMES_STALL_ZOMBIE_PASSES}" | tee -a "$LOG"
+echo "$(date -u +%FT%TZ) tip#142/#133 launching downstream ds=$DS run_id=$HERMES_RUN_ID zombie=${HERMES_STALL_ZOMBIE}/${HERMES_STALL_ZOMBIE_PASSES}" | tee -a "$LOG"
 set +e
 bash "$DS" >>"$LOG" 2>&1
 rc=$?
