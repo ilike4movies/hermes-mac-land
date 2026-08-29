@@ -181,4 +181,17 @@ Or Mac ONE-SHOT: \`curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command htt
         fi
         if [[ "$posted" != "1" ]]; then
           local tok owner name api_url payload
-          tok="${HERMES_STATUS_GIT
+          tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+          owner="${gh_repo%%/*}"
+          name="${gh_repo#*/}"
+          api_url="https://api.github.com/repos/${owner}/${name}/issues/${gh_issue}/comments"
+          if [[ -n "$tok" && ! -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+            _code="$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tok}" -H "Accept: application/vnd.github+json" https://api.github.com/rate_limit 2>/dev/null || echo 000)"
+            if [[ "$_code" == "401" || "$_code" == "403" ]]; then
+              echo "$_code $(date -u +%FT%TZ)" >"${SCRIPT_DIR}/GH_TOKEN_INVALID.flag"
+              echo "WARN GH_TOKEN unusable (HTTP ${_code}) — skip curl beacon"
+              tok=""
+            fi
+          fi
+          if [[ -n "$tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+            payload="$(AUTHURL_BEACON_BODY="$body" python3 -
