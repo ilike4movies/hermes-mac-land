@@ -81,9 +81,12 @@ _refresh_public_vendor() {
 }
 
 reload_secrets() {
-  if [[ -x "$SCRIPT_DIR/bridge-secrets-from-env.sh" ]]; then
+  # Tip #144: -f + bash (0644 curl downloads), not -x-only.
+  if [[ -f "$SCRIPT_DIR/bridge-secrets-from-env.sh" ]]; then
+    chmod +x "$SCRIPT_DIR/bridge-secrets-from-env.sh" 2>/dev/null || true
     bash "$SCRIPT_DIR/bridge-secrets-from-env.sh" >/dev/null 2>&1 || true
-  elif [[ -x "$SCRIPT_DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" ]]; then
+  elif [[ -f "$SCRIPT_DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" ]]; then
+    chmod +x "$SCRIPT_DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" 2>/dev/null || true
     bash "$SCRIPT_DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" >/dev/null 2>&1 || true
   fi
   if [[ -f "$SECRETS_ENV" ]]; then
@@ -135,7 +138,8 @@ _ensure_supervisor() {
   if pgrep -f 'hermes-cloud-wait-login-supervisor.sh' >/dev/null 2>&1; then
     return 0
   fi
-  if [[ -x "$SCRIPT_DIR/hermes-cloud-wait-login-supervisor.sh" ]]; then
+  if [[ -f "$SCRIPT_DIR/hermes-cloud-wait-login-supervisor.sh" ]]; then
+    chmod +x "$SCRIPT_DIR/hermes-cloud-wait-login-supervisor.sh" 2>/dev/null || true
     nohup bash "$SCRIPT_DIR/hermes-cloud-wait-login-supervisor.sh" >>"$SCRIPT_DIR/supervisor.log" 2>&1 &
     echo "$(date -u +%H:%M:%S) OK started wait-login supervisor pid=$!"
   fi

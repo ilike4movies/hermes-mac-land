@@ -44,8 +44,13 @@ else
   curl -fsSL https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-bootstrap-waiter.sh | bash | tee -a "$LOG"
 fi
 
-if [[ -x "$DIR/bridge-secrets-from-env.sh" ]]; then
+# Tip #144: -f + bash (0644 curl downloads), not -x-only.
+if [[ -f "$DIR/bridge-secrets-from-env.sh" ]]; then
+  chmod +x "$DIR/bridge-secrets-from-env.sh" 2>/dev/null || true
   bash "$DIR/bridge-secrets-from-env.sh" || true
+elif [[ -f "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" ]]; then
+  chmod +x "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" 2>/dev/null || true
+  bash "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" || true
 fi
 
 # Jump-first by default so grok-cos-1 gets the cloud-apply signal watch.
