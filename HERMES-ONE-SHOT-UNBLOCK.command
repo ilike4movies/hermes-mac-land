@@ -162,3 +162,97 @@ _install_downstream_nag() {
   rm -f "$NAG"
   for url in \
     "https://raw.githubusercontent.com/${REPO}/${PIN}/HERMES-INSTALL-DOWNSTREAM-NAG.command" \
+    "https://raw.githubusercontent.com/${REPO}/main/HERMES-INSTALL-DOWNSTREAM-NAG.command"
+  do
+    if curl -fsSL "$url" -o "$NAG" \
+      && grep -q 'com.hermes.downstream-nag' "$NAG" 2>/dev/null \
+      && grep -q 'Downstream DONE' "$NAG" 2>/dev/null; then
+      chmod +x "$NAG"
+      # Noninteractive: skip "Press Enter" (needs tip with HERMES_NAG_NONINTERACTIVE support).
+      if HERMES_NAG_NONINTERACTIVE=1 bash "$NAG"; then
+        echo "OK downstream nag installed/refreshed"
+        rm -f "$NAG"
+        return 0
+      fi
+      echo "WARN nag installer exited non-zero — continuing ONE-SHOT"
+      rm -f "$NAG"
+      return 0
+    fi
+    rm -f "$NAG"
+  done
+  echo "WARN could not fetch HERMES-INSTALL-DOWNSTREAM-NAG.command — continuing"
+  return 0
+}
+
+_run_stall() {
+  echo ""
+  echo "=== Phase 1: STALL downstream (SSH/.11) ==="
+  osascript -e 'display notification "Phase 1: STALL downstream on .11…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
+  local SCRIPT="/tmp/hermes-dispatcher-downstream-oneshot-$$.sh"
+  rm -f "$SCRIPT"
+  local FETCHED=""
+  local url
+  # Prefer known-good tip commit (raw CDN for main can lag); prefer #120 pin-fallback entrypoint (CDN lag safe)
+  local DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-a657c617857f2ff5ffd3abc7d9c794f5e9959752}"
+  _is_good_downstream() {
+    local f="$1"
+    if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
+       && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
+       && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null; then
+      return 0
+    fi
+    if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
+       && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null \
+       && grep -q 'WAIT_INVENTORY' "$f" 2>/dev/null \
+       && grep -q 'fail-closed' "$f" 2>/dev/null; then
+      return 0
+    fi
+    return 1
+  }
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${DOWNSTREAM_PIN}/shared-scripts/hermes-dispatcher-downstream.sh" \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-dispatcher-downstream.sh" \
+    "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-dispatcher-downstream.sh"
+  do
+    echo "Trying fetch: $url"
+    if curl -fsSL "$url" -o "$SCRIPT"; then
+      if _is_good_downstream "$SCRIPT"; then
+        FETCHED="$url"
+        break
+      fi
+      rm -f "$SCRIPT"
+    fi
+  done
+  if [[ -z "$FETCHED" || ! -s "$SCRIPT" ]]; then
+    echo "STALL fetch FAILED"
+    return 2
+  fi
+  chmod +x "$SCRIPT"
+  echo "OK fetched: $FETCHED"
+  set +e
+  bash "$SCRIPT"
+  local rc=$?
+  set -e
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK STALL downstream finished for run $HERMES_RUN_ID"
+    return 0
+  fi
+  echo "STALL downstream exited $rc"
+  return 1
+}
+
+_run_enable_actions() {
+  echo ""
+  echo "=== Phase 2: ENABLE Downstream Actions (local gh) ==="
+  osascript -e 'display notification "Phase 2: enabling GitHub Actions path…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
+  # Tip #127: same as ENABLE #126 — prefer HERMES_GH_WORKFLOW_PAT when gh lacks workflows scope.
+  _load_mac_hermes_env || true
+  if [[ -n "${HERMES_GH_WORKFLOW_PAT:-}" ]]; then
+    export GH_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+    export GITHUB_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+    echo "OK using HERMES_GH_WORKFLOW_PAT for workflow write (tip #127)"
+  fi
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "FAILED: gh CLI missing. Install GitHub CLI, then: gh auth login"
+    echo "Or web UI: paste Raw ci/downstream-stall.yml into create-file editor"
+    WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
