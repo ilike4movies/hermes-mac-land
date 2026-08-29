@@ -96,4 +96,51 @@ ICS
     fi
   fi
   # Tip #134: when AuthURL is unchanged but ICS hold expired, still refresh tip ICS
-  # (does not remint AuthURL; throttled by local rewri
+  # (does not remint AuthURL; throttled by local rewrite above).
+  if [[ "$ics_need_refresh" == "1" && "$auth_changed" != "1" && "${HERMES_AUTHURL_TIP_ICS:-1}" == "1" ]]; then
+    if command -v python3 >/dev/null 2>&1; then
+      local tip_tok="${GITHUB_TOKEN:-${GH_TOKEN:-${HERMES_GH_WORKFLOW_PAT:-}}}"
+      local tip_owner tip_name gh_repo="${HERMES_STATUS_GITHUB_REPO:-ilike4movies/hermes-mac-land}"
+      tip_owner="${gh_repo%%/*}"
+      tip_name="${gh_repo#*/}"
+      local ics_path="HERMES-APPROVE-TAILSCALE.ics" ics_body ics_sha ics_b64 ics_api ics_payload
+      ics_body="$(AUTHURL_ICS_URL="$url" HERMES_AUTHURL_ICS_HOLD_HOURS="${HERMES_AUTHURL_ICS_HOLD_HOURS:-6}" python3 - <<'ICS'
+import os
+from datetime import datetime, timedelta, timezone
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1][:12]
+now = datetime.now(timezone.utc)
+dt = now.strftime("%Y%m%dT%H%M%SZ")
+hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
+end = (now + timedelta(hours=hold_h)).strftime("%Y%m%dT%H%M%SZ")
+uid = f"hermes-authurl-{suffix}-{int(now.timestamp())}@hermes-mac-land"
+print(f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Hermes Mac Land//AuthURL Wake//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:{uid}
+DTSTAMP:{dt}
+DTSTART:{dt}
+DTEND:{end}
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix}
+DESCRIPTION:Approve NOW: {url}\\nThen add Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY.\\nOr Mac ONE-SHOT from hermes-mac-land tip.
+LOCATION:{url}
+URL:{url}
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW
+TRIGGER:-PT0S
+END:VALARM
+END:VEVENT
+END:VCALENDAR""")
+ICS
+)"
+      ics_sha=""
+      if command -v gh >/dev/null 2>&1; then
+        ics_sha="$(gh api "repos/${gh_repo}/contents/${ics_path}" --jq .sha 2>/dev/null || true)"
+      elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
+        ics_sha="$(curl -fsS -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"           "https:
