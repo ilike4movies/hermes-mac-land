@@ -19,7 +19,9 @@ curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ili
 
 Watch [issue #1](../../issues/1) for `## Downstream DONE`.
 
-Tip through **#161** on main (ENABLE/ONE-SHOT git clone+push fallback when contents API lacks OAuth `workflow` scope; tip #160 FALLBACK→b2b5fc4 tip159; #155 NAG DONE@ts; #154 prose reject). STALL/ONE-SHOT still prefer tip-first fetch.
+Tip through **#162** on main (STALL/ONLY tip-pin + tip #159/#160 fetch integrity; #161 ENABLE git-push; FALLBACK→b2b5fc4). STALL/ONE-SHOT still prefer tip-first fetch.
+
+Tip **#162**: STALL / DOWNSTREAM-ONLY banners + `_is_good_downstream` require tip #160/`b2b5fc4` or tip #159 fail-closed markers (reject pre-#159 silent WARN entrypoints).
 
 Tip **#161**: Mac ENABLE / ONE-SHOT Phase 2 — if `gh api PUT …/contents/.github/workflows/…` 404s (missing OAuth `workflow` scope), fall back to shallow `git clone` (SSH first) + commit + `git push` of `ci/downstream-stall.yml`. SSH collaborator push often lands workflow files without the OAuth scope cloud tokens lack.
 
