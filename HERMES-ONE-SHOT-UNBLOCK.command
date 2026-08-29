@@ -1,1 +1,1 @@
-LOAD_FROM_FILE:/tmp/tip146_oneshot_content.txt
+PLACEHOLDER_SEE_FILE
