@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #135 (AuthURL ICS 6h hold + soft-hold refresh; #133 single-flight downstream; hold live AuthURL across finite→forever; interactive up timeout forever; pre-expiry short→desired upgrade; 4h up timeout; throttle soft-skip AuthURL echo; ONE-SHOT Phase 2 + ENABLE use HERMES_GH_WORKFLOW_PAT; soft skip remint while AuthURL live; supervisor soft keep-alive on wait-login respawn; AuthURL soft keep-alive default; ONE-SHOT pin to #120 entrypoint SHA; tip-CDN pin fallback; curl|bash-safe entrypoint; soft restart young-up guard; sudo kill) |
+| 6 | Operator docs | **DONE** — tip through #135 (AuthURL ICS 6h hold + soft-hold refresh; #133 single-flight downstream; hold live AuthURL across finite→forever; interactive up timeout forever; pre-expiry short→desired upgrade; 4h up timeout; throttle soft-skip AuthURL echo; ONE-SHOT Phase 2 + ENABLE use HERMES_GH_WORKFLOW_PAT; soft skip remint while AuthURL live; supervisor soft keep-alive on wait-login respawn; AuthURL soft keep-alive default; ONE-SHOT pin to #120 entrypoint; tip-CDN pin fallback; curl|bash-safe entrypoint; soft restart young-up guard; sudo kill) |
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
