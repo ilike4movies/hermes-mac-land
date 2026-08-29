@@ -1,1 +1,1 @@
-FILE:/tmp/hermes-mac-land/HERMES-ONE-SHOT-UNBLOCK.command
+LOAD_FROM_DISK:/tmp/RESTORE_ONESHOT_CONTENT.txt
