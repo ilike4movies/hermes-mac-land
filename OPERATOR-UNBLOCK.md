@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #158 (reject pre-#156 parts; FALLBACK ff0ccac; #157–#150)|
+| 6 | Operator docs | **DONE** — tip through #159 (fail-closed DONE beacon; #158–#150)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -235,3 +235,10 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - [`hermes-dispatcher-downstream.sh`](shared-scripts/hermes-dispatcher-downstream.sh): `_parts_integrity_ok` requires tip #156 DONE-post markers + tip #150/#151 inventory markers before assemble; stale co-located/CDN parts fall back to `ff0ccac`.
 - Mac STALL / DOWNSTREAM-ONLY / ONE-SHOT: entrypoint integrity requires `_parts_integrity_ok`; legacy monolithic check requires `HERMES_GH_BEACON_TIMEOUT_SECS` (not bare `_post_github_status`).
 - Closes: Mac could accept pre-#156 silent-fail status post when tip fetch "succeeded" with stale parts.
+
+### Tip #159 (fail-closed if Downstream DONE GitHub beacon missing)
+
+- [`hermes-dispatcher-part-a.sh`](shared-scripts/hermes-dispatcher-part-a.sh): `_post_github_status` returns non-zero on failure (was WARN-only).
+- [`hermes-dispatcher-part-c.sh`](shared-scripts/hermes-dispatcher-part-c.sh): when inventory present, **exit 2** if issue #1 Downstream DONE beacon did not post (obj5/NAG were blind on silent WARN).
+- Entrypoint `_parts_integrity_ok` requires tip #159 markers; Mac ONE-SHOT/STALL/ONLY pre-export `HERMES_STATUS_GITHUB_TOKEN` from `gh auth token`.
+- FALLBACK still `ff0ccac` until tip #160 pins this tip's SHA (prefer tip CDN `main`).
