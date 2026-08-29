@@ -2,6 +2,8 @@
 # Keep wait-login alive until Tailscale Running, then auto-land / downstream.
 # When HERMES_AUTO_SURGICAL_LAND=0: wait for host SSH key (mid-wait secrets) before
 # running dispatcher downstream — do not one-shot-and-exit on Running alone.
+# Tip #137: spawn inherits tip#131 forever up default + tip#136 DESIRED_UP_TIMEOUT
+# persist. Prefer hermes-cloud-attach-wait-login.sh over restart-authurl when AuthURL live.
 set -euo pipefail
 DIR="${HERMES_CLOUD_APPLY_DIR:-/tmp/hermes-cloud-apply}"
 SOCK="${HERMES_TAILSCALE_SOCKET:-/var/run/tailscale/tailscaled.sock}"
@@ -60,8 +62,18 @@ _spawn_wait_login() {
     fi
     # Tip #124: wait-login respawns inherit soft AuthURL keep-alive by default
     # (tip #123). Do not force hard wipe on supervisor restart mid-approve.
+    # Tip #137: default forever up timeout + tip#136 DESIRED_UP_TIMEOUT persist so
+    # supervisor respawns do not cold-start forever=0 mid finite hold-roll.
     export HERMES_AUTHURL_HARD_ON_REFRESH="${HERMES_AUTHURL_HARD_ON_REFRESH:-0}"
-    echo "$(date -u +%FT%TZ) wait-login spawn HERMES_AUTHURL_HARD_ON_REFRESH=${HERMES_AUTHURL_HARD_ON_REFRESH}"
+    export HERMES_TAILSCALE_UP_TIMEOUT_SECS="${HERMES_TAILSCALE_UP_TIMEOUT_SECS:-0}"
+    if [[ -f "$DIR/DESIRED_UP_TIMEOUT.txt" ]]; then
+      _desired="$(tr -d ' \r\n' <"$DIR/DESIRED_UP_TIMEOUT.txt" 2>/dev/null || true)"
+      if [[ "${_desired}" =~ ^[0-9]+$ ]] && (( _desired > 0 )); then
+        export HERMES_TAILSCALE_UP_TIMEOUT_SECS="$_desired"
+        echo "$(date -u +%FT%TZ) tip#137 adopt DESIRED_UP_TIMEOUT=${_desired}s for wait-login spawn"
+      fi
+    fi
+    echo "$(date -u +%FT%TZ) wait-login spawn HARD=${HERMES_AUTHURL_HARD_ON_REFRESH} UP_TIMEOUT=${HERMES_TAILSCALE_UP_TIMEOUT_SECS}s"
     bash "$DIR/hermes-moltbot-cloud-tailscale-join-and-apply.sh" --wait-login >>"$DIR/wait-login.log" 2>&1 &
     echo $! >"$DIR/waiter.pid"
   ) 200>"$DIR/wait-login.flock"
