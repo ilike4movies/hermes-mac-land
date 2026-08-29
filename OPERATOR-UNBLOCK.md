@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #149 (stage-a `-f`; #148 DOWNSTREAM-ONLY; #147/#146 tip once+main; #145–#140)|
+| 6 | Operator docs | **DONE** — tip through #150 (inventory-wait rejects SEED; #149 stage-a `-f`; #148 DOWNSTREAM-ONLY; #147/#146 tip once+main)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -181,3 +181,9 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 - [`hermes-cloud-agent-start.sh`](shared-scripts/hermes-cloud-agent-start.sh) + [`hermes-moltbot-cloud-wait-join-then-apply.sh`](shared-scripts/hermes-moltbot-cloud-wait-join-then-apply.sh): Stage A source/live preflight now resolve with `-f` + `chmod +x` before `bash` (0644 curl class).
 - Closes the tip#141–#145 class gap left on the **post-surgical-land Stage A** path (credentialed-resume already fixed in #145).
+
+### Tip #150 (inventory-wait rejects contract-install SEED)
+
+- [`hermes-dispatcher-part-b.sh`](shared-scripts/hermes-dispatcher-part-b.sh) `_inventory_evidence_ok`: reject `pending` first line + `SEED` / `NOT live inventory` markers **before** accepting EP04/workspace/tts keywords.
+- Proven false-pass: tip#97 SEED embeds `/opt/moltbot`, `tts`, `EP04` in comments → old check returned OK and could mark Downstream DONE without live inventory.
+- Live accept requires dated LIVE / sha / host-verify signals (or EP + real `work/ep` artifact paths), not archaeology prose.
