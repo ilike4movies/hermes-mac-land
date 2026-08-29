@@ -86,7 +86,9 @@ _is_good_downstream() {
   # Self-healing curl|bash / ONE-SHOT entrypoint (tip #118+#120)
   if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
      && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
-     && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null; then
+     && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null \
+     && grep -q '_parts_integrity_ok' "$f" 2>/dev/null; then
+    # Tip #158: entrypoint must reject pre-#156/#150/#151 parts
     return 0
   fi
   # Legacy monolithic downstream body
@@ -94,7 +96,7 @@ _is_good_downstream() {
      && grep -q 'stack-apply' "$f" 2>/dev/null \
      && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null \
      && grep -q 'RAL-634 starvation verify' "$f" 2>/dev/null \
-     && grep -q '_post_github_status' "$f" 2>/dev/null \
+     && grep -q 'HERMES_GH_BEACON_TIMEOUT_SECS' "$f" 2>/dev/null \
      && grep -q 'STALL_DISPATCH_PASSES' "$f" 2>/dev/null \
      && grep -q 'WAIT_INVENTORY' "$f" 2>/dev/null \
      && grep -q 'fail-closed' "$f" 2>/dev/null; then
