@@ -71,3 +71,32 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 
 | Ticket | UUID | Status |
 |--------|------|--------|
+| **RAL-793** | `963472c8-cc84-426a-9ed6-79e08566353a` | In Progress — **sole remaining program blocker** (stall `2954673`) |
+| **RAL-634** | `1b5a7e86-1d14-456f-b0d1-39a02df243c2` | **Done** |
+| **RAL-798** | `52e94e17-69e6-4688-a60e-aea25b090ebf` | In Progress — WIP-park **#110 LIVE** on `.11` (canary PASS @ 00:05Z) |
+| **RAL-799** | `0d76e06f-bf49-4587-a733-1b6f397f1392` | **Done** |
+| **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** |
+| **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
+| **RAL-823** | `b444b07b-d9c5-496c-b5b0-79f31dd4d210` | In Progress — Mac ONE-SHOT operator wake (due 2026-08-28) |
+
+## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~44h+)
+
+| Item | Status |
+|------|--------|
+| Contract / inventory / Downstream DONE | **MISSING** |
+| False Done @ 00:17Z | **REVERTED** — still open |
+
+**Fastest tonight:** Mac Right-click → Open **ONE-SHOT**.command (STALL → Actions fallback), or Terminal paste above.
+
+Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait default 15 min** (`HERMES_INVENTORY_WAIT_SECS=900`). Runtime ~15–20 min (STALL inventory wait 900s) or Actions ~10–15 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
+
+**Zombie reclaim (#72):** when stall age ≥1h (auto-detected from `HERMES_RUN_ID` prefix), downstream escalates to **3× DISPATCH-NOW @ 120s** for ultra-stale CLAIM — fail stale CLAIM → reopen → second reopen if still stuck. Mac launchers + `ci/downstream-stall.yml` (GHA template) default `HERMES_STALL_ZOMBIE=1` + `HERMES_STALL_ZOMBIE_PASSES=3` for run `2954673`. Track operator work on **RAL-823**.
+
+## Program gates
+
+| # | Requirement | Status |
+|---|-------------|--------|
+| 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
+| 5 | Media Studio canary + inventory | **OPEN** |
+| 6 | Operator docs | **DONE** — tip through #167 (ICS tip from TIP_PIN/CURRENT_AUTHURL; #166–#160)|
+
