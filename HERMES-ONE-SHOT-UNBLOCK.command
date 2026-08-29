@@ -26,7 +26,7 @@ FALLBACK_ACTIONS="${HERMES_ONE_SHOT_FALLBACK_ACTIONS:-1}"
 cd "${TMPDIR:-/tmp}"
 echo "=== Hermes ONE-SHOT UNBLOCK (run=$HERMES_RUN_ID) pin=$PIN ==="
 echo "zombie=$HERMES_STALL_ZOMBIE zombie_passes=$HERMES_STALL_ZOMBIE_PASSES stall_recovery=$HERMES_STALL_RECOVERY"
-echo "tip through #145+ (dispatcher -f helpers; AuthURL hold flock); approve tip CURRENT_AUTHURL or RAL-823"
+echo "tip through #158 (reject pre-#156 status post; FALLBACK ff0ccac); approve tip CURRENT_AUTHURL or RAL-823"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/${REPO}/issues/1"
 echo "Path: Web UI early + STALL first; on fail → ENABLE-ACTIONS (fallback=$FALLBACK_ACTIONS)"
@@ -209,7 +209,9 @@ _run_stall() {
     local f="$1"
     if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
        && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
-       && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null; then
+       && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null \
+       && grep -q '_parts_integrity_ok' "$f" 2>/dev/null; then
+      # Tip #158: entrypoint must reject pre-#156/#150/#151 parts
       return 0
     fi
     if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
