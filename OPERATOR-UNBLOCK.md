@@ -113,4 +113,16 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 - Prefer [`shared-scripts/hermes-cloud-attach-wait-login.sh`](shared-scripts/hermes-cloud-attach-wait-login.sh) over `restart-authurl.sh` / manual `tailscale up` while NeedsLogin still advertises a live AuthURL.
 - Kills wait-login by exact PID only (no `pkill -f` self-match). Never kills interactive `up` unless `HERMES_FORCE_KILL_UP=1`.
-- Refuses cold-start when AuthURL is live and no up is running (`HERME
+- Refuses cold-start when AuthURL is live and no up is running (`HERMES_FORCE_COLD_UP=1` to override — expect remint).
+- Supervisor spawn adopts `DESIRED_UP_TIMEOUT.txt` (tip #136) so respawns do not reintroduce forever=0 mid-roll.
+
+### Tip #138 (attach+supervisor share wait-login flock)
+
+- [`hermes-cloud-attach-wait-login.sh`](shared-scripts/hermes-cloud-attach-wait-login.sh) and [`hermes-cloud-wait-login-supervisor.sh`](shared-scripts/hermes-cloud-wait-login-supervisor.sh) both take `$DIR/wait-login.flock` before spawning `--wait-login`.
+- Attach is a **no-op** when exactly one healthy wait-login + forever/`timeout=0s` up already holds a live AuthURL (no kill, no remint). Force with `HERMES_FORCE_REATTACH=1`.
+- Supervisor skips spawn when the flock is busy or a waiter is already active under the flock.
+- Stops the attach↔supervisor race that reminted AuthURLs after tip #137 (duplicate wait-logins @ ~03:17Z).
+
+### Tip #139 (ONE-SHOT RAL-823 URL + tip banner)
+
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command) Linear default URL point
