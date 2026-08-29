@@ -1,1 +1,1 @@
-PLACEHOLDER_WILL_FAIL
+LOAD_FROM_FILE:/workspace/.tmp_hml_tip138/content_raw.txt
