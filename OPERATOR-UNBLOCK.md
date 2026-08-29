@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #164 (launcher tip banners; #163 ICS soft-hold; #162 STALL/ONLY; #161 ENABLE; #160 FALLBACK→b2b5fc4)|
+| 6 | Operator docs | **DONE** — tip through #165 (ICS soft-hold tip-pin current; #164 launcher banners; #163/#162/#161/#160)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -270,4 +270,8 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command), [`HERMES-DOWNSTREAM-RAL793-STALL.command`](HERMES-DOWNSTREAM-RAL793-STALL.command), [`HERMES-DOWNSTREAM-ONLY.command`](HERMES-DOWNSTREAM-ONLY.command), [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](HERMES-ENABLE-DOWNSTREAM-ACTIONS.command): tip banners were still **#162** after tip #163 ICS soft-hold shipped; now tip through **#164**.
 - Re-download ONE-SHOT/STALL so Mac operators see tip #163 ICS soft-hold + tip #162 integrity in the banner.
 
+### Tip #165 (ICS soft-hold tip-pin → #164+)
+
+- Soft-hold ICS rewrite in [`hermes-join-part-b.sh`](shared-scripts/hermes-join-part-b.sh) was still pinning tip **#163** after tip #164 launcher banners shipped — soft-refresh would regress calendar SUMMARY/DESCRIPTION.
+- Now pins tip through **#165** (launcher banners #164 + ENABLE/FALLBACK guidance).
 
