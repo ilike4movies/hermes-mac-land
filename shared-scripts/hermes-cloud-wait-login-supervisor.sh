@@ -117,22 +117,43 @@ _host_ssh_ready() {
 }
 
 _run_bridge() {
-  if [[ -x "$DIR/bridge-secrets-from-env.sh" ]]; then
-    bash "$DIR/bridge-secrets-from-env.sh" >/dev/null 2>&1 || true
-  elif [[ -x "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" ]]; then
-    bash "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh" >/dev/null 2>&1 || true
-  fi
+  # Tip #144: -f + bash (0644 curl downloads), not -x-only.
+  local cand
+  for cand in     "$DIR/bridge-secrets-from-env.sh"     "$DIR/hermes-moltbot-cloud-bridge-secrets-from-env.sh"
+  do
+    if [[ -f "$cand" ]]; then
+      chmod +x "$cand" 2>/dev/null || true
+      bash "$cand" >/dev/null 2>&1 || true
+      return 0
+    fi
+  done
 }
 
 _ensure_secrets_bridge_poller() {
   if pgrep -f 'hermes-cloud-secrets-bridge-poller.sh' >/dev/null 2>&1; then
     return 0
   fi
-  local poller="$DIR/hermes-cloud-secrets-bridge-poller.sh"
-  [[ -x "$poller" ]] || poller="$(dirname "$0")/hermes-cloud-secrets-bridge-poller.sh"
-  if [[ -x "$poller" ]]; then
+  # Tip #144: resolve poller via -f (+ CDN), not -x-only (tip#141 class).
+  local poller="" cand
+  for cand in     "$DIR/hermes-cloud-secrets-bridge-poller.sh"     "$(dirname "$0")/hermes-cloud-secrets-bridge-poller.sh"     "$(dirname "$0")/shared-scripts/hermes-cloud-secrets-bridge-poller.sh"
+  do
+    if [[ -f "$cand" ]]; then
+      chmod +x "$cand" 2>/dev/null || true
+      poller="$cand"
+      break
+    fi
+  done
+  if [[ -z "$poller" ]]; then
+    poller="$DIR/hermes-cloud-secrets-bridge-poller.sh"
+    echo "$(date -u +%FT%TZ) tip#144 fetching hermes-cloud-secrets-bridge-poller.sh"
+    curl -fsSL "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-secrets-bridge-poller.sh" -o "$poller" || true
+    chmod +x "$poller" 2>/dev/null || true
+  fi
+  if [[ -f "$poller" ]]; then
     nohup bash "$poller" >/dev/null 2>&1 &
-    echo "$(date -u +%FT%TZ) started secrets-bridge-poller"
+    echo "$(date -u +%FT%TZ) started secrets-bridge-poller (tip#144)"
+  else
+    echo "$(date -u +%FT%TZ) WARN: secrets-bridge-poller missing (tip#144)"
   fi
 }
 

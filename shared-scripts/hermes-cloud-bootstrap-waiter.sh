@@ -28,7 +28,7 @@ _fetch shared-scripts/hermes-moltbot-cloud-bridge-secrets-from-env.sh bridge-sec
 _fetch shared-scripts/hermes-cloud-secrets-bridge-poller.sh hermes-cloud-secrets-bridge-poller.sh
 _fetch shared-scripts/hermes-moltbot-cloud-wait-join-then-apply.sh wait-join-then-apply.sh
 _fetch shared-scripts/hermes-moltbot-cloud-apply-install-via-ssh.sh hermes-moltbot-cloud-apply-install-via-ssh.sh
-_fetch shared-scripts/hermes-moltbot-land-beacon.sh hermes-moltbot-land-beacon.sh
+_fetch shared-scripts/hermes-moltbot-land-beacon.sh hermes-moltbot-cloud-land-beacon.sh
 _fetch shared-scripts/hermes-moltbot-cloud-tailscale-join-and-apply.sh hermes-moltbot-cloud-tailscale-join-and-apply.sh
 _fetch shared-scripts/hermes-cloud-wait-login-supervisor.sh hermes-cloud-wait-login-supervisor.sh
 _fetch shared-scripts/hermes-stage-a-preflight.sh hermes-stage-a-preflight.sh
@@ -49,9 +49,17 @@ else
   echo "OK wait-login supervisor already running"
 fi
 if ! pgrep -f 'hermes-cloud-secrets-bridge-poller.sh' >/dev/null 2>&1; then
-  if [[ -x "$DIR/hermes-cloud-secrets-bridge-poller.sh" ]]; then
-    nohup bash "$DIR/hermes-cloud-secrets-bridge-poller.sh" >/dev/null 2>&1 &
-    echo "OK started secrets-bridge-poller"
+  # Tip #144: -f + bash (+ CDN), not -x-only.
+  poller="$DIR/hermes-cloud-secrets-bridge-poller.sh"
+  if [[ ! -f "$poller" ]]; then
+    curl -fsSL "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-secrets-bridge-poller.sh" -o "$poller" || true
+  fi
+  if [[ -f "$poller" ]]; then
+    chmod +x "$poller" 2>/dev/null || true
+    nohup bash "$poller" >/dev/null 2>&1 &
+    echo "OK started secrets-bridge-poller (tip#144)"
+  else
+    echo "WARN tip#144 secrets-bridge-poller missing"
   fi
 else
   echo "OK secrets-bridge-poller already running"
