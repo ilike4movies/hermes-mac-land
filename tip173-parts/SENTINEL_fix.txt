@@ -1,0 +1,2 @@
+tip173-operator-fix-pending
+expected-blob=b04d1447b39e76510d940acf726ec8b150b67949
