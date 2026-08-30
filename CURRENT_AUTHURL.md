@@ -1,6 +1,6 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-29T17:29:17Z
+**Last refreshed:** 2026-08-30T01:12:04Z
 
 **Approve:** https://login.tailscale.com/a/1d0d805013867
 
