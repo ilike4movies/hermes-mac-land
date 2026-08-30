@@ -196,4 +196,26 @@ PY
       printf 'refreshed=%s\n' "$(date -u +%FT%TZ)"
     } >"$pending"
     if command -v python3 >/dev/null 2>&1; then
-      AUTHURL_ICS_URL="$url" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" HERMES_AUT
+      AUTHURL_ICS_URL="$url" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" HERMES_AUTHURL_ICS_HOLD_HOURS="${HERMES_AUTHURL_ICS_HOLD_HOURS:-6}" python3 - <<'ICS' >"${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics" 2>/dev/null || true
+import os
+from datetime import datetime, timedelta, timezone
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "170"
+now = datetime.now(timezone.utc)
+dt = now.strftime("%Y%m%dT%H%M%SZ")
+hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
+end = (now + timedelta(hours=hold_h)).strftime("%Y%m%dT%H%M%SZ")
+uid = f"hermes-authurl-{suffix}-{int(now.timestamp())}@hermes-mac-land"
+print(f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Hermes Mac Land//AuthURL Wake//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:{uid}
+DTSTAMP:{dt}
+DTSTART:{dt}
+DTEND:{end}
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (CDN TIP_
