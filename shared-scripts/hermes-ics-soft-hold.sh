@@ -73,7 +73,7 @@ tip="${HERMES_AUTHURL_ICS_EXPECTED_TIP:-}"
 if [[ -z "$tip" ]]; then
   tip="$(_tip_max "$local_tip" "$cdn_tip")"
 fi
-tip="${tip:-169}"
+tip="${tip:-170}"
 if [[ -n "$cdn_tip" && "$cdn_tip" == "$tip" && "${HERMES_TIP_PIN_CDN_SYNC:-1}" == "1" ]]; then
   printf '%s\n' "$cdn_tip" >"$PINFILE" 2>/dev/null || true
 fi
@@ -118,7 +118,7 @@ import os
 from datetime import datetime, timedelta, timezone
 url=os.environ["AUTHURL_ICS_URL"]
 suffix=url.rstrip("/").rsplit("/",1)[-1]
-tip=os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "169"
+tip=os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "170"
 hours=int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6")
 now=datetime.now(timezone.utc)
 end=now+timedelta(hours=hours)
@@ -153,7 +153,7 @@ elif [[ "$need_tip" == "1" ]]; then
 import os, re
 path=os.environ["ICS_PATH"]; url=os.environ["AUTHURL_ICS_URL"]
 suffix=url.rstrip("/").rsplit("/",1)[-1]
-tip=os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "169"
+tip=os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "170"
 text=open(path, encoding="utf-8", errors="replace").read()
 summary=f"SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})"
 desc=(
