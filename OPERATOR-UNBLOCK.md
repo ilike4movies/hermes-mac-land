@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #169 (soft-hold tick + Dropbox WAKE; #168–#160)|
+| 6 | Operator docs | **DONE** — tip through #170 (Dropbox public WAKE link; #169–#160)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -298,3 +298,9 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - [`wait_for_running`](shared-scripts/hermes-join-part-c.sh) now runs [`hermes-ics-soft-hold.sh`](shared-scripts/hermes-ics-soft-hold.sh) about every 15m (`HERMES_ICS_SOFT_HOLD_EVERY_SECS`) while NeedsLogin — CDN TIP_PIN hot-pick without remint/respawn even when in-memory part-b is pre-tip168.
 - Dropbox wake file: `/Hermes/WAKE-1d0d8050-tip169.txt` (AuthURL + ONE-SHOT).
 - Path C Zapier `put_workflow_file_via_git_data` returned **Bad credentials** (task-limit cleared). Reconnect GitHub at `https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336` then retry, or Web UI / ENABLE tip #161.
+
+### Tip #170 (Dropbox public WAKE link + Zapier Calendar reconnect note)
+
+- Public Dropbox WAKE: `https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1`
+- Zapier Google Calendar connection **stale** — reconnect `https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487` (same class as GitHub Bad credentials for Path C).
+- Tip #169 soft-hold tick + Quo SMS remain the primary non-Gmail wakes while AuthURL holds.
