@@ -1,1 +1,4 @@
-LOAD_FROM_FILE_/tmp/cursor/tip170/RESTORE_g8000.txt
+#!/bin/bash
+# HERMES-ONE-SHOT-UNBLOCK.command — Right-click → Open on Mac Hermes (not double-click)
+# Single click critical path for stalled canary recovery:
+#   0) Open Tailscale admin + tip CURRENT_
