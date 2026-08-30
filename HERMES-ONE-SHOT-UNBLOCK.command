@@ -287,4 +287,61 @@ _run_stall() {
     "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-dispatcher-downstream.sh"
   )
   if [[ -n "$DOWNSTREAM_PIN" ]]; then
-    urls+=("https://raw.githubuserc
+    urls+=("https://raw.githubusercontent.com/${REPO}/${DOWNSTREAM_PIN}/shared-scripts/hermes-dispatcher-downstream.sh")
+  fi
+  for url in "${urls[@]}"; do
+    echo "Trying fetch: $url"
+    if curl -fsSL "$url" -o "$SCRIPT"; then
+      if _is_good_downstream "$SCRIPT"; then
+        FETCHED="$url"
+        break
+      fi
+      rm -f "$SCRIPT"
+    fi
+  done
+  if [[ -z "$FETCHED" || ! -s "$SCRIPT" ]]; then
+    echo "STALL fetch FAILED"
+    return 2
+  fi
+  chmod +x "$SCRIPT" 2>/dev/null || true
+  echo "OK fetched: $FETCHED"
+  set +e
+  bash "$SCRIPT"
+  local rc=$?
+  set -e
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK STALL downstream finished for run $HERMES_RUN_ID"
+    return 0
+  fi
+  echo "STALL downstream exited $rc"
+  return 1
+}
+
+_install_workflow_via_git_push() {
+  # Tip #161: contents API needs OAuth workflow scope; SSH/git push often works without it.
+  local WF_PATH=".github/workflows/downstream-stall.yml"
+  local SRC_URL="https://raw.githubusercontent.com/${REPO}/main/ci/downstream-stall.yml"
+  local work="/tmp/hermes-wf-git-oneshot-$$"
+  local src_file="/tmp/hermes-downstream-stall-yml-git-$$.yml"
+  rm -rf "$work"
+  mkdir -p "$work"
+  curl -fsSL "$SRC_URL" -o "$src_file"
+  if ! grep -q 'workflow_dispatch' "$src_file" || ! grep -q 'hermes-dispatcher-downstream.sh' "$src_file"; then
+    echo "WARN tip #161: source workflow incomplete"
+    rm -f "$src_file"
+    rm -rf "$work"
+    return 1
+  fi
+  echo "tip #161: trying git clone+push fallback (SSH first)…"
+  if git clone --depth 1 "git@github.com:${REPO}.git" "$work/repo" >/tmp/hermes-wf-git-clone.out 2>/tmp/hermes-wf-git-clone.err; then
+    echo "OK tip #161 cloned via SSH"
+  elif GIT_TERMINAL_PROMPT=0 gh repo clone "$REPO" "$work/repo" -- --depth 1 >/tmp/hermes-wf-git-clone.out 2>>/tmp/hermes-wf-git-clone.err; then
+    echo "OK tip #161 cloned via gh"
+  else
+    echo "WARN tip #161: git clone failed"
+    cat /tmp/hermes-wf-git-clone.err 2>/dev/null || true
+    rm -f "$src_file"
+    rm -rf "$work"
+    return 1
+  fi
+  mkdir -p "$work/repo/.github/workfl
