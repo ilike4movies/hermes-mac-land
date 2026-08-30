@@ -1,1 +1,1 @@
-PLACEHOLDER
+LOAD_FROM_FILE_/tmp/cursor/tip170/RESTORE_g8000.txt
