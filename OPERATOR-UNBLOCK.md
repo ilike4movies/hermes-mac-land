@@ -246,3 +246,53 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 ### Tip #160 (FALLBACK pin includes tip #159 fail-closed)
 
 - [`hermes-dispatcher-downstream.sh`](shared-scripts/hermes-dispatcher-downstream.sh): default `HERMES_DOWNSTREAM_FALLBACK_REF` bumped `ff0ccac` → **`b2b5fc4`** (tip #159 fail-closed DONE beacon + tip #156/#158/#150/#151).
+- CDN fail on `main` must not assemble pre-#159 parts (WARN-only status post → silent obj5 miss).
+
+### Tip #161 (ENABLE git clone+push fallback for workflow install)
+
+- [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](HERMES-ENABLE-DOWNSTREAM-ACTIONS.command) + ONE-SHOT Phase 2: when `gh api PUT` to `.github/workflows/downstream-stall.yml` fails (OAuth missing `workflow` scope → 404), fall back to shallow **git clone (SSH first) + commit + push** of `ci/downstream-stall.yml`.
+- Closes: Mac ENABLE dead-ends on cloud/API-style tokens even when the operator's SSH git identity can push workflow files.
+- Prefer Mac ONE-SHOT / STALL first; Path C Web UI paste remains last resort. Cloud Zapier/Github App still cannot write workflows.
+
+### Tip #162 (STALL / DOWNSTREAM-ONLY tip-pin + fetch integrity)
+
+- [`HERMES-DOWNSTREAM-RAL793-STALL.command`](HERMES-DOWNSTREAM-RAL793-STALL.command) + [`HERMES-DOWNSTREAM-ONLY.command`](HERMES-DOWNSTREAM-ONLY.command): tip banners were stale at #147/#148; now tip through **#162**.
+- `_is_good_downstream` requires tip #160 FALLBACK (`b2b5fc4`) / tip #159 fail-closed markers so Mac STALL/ONLY cannot accept pre-#159 silent-WARN entrypoints.
+- ONE-SHOT `_is_good_downstream` aligned.
+
+### Tip #163 (ICS soft-hold tip-pin)
+
+- Soft-hold / AuthURL tip ICS rewrite in [`hermes-join-part-b.sh`](shared-scripts/hermes-join-part-b.sh) now pins SUMMARY/DESCRIPTION/VALARM through **#163** (Mac ONE-SHOT + ENABLE git-push + FALLBACK `b2b5fc4`) instead of tip-less generic text.
+- Prevents ICS soft-refresh from erasing tip #161/#162 operator guidance while AuthURL is held.
+
+### Tip #164 (Mac launcher tip banners → #163+)
+
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command), [`HERMES-DOWNSTREAM-RAL793-STALL.command`](HERMES-DOWNSTREAM-RAL793-STALL.command), [`HERMES-DOWNSTREAM-ONLY.command`](HERMES-DOWNSTREAM-ONLY.command), [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](HERMES-ENABLE-DOWNSTREAM-ACTIONS.command): tip banners were still **#162** after tip #163 ICS soft-hold shipped; now tip through **#164**.
+- Re-download ONE-SHOT/STALL so Mac operators see tip #163 ICS soft-hold + tip #162 integrity in the banner.
+
+### Tip #165 (ICS soft-hold tip-pin → #164+)
+
+- Soft-hold ICS rewrite in [`hermes-join-part-b.sh`](shared-scripts/hermes-join-part-b.sh) was still pinning tip **#163** after tip #164 launcher banners shipped — soft-refresh would regress calendar SUMMARY/DESCRIPTION.
+- Now pins tip through **#165** (launcher banners #164 + ENABLE/FALLBACK guidance).
+
+### Tip #166 (ICS tip-stale soft-hold without DTEND remint)
+
+- Soft-hold previously only rewrote ICS when `remain_s < 1800`, so local/calendar SUMMARY could stay stuck on an old tip (e.g. #162) for hours after tip #165 shipped.
+- [`hermes-join-part-b.sh`](shared-scripts/hermes-join-part-b.sh): if SUMMARY tip pin is behind `HERMES_AUTHURL_ICS_EXPECTED_TIP` (default **166**), rewrite SUMMARY/DESCRIPTION/VALARM **in place** and preserve UID/DTEND/URL (no AuthURL remint).
+- Soft-refresh templates + AuthURL suffix display use the **full** AuthURL id (no `[:12]` truncate).
+
+### Tip #167 (ICS expected tip from TIP_PIN / CURRENT_AUTHURL.md)
+
+- Tip-stale soft-hold (`HERMES_AUTHURL_ICS_EXPECTED_TIP`) no longer requires editing `hermes-join-part-b.sh` on every tip advance.
+- Resolver order: env → [`TIP_PIN`](TIP_PIN) → parse `Tip through **#N**` from [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md) → default **167**.
+- Soft-refresh ICS templates use the resolved tip number. Bump tip by updating `TIP_PIN` + `CURRENT_AUTHURL.md` (and launcher banners as needed).
+
+### Tip #168 (CDN TIP_PIN hot-pick + standalone ICS soft-hold)
+
+- Long-lived wait-login soft-holds can lag tip advances when local `TIP_PIN` is stale and join-part-b was sourced hours earlier.
+- [`_resolve_ics_expected_tip`](shared-scripts/hermes-join-part-b.sh) now CDN-fetches [`TIP_PIN`](TIP_PIN) from `main` (max of local + CDN; env still wins) and optionally syncs local `TIP_PIN`.
+- New [`shared-scripts/hermes-ics-soft-hold.sh`](shared-scripts/hermes-ics-soft-hold.sh): curl|bash-safe tip-stale/TTL soft-hold **without** reminting AuthURL or respawning wait-login.
+
+### Tip #169 (wait-login soft-hold tick + Dropbox WAKE + Zapier GH reconnect)
+
+- [`wait_for_running`](shared-scripts/hermes-join-part-c.sh) now runs [`hermes-ics-soft-hold.sh`](shared-scripts/hermes-ics-soft-hold.sh) about every 15m (`HERMES_ICS_SOFT_HOLD_EVERY_SECS`) while NeedsLogin — CDN TIP_PIN hot-pick without remint/respawn even when in-
