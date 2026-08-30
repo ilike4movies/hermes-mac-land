@@ -256,4 +256,31 @@ end = (now + timedelta(hours=hold_h)).strftime("%Y%m%dT%H%M%SZ")
 uid = f"hermes-authurl-{suffix}-{int(now.timestamp())}@hermes-mac-land"
 print(f"""BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Hermes Mac Land//AuthURL 
+PRODID:-//Hermes Mac Land//AuthURL Wake//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:{uid}
+DTSTAMP:{dt}
+DTSTART:{dt}
+DTEND:{end}
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (CDN TIP_PIN/#169 soft-hold tick; #168 hot-pick; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
+LOCATION:{url}
+URL:{url}
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #{tip}
+TRIGGER:-PT0S
+END:VALARM
+END:VEVENT
+END:VCALENDAR""")
+ICS
+)"
+      ics_sha=""
+      if command -v gh >/dev/null 2>&1; then
+        ics_sha="$(gh api "repos/${gh_repo}/contents/${ics_path}" --jq .sha 2>/dev/null || true)"
+      elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
+        ics_sha="$(curl -fsS -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"
