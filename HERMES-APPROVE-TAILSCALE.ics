@@ -8,8 +8,9 @@ UID:hermes-authurl-1d0d805013867@hermes-mac-land
 DTSTAMP:20260830T011204Z
 DTSTART:20260830T011204Z
 DTEND:20260830T071204Z
-SUMMARY:ACTION: Approve Hermes Tailscale AuthURL 1d0d805013867 (tip #169)
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL 1d0d805013867 (tip #170)
 DESCRIPTION:Approve NOW: https://login.tailscale.com/a/1d0d805013867
+Then Mac ONE-SHOT tip #170. Dropbox WAKE: https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1 Zapier GH+Calendar reconnect if Path C. FALLBACK b2b5fc4.
 Then Mac ONE-SHOT tip #169 (wait-login soft-hold tick; CDN TIP_PIN; Dropbox /Hermes/WAKE; Zapier GH reconnect; FALLBACK b2b5fc4). Runtime Secrets also OK on LEGACY .11.
 Then Mac ONE-SHOT tip #168 (CDN TIP_PIN hot-pick #168; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
 URL:https://login.tailscale.com/a/1d0d805013867
@@ -17,4 +18,4 @@ STATUS:CONFIRMED
 SEQUENCE:2
 BEGIN:VALARM
 ACTION:DISPLAY
-DESCRIPTION:Approve Tailscale AuthURL 1d0d805013867 NOW — Mac ONE-SHOT tip #169
+DESCRIPTION:Approve Tailscale AuthURL 1d0d805013867 NOW — Mac ONE-SHOT tip #170
