@@ -14,7 +14,7 @@ cd "${TMPDIR:-/tmp}"
 echo "=== Hermes ENABLE Downstream Actions ==="
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Repo: $REPO"
-echo "tip through #173 (NAG Path C reconnect; ONE-SHOT #171; #161 ENABLE; FALLBACK b2b5fc4 tip159)"
+echo "tip through #174 (soft-hold CURRENT tip#174; NAG Path C #172; ONE-SHOT #171; #161 ENABLE; FALLBACK b2b5fc4 tip159)"
 echo "Prefer for tonight (if Tailscale+SSH OK):"
 echo "  https://github.com/${REPO}/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command"
 
