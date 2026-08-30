@@ -241,4 +241,50 @@ _run_stall() {
   }
   _is_good_downstream() {
     local f="$1"
-    if grep -q 'ONE-SHOT safe entrypoint' 
+    if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
+       && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
+       && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null \
+       && grep -q '_parts_integrity_ok' "$f" 2>/dev/null \
+       && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
+      # Tip #162: require tip #160 FALLBACK / tip #159 fail-closed markers
+      return 0
+    fi
+    if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
+       && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null \
+       && grep -q 'WAIT_INVENTORY' "$f" 2>/dev/null \
+       && grep -q 'fail-closed' "$f" 2>/dev/null \
+       && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
+      return 0
+    fi
+    return 1
+  }
+  # Prefer tip#142 once launcher (single-flight + CDN dispatcher resolve).
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-cloud-run-downstream-once.sh" \
+    "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-cloud-run-downstream-once.sh"
+  do
+    echo "Trying once launcher: $url"
+    if curl -fsSL "$url" -o "$ONCE" && _is_good_once "$ONCE"; then
+      chmod +x "$ONCE" 2>/dev/null || true
+      echo "OK tip#146 using once launcher: $url"
+      set +e
+      bash "$ONCE"
+      local rc=$?
+      set -e
+      rm -f "$ONCE"
+      if [[ "$rc" -eq 0 ]]; then
+        echo "OK STALL downstream finished for run $HERMES_RUN_ID (once)"
+        return 0
+      fi
+      echo "WARN once launcher exited $rc — falling back to dispatcher entrypoint"
+      break
+    fi
+    rm -f "$ONCE"
+  done
+  # Dispatcher entrypoint: tip/main first; optional legacy pin last.
+  local urls=(
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-dispatcher-downstream.sh"
+    "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-dispatcher-downstream.sh"
+  )
+  if [[ -n "$DOWNSTREAM_PIN" ]]; then
+    urls+=("https://raw.githubuserc
