@@ -5,4 +5,9 @@
 #   0a) Open Linear operator ticket (RAL-823) early
 #   0b) Open Web UI workflow create + Raw paste tabs early (parallel with STALL)
 #   0c) Install 5-min Downstream nag LaunchAgent (auto ONE-SHOT until issue #1 shows Downstream DONE)
-#   1) Try STALL downstream 
+#   1) Try STALL downstream (SSH/Tailscale to .11) — fastest when mesh works
+#   2) On STALL fail → Phase 2 ENABLE (install workflow + gh workflow run; tip #127 uses HERMES_GH_WORKFLOW_PAT)
+# Requires ~/.hermes/.env LINEAR_API_KEY. Prefer this over picking between STALL vs ENABLE.
+# Do not put open canary ticket IDs in PR titles when enabling Actions.
+set -euo pipefail
+export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:
