@@ -167,4 +167,50 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - Removes default stale `HERMES_DOWNSTREAM_PIN` that pinned a pre-#145 SHA ahead of tip (set explicitly only if needed).
 - Banner pinned through **#145+**. Ensures Mac ONE-SHOT picks up tip#145 `-f` helper resolve without CDN-lag pin games.
 
-### Tip #147 (STALL.command 
+### Tip #147 (STALL.command tip once + main)
+
+- [`HERMES-DOWNSTREAM-RAL793-STALL.command`](HERMES-DOWNSTREAM-RAL793-STALL.command): same tip#146 class fix — prefer tip#142 once launcher, then tip/`main`; drop stale `a657c617…` pin default.
+- Closes the alternate Mac double-click path that still skipped tip#145 `-f` helpers.
+
+### Tip #148 (DOWNSTREAM-ONLY stall-class parity)
+
+- [`HERMES-DOWNSTREAM-ONLY.command`](HERMES-DOWNSTREAM-ONLY.command): now matches STALL/ONE-SHOT stall-class defaults — pin run `2954673`, `HERMES_AUTO_SURGICAL_LAND=0`, zombie=`1`/`3`, `WAIT_INVENTORY=1`, Linear key preflight, tip#142 once launcher first.
+- Closes the third Mac entrypoint that previously ran bare dispatcher without stall recovery / inventory wait.
+
+### Tip #149 (Stage A preflight `-f`, not `-x`)
+
+- [`hermes-cloud-agent-start.sh`](shared-scripts/hermes-cloud-agent-start.sh) + [`hermes-moltbot-cloud-wait-join-then-apply.sh`](shared-scripts/hermes-moltbot-cloud-wait-join-then-apply.sh): Stage A source/live preflight now resolve with `-f` + `chmod +x` before `bash` (0644 curl class).
+- Closes the tip#141–#145 class gap left on the **post-surgical-land Stage A** path (credentialed-resume already fixed in #145).
+
+### Tip #150 (inventory-wait rejects contract-install SEED)
+
+- [`hermes-dispatcher-part-b.sh`](shared-scripts/hermes-dispatcher-part-b.sh) `_inventory_evidence_ok`: reject `pending` first line + `SEED` / `NOT live inventory` markers **before** accepting EP04/workspace/tts keywords.
+- Proven false-pass: tip#97 SEED embeds `/opt/moltbot`, `tts`, `EP04` in comments → old check returned OK and could mark Downstream DONE without live inventory.
+- Live accept requires dated LIVE / sha / host-verify signals (or EP + real `work/ep` artifact paths), not archaeology prose.
+
+### Tip #151 (DONE requires live inventory present)
+
+- [`hermes-dispatcher-part-c.sh`](shared-scripts/hermes-dispatcher-part-c.sh): bare `## Downstream DONE` only when `inventory wait: present` (INVENTORY_STATUS=present + STARVE_RC=0).
+- `HERMES_WAIT_INVENTORY=0` no longer posts bare DONE with `skipped` — posts `## Downstream COMPLETE (inventory deferred)` instead so obj5 cred_DONE gates cannot false-count.
+- Inventory miss/timeout still posts `## Downstream PARTIAL` + non-zero exit (tip#150 SEED reject remains the wait gate).
+
+### Tip #152 (FALLBACK pin includes tip #150/#151)
+
+- [`hermes-dispatcher-downstream.sh`](shared-scripts/hermes-dispatcher-downstream.sh): default `HERMES_DOWNSTREAM_FALLBACK_REF` bumped `dc1980b` (#118) → **`6c6881a`** (tip #151).
+- CDN fail on `main` must not assemble pre-#150/#151 parts (SEED false-pass / bare DONE with inventory skipped).
+
+### Tip #153 (AuthURL beacon: skip dead gh + MCP handoff dedupe)
+
+- [`hermes-join-part-b.sh`](shared-scripts/hermes-join-part-b.sh): auto-beacon **skips `gh`** when `GH_TOKEN_INVALID.flag` is set; wraps `gh` in `timeout` (default 8s); first gh 401 sets the invalid flag.
+- Tip CURRENT_AUTHURL.md / ICS tip puts also skip `gh` when the flag is set (curl path already did).
+- When beacon cannot post (dead ghs_/no Linear key), writing `AUTHURL_MCP_SURFACE_NEEDED.txt` also records the URL into `LAST_POSTED_AUTHURL.txt` so wait-login does **not** re-run dead `gh` every poll while `LAST_POSTED` still holds a retired remint (e.g. `80d5b860` vs live `1d0d8050`).
+- Remint still re-beacons (URL change ≠ lastfile). Agent clears MCP surface after tip/#1/RAL-823 MCP post.
+
+### Tip #154 (NAG: machine Downstream DONE only)
+
+- [`HERMES-INSTALL-DOWNSTREAM-NAG.command`](HERMES-INSTALL-DOWNSTREAM-NAG.command): stop matching prose substring `## Downstream DONE` (42+ tooling hits on issue #1 page 1 → false unload).
+- Require **first line exact** `## Downstream DONE` **and** `host=` in body (credentialed machine beacon).
+- Curl path **paginates** all comment pages (issue #1 >100 comments); `gh --paginate` unchanged.
+- Explicitly ignores `## Downstream COMPLETE (inventory deferred)` (tip #151) so nag keeps firing until live inventory DONE.
+
+### Tip #155 (NAG matches
