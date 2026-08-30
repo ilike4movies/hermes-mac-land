@@ -64,3 +64,23 @@ _preflight_mac_secrets() {
     exit 1
   fi
   # Tip #159: pre-export GitHub status token so curl fallback works if gh hangs mid-post.
+  if [[ -z "${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}" ]] && command -v gh >/dev/null 2>&1; then
+    _tok="$(timeout 5 gh auth token 2>/dev/null || true)"
+    if [[ -n "$_tok" ]]; then
+      export HERMES_STATUS_GITHUB_TOKEN="$_tok"
+      echo "OK tip #159 status token exported from gh auth"
+    else
+      echo "WARN tip #159: no gh auth token — Downstream DONE beacon may fail-closed; run: gh auth login"
+    fi
+  fi
+
+}
+
+
+_open_tailscale_approve_early() {
+  # Open Tailscale admin (pending machines) + tip CURRENT_AUTHURL so Mac ONE-SHOT
+  # can also approve the cloud waiter node as a parallel path.
+  # Opt out: HERMES_ONE_SHOT_OPEN_TAILSCALE=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_TAILSCALE:-1}" != "1" ]]; then
+    echo "SKIP early Tailscale approve tabs (HERMES_ONE_SHOT_OPEN_TAILSCALE=0)"
+    ret
