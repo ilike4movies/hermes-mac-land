@@ -86,7 +86,7 @@
 - Throttled to ≤1/30m (`~/.hermes/nag-pathc-last.txt`) so 5-min nag ticks do not spam tabs.
 - Opt out: `HERMES_NAG_OPEN_PATHC_RECONNECT=0`
 - Closes: installed nag kept opening ONE-SHOT/Web UI/Tailscale but never surfaced Path C reconnect after tip#171 ONE-SHOT-only opens.
-- Cloud Path C alts @ tip#172 still fail: Github MCP Contents API **404** on `.github/workflows/`; Zapier `put_file_from_repo` **Bad credentials`.
+- Cloud Path C alts @ tip#172 still fail: Github MCP Contents API **404** on `.github/workflows/`; Zapier `put_file_from_repo` **Bad credentials**.
 - Tip #169 soft-hold tick + Quo SMS remain the primary non-Gmail wakes while AuthURL holds.
 
 ### Tip #173 (Dropbox WAKE content refresh — same public link)
