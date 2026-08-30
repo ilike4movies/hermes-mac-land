@@ -335,6 +335,30 @@ wait_for_running() {
     if [[ "$st" == "NeedsLogin" || "$st" == "NoState" || -z "$st" ]]; then
       _ensure_single_tailscale_up_wait "$max" || true
       _refresh_authurl_file || true
+      # Tip #169: periodically run standalone ICS soft-hold (CDN TIP_PIN) without remint/respawn.
+      # Covers long-lived wait-login that sourced pre-tip168 part-b (in-memory resolver stale).
+      if [[ "${HERMES_ICS_SOFT_HOLD_ON_STATUS:-1}" == "1" ]]; then
+        local hold_every="${HERMES_ICS_SOFT_HOLD_EVERY_SECS:-900}" hold_stamp="$SCRIPT_DIR/LAST_ICS_SOFT_HOLD.at" hold_now
+        hold_now="$(date +%s)"
+        if [[ ! -f "$hold_stamp" ]] || (( hold_now - $(cat "$hold_stamp" 2>/dev/null || echo 0) >= hold_every )); then
+          if [[ -x "$SCRIPT_DIR/hermes-ics-soft-hold.sh" ]]; then
+            HERMES_ICS_SOFT_HOLD_DIR="$SCRIPT_DIR" bash "$SCRIPT_DIR/hermes-ics-soft-hold.sh" >/dev/null 2>&1 || true
+          elif [[ -f "$SCRIPT_DIR/hermes-ics-soft-hold.sh" ]]; then
+            HERMES_ICS_SOFT_HOLD_DIR="$SCRIPT_DIR" bash "$SCRIPT_DIR/hermes-ics-soft-hold.sh" >/dev/null 2>&1 || true
+          else
+            # CDN-fetch soft-hold script when apply mirror is mid-tip
+            local _hold_tmp
+            _hold_tmp="$(mktemp)"
+            if curl -fsSL --max-time 5 \
+              "https://raw.githubusercontent.com/${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}/main/shared-scripts/hermes-ics-soft-hold.sh" \
+              -o "$_hold_tmp" 2>/dev/null; then
+              HERMES_ICS_SOFT_HOLD_DIR="$SCRIPT_DIR" bash "$_hold_tmp" >/dev/null 2>&1 || true
+            fi
+            rm -f "$_hold_tmp"
+          fi
+          echo "$hold_now" >"$hold_stamp" 2>/dev/null || true
+        fi
+      fi
     fi
     sleep 5
     i=$((i + 5))
