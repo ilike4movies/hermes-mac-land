@@ -284,3 +284,16 @@ ICS
         ics_sha="$(gh api "repos/${gh_repo}/contents/${ics_path}" --jq .sha 2>/dev/null || true)"
       elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
         ics_sha="$(curl -fsS -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"           "https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${ics_path}" 2>/dev/null           | python3 -c 'import sys,json; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)"
+      fi
+      ics_b64="$(printf '%s' "$ics_body" | base64 | tr -d '\n')"
+      if command -v gh >/dev/null 2>&1; then
+        if [[ -n "$ics_sha" ]]; then
+          gh api --method PUT "repos/${gh_repo}/contents/${ics_path}" -f message="ops: soft-hold refresh HERMES-APPROVE-TAILSCALE.ics (#134)" -f content="$ics_b64" -f branch=main -f sha="$ics_sha" >/dev/null 2>&1 && echo "OK tip HERMES-APPROVE-TAILSCALE.ics soft-hold refreshed on ${gh_repo}"
+        else
+          gh api --method PUT "repos/${gh_repo}/contents/${ics_path}" -f message="ops: soft-hold refresh HERMES-APPROVE-TAILSCALE.ics (#134)" -f content="$ics_b64" -f branch=main >/dev/null 2>&1 && echo "OK tip HERMES-APPROVE-TAILSCALE.ics soft-hold refreshed on ${gh_repo}"
+        fi
+      elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
+        ics_api="https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${ics_path}"
+        ics_payload="$(ICS_B64="$ics_b64" ICS_SHA="$ics_sha" python3 -c 'import json,os; d={"message":"ops: soft-hold refresh HERMES-APPROVE-TAILSCALE.ics (#134)","content":os.environ["ICS_B64"],"branch":"main"}; s=os.environ.get("ICS_SHA") or "";
+print(json.dumps({**d, **({"sha":s} if s else {})}))')"
+        curl -fsS -X PUT -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"           -H "Content-Type: application/json" --data "$ics_payload" "$ics_api" >/dev/null 2>&1 && echo "OK tip HERMES-APPROVE-TAILSCALE.ics soft-hold refreshed on ${gh_repo} (curl)"
