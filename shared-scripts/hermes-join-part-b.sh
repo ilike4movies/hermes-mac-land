@@ -153,4 +153,27 @@ PY
 import os, re
 path = os.environ["ICS_PATH"]
 url = os.environ["AUTHURL_ICS_URL"]
-suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL i
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "170"
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "170"
+text = open(path, encoding="utf-8", errors="replace").read()
+summary = f"SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})"
+desc = (
+    f"DESCRIPTION:Approve NOW: {url}\\n"
+    f"Then Mac ONE-SHOT tip #{tip} (CDN TIP_PIN/#169 soft-hold tick; #168 hot-pick; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE; FALLBACK b2b5fc4 tip159). "
+    "Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11."
+)
+valarm = f"DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #{tip}"
+out = []
+in_valarm = False
+for line in text.splitlines():
+    if line.startswith("BEGIN:VALARM"):
+        in_valarm = True
+        out.append(line)
+        continue
+    if line.startswith("END:VALARM"):
+        in_valarm = False
+        out.append(line)
+        continue
+    if line.startswith("SUMMARY:"):
+       
