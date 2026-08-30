@@ -136,4 +136,18 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 ### Tip #141 (secrets-bridge `-f` + heartbeat)
 
-- [`hermes-cloud-secrets-bridge-poller.sh`](shared-scripts/hermes-cloud-secrets-bridge-poller.sh): run bridge scripts with `bash` when the file **exists**, n
+- [`hermes-cloud-secrets-bridge-poller.sh`](shared-scripts/hermes-cloud-secrets-bridge-poller.sh): run bridge scripts with `bash` when the file **exists**, not only when `+x` (curl|raw downloads often land `0644`). Prefer tip-named `hermes-moltbot-cloud-bridge-secrets-from-env.sh`.
+- Heartbeat every `HERMES_SECRETS_BRIDGE_HEARTBEAT_EVERY` polls (default 30 ≈5m at 10s interval) so log mtime proves the poller is alive.
+- Live bug: poller pid stayed up for 12h+ but never invoked the bridge because `-x` failed — mid-session Runtime Secrets would not arm waiters until this tip.
+
+### Tip #142 (run-downstream-once bash + tip CDN fetch)
+
+- [`hermes-cloud-run-downstream-once.sh`](shared-scripts/hermes-cloud-run-downstream-once.sh): resolve dispatcher with `-f`+`bash` (not `-x`-only); if missing locally, curl tip CDN `shared-scripts/hermes-dispatcher-downstream.sh` before fail-closed exit 127.
+- Prevents post-approve on-join/wait-login stall from aborting after AuthURL join when apply-dir scripts are 0644 or not yet synced.
+
+### Tip #143 (on-join/supervisor once `-f` + CDN)
+
+- [`hermes-downstream-on-join-watcher.sh`](shared-scripts/hermes-downstream-on-join-watcher.sh), [`hermes-cloud-wait-login-supervisor.sh`](shared-scripts/hermes-cloud-wait-login-supervisor.sh), [`hermes-join-part-c.sh`](shared-scripts/hermes-join-part-c.sh): resolve `hermes-cloud-run-downstream-once.sh` with `-f` (+ tip CDN fetch), not `-x`-only.
+- Closes the tip#141/#142 class gap at the caller: 0644 once launcher no longer skips post-approve stall.
+
+### Tip #144 (super
