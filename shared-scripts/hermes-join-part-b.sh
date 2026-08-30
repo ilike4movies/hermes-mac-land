@@ -35,4 +35,21 @@ if m:
 raise SystemExit(1)
 PY
 )" || parsed=""
-    best="$(_tip_max "$best" "$
+    best="$(_tip_max "$best" "$parsed")"
+  fi
+  # Tip #168 CDN hot-pick (short timeout; never blocks soft-hold long).
+  if [[ "${HERMES_TIP_PIN_CDN:-1}" == "1" ]] && command -v curl >/dev/null 2>&1; then
+    cdn_pin="$(curl -fsSL --max-time "${HERMES_TIP_PIN_CDN_TIMEOUT_SECS:-3}" \
+      "https://raw.githubusercontent.com/${repo}/main/TIP_PIN" 2>/dev/null \
+      | tr -dc '0-9' | head -c 8 || true)"
+    best="$(_tip_max "$best" "$cdn_pin")"
+    if [[ -n "$cdn_pin" && -n "$best" && "$cdn_pin" == "$best" && "${HERMES_TIP_PIN_CDN_SYNC:-1}" == "1" ]]; then
+      if [[ -z "$pin" || "$cdn_pin" != "$pin" ]]; then
+        printf '%s\n' "$cdn_pin" >"$pinfile" 2>/dev/null || true
+      fi
+    fi
+    if [[ -z "$best" ]]; then
+      cdn_md="$(curl -fsSL --max-time "${HERMES_TIP_PIN_CDN_TIMEOUT_SECS:-3}" \
+        "https://raw.githubusercontent.com/${repo}/main/CURRENT_AUTHURL.md" 2>/dev/null || true)"
+      if [[ -n "$cdn_md" ]] && command -v python3 >/dev/null 2>&1; then
+        parsed="$(CURRENT_AUTHURL_MD_TEXT="$cdn_md" pyth
