@@ -83,3 +83,25 @@ _refresh_authurl_file() {
   [[ -n "$url" ]] || return 0
   local pending="${SCRIPT_DIR}/PENDING_AUTHURL_TIP.txt"
   local auth_changed=0 pending_stale=0
+  if [[ ! -f "$authfile" ]] || ! grep -qF "$url" "$authfile" 2>/dev/null; then
+    auth_changed=1
+  fi
+  if [[ ! -f "$pending" ]] || ! grep -qF "$url" "$pending" 2>/dev/null; then
+    pending_stale=1
+  fi
+  if [[ "$auth_changed" == "1" ]]; then
+    {
+      printf '%s\n' "$url"
+      printf 'ACTIVE — approve now (%s).\n' "$(date -u +%FT%TZ)"
+      echo 'Cloud waiters armed; TS_AUTHKEY preferred. Proactive refresh before prior TTL.'
+    } >"$authfile"
+    echo "APPROVE_THIS_URL=$url"
+  fi
+  # Tip #134: soft-hold ICS rewrite when calendar window is expired/near-expiry
+  # while the same AuthURL is still advertised (avoids mid-approve calendar miss).
+  # Tip #166: also rewrite SUMMARY/DESCRIPTION in-place when tip pin is stale even if
+  # DTEND remain_s is still healthy (no AuthURL remint; preserve UID/DTEND).
+  local ics_need_refresh=0
+  local ics_tip_stale=0
+  local ics_local="${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics"
+  # Tip #167/#168: resolve expected tip from env / TIP_PIN / CURRENT_AUTHURL.md / CDN (default 168).
