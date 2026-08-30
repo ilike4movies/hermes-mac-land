@@ -1,0 +1,1 @@
+@/tmp/OPERATOR_EXACT_FOR_MCP.txt
