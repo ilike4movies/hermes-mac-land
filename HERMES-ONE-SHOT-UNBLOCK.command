@@ -68,4 +68,96 @@ _preflight_mac_secrets() {
     _tok="$(timeout 5 gh auth token 2>/dev/null || true)"
     if [[ -n "$_tok" ]]; then
       export HERMES_STATUS_GITHUB_TOKEN="$_tok"
-      echo "OK tip #159 status token exported from gh 
+      echo "OK tip #159 status token exported from gh auth"
+    else
+      echo "WARN tip #159: no gh auth token — Downstream DONE beacon may fail-closed; run: gh auth login"
+    fi
+  fi
+
+}
+
+
+_open_tailscale_approve_early() {
+  # Open Tailscale admin (pending machines) + tip CURRENT_AUTHURL so Mac ONE-SHOT
+  # can also approve the cloud waiter node as a parallel path.
+  # Opt out: HERMES_ONE_SHOT_OPEN_TAILSCALE=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_TAILSCALE:-1}" != "1" ]]; then
+    echo "SKIP early Tailscale approve tabs (HERMES_ONE_SHOT_OPEN_TAILSCALE=0)"
+    return 0
+  fi
+  local ADMIN="https://login.tailscale.com/admin/machines"
+  local AUTH=""
+  local url f="/tmp/hermes-current-authurl-$$.txt"
+  echo ""
+  echo "=== Parallel: Tailscale approve (cloud waiter / pending machines) ==="
+  echo "Admin (approve pending): $ADMIN"
+  rm -f "$f"
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/CURRENT_AUTHURL.md" \
+    "https://raw.githubusercontent.com/${REPO}/main/CURRENT_AUTHURL.md"
+  do
+    if curl -fsSL "$url" -o "$f" 2>/dev/null; then
+      AUTH=$(grep -Eo 'https://login\.tailscale\.com/a/[A-Za-z0-9]+' "$f" | head -1 || true)
+      [[ -n "$AUTH" ]] && break
+    fi
+    rm -f "$f"
+  done
+  rm -f "$f"
+  if [[ -n "$AUTH" ]]; then
+    echo "Live AuthURL: $AUTH"
+    osascript -e 'display notification "Approve Tailscale pending + AuthURL while STALL runs" with title "Hermes ONE-SHOT Tailscale" sound name "Glass"' 2>/dev/null || true
+    open "$ADMIN" 2>/dev/null || true
+    open "$AUTH" 2>/dev/null || true
+  else
+    echo "WARN no tip CURRENT_AUTHURL.md — opening admin machines only"
+    osascript -e 'display notification "Approve pending Tailscale machines while STALL runs" with title "Hermes ONE-SHOT Tailscale" sound name "Glass"' 2>/dev/null || true
+    open "$ADMIN" 2>/dev/null || true
+  fi
+  # Calendar wake ICS (tip HERMES-APPROVE-TAILSCALE.ics). Opt out: HERMES_ONE_SHOT_OPEN_ICS=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_ICS:-1}" == "1" ]]; then
+    local ics="${HOME}/Downloads/HERMES-APPROVE-TAILSCALE.ics"
+    if curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/HERMES-APPROVE-TAILSCALE.ics" -o "$ics" 2>/dev/null; then
+      echo "Calendar ICS: $ics"
+      open "$ics" 2>/dev/null || true
+    else
+      echo "WARN tip HERMES-APPROVE-TAILSCALE.ics not available yet"
+    fi
+  fi
+}
+
+_open_operator_linear_early() {
+  # Surface operator wake ticket so Mac session sees current AuthURL + ONE-SHOT paste.
+  # Opt out: HERMES_ONE_SHOT_OPEN_LINEAR=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_LINEAR:-1}" != "1" ]]; then
+    echo "SKIP early Linear operator ticket (HERMES_ONE_SHOT_OPEN_LINEAR=0)"
+    return 0
+  fi
+  local URL="${HERMES_OPERATOR_LINEAR_URL:-https://linear.app/ilike4/issue/RAL-823/operator-mac-one-shot-tailscale-approve-now-authurl-1d0d8050-canary}"
+  echo ""
+  echo "=== Parallel: Linear operator ticket ==="
+  echo "$URL"
+  open "$URL" 2>/dev/null || true
+}
+
+_open_webui_workflow_early() {
+  # Open create-file + Raw paste tabs while Phase 1 STALL runs so the operator can
+  # enable Actions in parallel (cloud API tokens cannot write .github/workflows/).
+  # Opt out: HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_WEBUI_EARLY:-1}" != "1" ]]; then
+    echo "SKIP early Web UI (HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0)"
+    return 0
+  fi
+  local WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+  local WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+  echo ""
+  echo "=== Parallel: Web UI workflow enable (paste Raw while STALL runs) ==="
+  echo "Create file: $WEBUI_NEW"
+  echo "Paste source (Raw): $WEBUI_RAW"
+  echo "Action secrets (if needed): https://github.com/${REPO}/settings/secrets/actions"
+  osascript -e 'display notification "Browser: paste Raw into workflow create tab while STALL runs" with title "Hermes ONE-SHOT Web UI" sound name "Glass"' 2>/dev/null || true
+  open "$WEBUI_NEW" 2>/dev/null || true
+  open "$WEBUI_RAW" 2>/dev/null || true
+}
+
+_open_pathc_reconnect_early() {
+  # Tip #171: 
