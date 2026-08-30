@@ -11,4 +11,21 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 
 # Hermes dispatcher — operator unblock (RAL-800)
 
-**Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not
+**Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
+
+**Updated:** 2026-08-29T04:52Z
+
+## ⚠️ Linear auto-Done hygiene
+
+**Do NOT attach GitHub PRs to open canaries** while they are open — Linear auto-Dones on PR merge and falsely closes tickets before `.11` prove-out.
+
+**Also:** do **not** put open canary ticket IDs in **PR titles** — GitHub auto-links on merge even when you do not attach manually.
+
+| Incident | Cause | Fix |
+|----------|-------|-----|
+| 20:48Z | #18 merged + attached | Reverted; attachment detached @ 21:02Z |
+| 21:29Z | #20 title contained canary ID → auto-attach | Reverted @ 21:30Z; attachment detached |
+| 21:38Z | MCP comment used wrong issue UUID → posted on RAL-800 | Corrected @ 21:40Z; see UUID table below |
+| 01:04Z | Cloud subagent `bc-3914e61d` booted on **Ooterverse** (not hermes-mac-land) | Downstream FAILED pre-SSH; use Mac or web-UI LEGACY `.11` agent |
+| 03:49Z | #40 auto-attached to RAL-634 (Done) | Detach if needed; do not re-open RAL-634 for doc-only merges |
+| 04
