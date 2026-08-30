@@ -310,4 +310,55 @@ _install_workflow_via_git_push() {
     return 1
   fi
   echo "tip #161: trying git clone+push fallback (SSH first)…"
-  if git clone --depth 1 "git@github.com:${REPO}.git" "$work/repo" >/tmp/hermes-wf-git-clone.out 2>/tmp/hermes-wf-git-c
+  if git clone --depth 1 "git@github.com:${REPO}.git" "$work/repo" >/tmp/hermes-wf-git-clone.out 2>/tmp/hermes-wf-git-clone.err; then
+    echo "OK tip #161 cloned via SSH"
+  elif GIT_TERMINAL_PROMPT=0 gh repo clone "$REPO" "$work/repo" -- --depth 1 >/tmp/hermes-wf-git-clone.out 2>>/tmp/hermes-wf-git-clone.err; then
+    echo "OK tip #161 cloned via gh"
+  else
+    echo "WARN tip #161: git clone failed"
+    cat /tmp/hermes-wf-git-clone.err 2>/dev/null || true
+    rm -f "$src_file"
+    rm -rf "$work"
+    return 1
+  fi
+  mkdir -p "$work/repo/.github/workflows"
+  cp "$src_file" "$work/repo/${WF_PATH}"
+  rm -f "$src_file"
+  (
+    set -euo pipefail
+    cd "$work/repo"
+    git config user.email "hermes-mac-land@local"
+    git config user.name "Hermes ONE-SHOT tip161"
+    git add "$WF_PATH"
+    if git diff --cached --quiet; then
+      echo "OK tip #161: workflow already present in clone"
+      exit 0
+    fi
+    git commit -m "ci: enable downstream-stall workflow under .github/workflows (tip #161 git fallback)"
+    git push origin HEAD:main
+  )
+  local rc=$?
+  rm -rf "$work"
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK tip #161 installed ${WF_PATH} via git push"
+    return 0
+  fi
+  echo "WARN tip #161: git push failed (rc=$rc)"
+  return 1
+}
+
+_run_enable_actions() {
+  echo ""
+  echo "=== Phase 2: ENABLE Downstream Actions (local gh) ==="
+  osascript -e 'display notification "Phase 2: enabling GitHub Actions path…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
+  # Tip #127: same as ENABLE #126 — prefer HERMES_GH_WORKFLOW_PAT when gh lacks workflows scope.
+  _load_mac_hermes_env || true
+  if [[ -n "${HERMES_GH_WORKFLOW_PAT:-}" ]]; then
+    export GH_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+    export GITHUB_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+    echo "OK using HERMES_GH_WORKFLOW_PAT for workflow write (tip #127)"
+  fi
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "FAILED: gh CLI missing. Install GitHub CLI, then: gh auth login"
+    echo "Or web UI: paste Raw ci/downstream-stall.yml into create-file editor"
+    WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflo
