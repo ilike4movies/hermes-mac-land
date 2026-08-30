@@ -160,4 +160,205 @@ _open_webui_workflow_early() {
 }
 
 _install_downstream_nag() {
-  # Keep Mac reminding every 5 mi
+  # Keep Mac reminding every 5 min until "## Downstream DONE" posts on issue #1.
+  # Opt out: HERMES_ONE_SHOT_INSTALL_NAG=0
+  if [[ "${HERMES_ONE_SHOT_INSTALL_NAG:-1}" != "1" ]]; then
+    echo "SKIP downstream nag install (HERMES_ONE_SHOT_INSTALL_NAG=0)"
+    return 0
+  fi
+  echo ""
+  echo "=== Install Downstream nag LaunchAgent (5 min + auto ONE-SHOT until DONE) ==="
+  local NAG="/tmp/hermes-install-downstream-nag-oneshot-$$.command"
+  local url
+  rm -f "$NAG"
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/HERMES-INSTALL-DOWNSTREAM-NAG.command" \
+    "https://raw.githubusercontent.com/${REPO}/main/HERMES-INSTALL-DOWNSTREAM-NAG.command"
+  do
+    if curl -fsSL "$url" -o "$NAG" \
+      && grep -q 'com.hermes.downstream-nag' "$NAG" 2>/dev/null \
+      && grep -q '_machine_downstream_done' "$NAG" 2>/dev/null \
+      && grep -q 'Downstream DONE @' "$NAG" 2>/dev/null; then
+      # Tip #155: require tip#154+ detector (rejects stale pre-154 NAG that false-unloads on prose)
+      # and tip#155 timestamped DONE match (part-c posts "## Downstream DONE @ $WHEN").
+      chmod +x "$NAG"
+      # Noninteractive: skip "Press Enter" (needs tip with HERMES_NAG_NONINTERACTIVE support).
+      if HERMES_NAG_NONINTERACTIVE=1 bash "$NAG"; then
+        echo "OK downstream nag installed/refreshed"
+        rm -f "$NAG"
+        return 0
+      fi
+      echo "WARN nag installer exited non-zero — continuing ONE-SHOT"
+      rm -f "$NAG"
+      return 0
+    fi
+    rm -f "$NAG"
+  done
+  echo "WARN could not fetch HERMES-INSTALL-DOWNSTREAM-NAG.command — continuing"
+  return 0
+}
+
+_run_stall() {
+  echo ""
+  echo "=== Phase 1: STALL downstream (SSH/.11) ==="
+  osascript -e 'display notification "Phase 1: STALL downstream on .11…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
+  local SCRIPT="/tmp/hermes-dispatcher-downstream-oneshot-$$.sh"
+  local ONCE="/tmp/hermes-cloud-run-downstream-once-$$.sh"
+  rm -f "$SCRIPT" "$ONCE"
+  local FETCHED=""
+  local url
+  # Tip #146: prefer tip#142 once launcher + tip main first (tip#145 -f helpers).
+  # Old HERMES_DOWNSTREAM_PIN default pinned a pre-#145 SHA and skipped tip fixes.
+  local DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-}"
+  _is_good_once() {
+    local f="$1"
+    grep -q 'Tip #142' "$f" 2>/dev/null \
+      && grep -q 'hermes-dispatcher-downstream.sh' "$f" 2>/dev/null \
+      && grep -q 'flock' "$f" 2>/dev/null
+  }
+  _is_good_downstream() {
+    local f="$1"
+    if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
+       && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
+       && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null \
+       && grep -q '_parts_integrity_ok' "$f" 2>/dev/null \
+       && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
+      # Tip #162: require tip #160 FALLBACK / tip #159 fail-closed markers
+      return 0
+    fi
+    if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
+       && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null \
+       && grep -q 'WAIT_INVENTORY' "$f" 2>/dev/null \
+       && grep -q 'fail-closed' "$f" 2>/dev/null \
+       && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
+      return 0
+    fi
+    return 1
+  }
+  # Prefer tip#142 once launcher (single-flight + CDN dispatcher resolve).
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-cloud-run-downstream-once.sh" \
+    "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-cloud-run-downstream-once.sh"
+  do
+    echo "Trying once launcher: $url"
+    if curl -fsSL "$url" -o "$ONCE" && _is_good_once "$ONCE"; then
+      chmod +x "$ONCE" 2>/dev/null || true
+      echo "OK tip#146 using once launcher: $url"
+      set +e
+      bash "$ONCE"
+      local rc=$?
+      set -e
+      rm -f "$ONCE"
+      if [[ "$rc" -eq 0 ]]; then
+        echo "OK STALL downstream finished for run $HERMES_RUN_ID (once)"
+        return 0
+      fi
+      echo "WARN once launcher exited $rc — falling back to dispatcher entrypoint"
+      break
+    fi
+    rm -f "$ONCE"
+  done
+  # Dispatcher entrypoint: tip/main first; optional legacy pin last.
+  local urls=(
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-dispatcher-downstream.sh"
+    "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-dispatcher-downstream.sh"
+  )
+  if [[ -n "$DOWNSTREAM_PIN" ]]; then
+    urls+=("https://raw.githubusercontent.com/${REPO}/${DOWNSTREAM_PIN}/shared-scripts/hermes-dispatcher-downstream.sh")
+  fi
+  for url in "${urls[@]}"; do
+    echo "Trying fetch: $url"
+    if curl -fsSL "$url" -o "$SCRIPT"; then
+      if _is_good_downstream "$SCRIPT"; then
+        FETCHED="$url"
+        break
+      fi
+      rm -f "$SCRIPT"
+    fi
+  done
+  if [[ -z "$FETCHED" || ! -s "$SCRIPT" ]]; then
+    echo "STALL fetch FAILED"
+    return 2
+  fi
+  chmod +x "$SCRIPT" 2>/dev/null || true
+  echo "OK fetched: $FETCHED"
+  set +e
+  bash "$SCRIPT"
+  local rc=$?
+  set -e
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK STALL downstream finished for run $HERMES_RUN_ID"
+    return 0
+  fi
+  echo "STALL downstream exited $rc"
+  return 1
+}
+
+_install_workflow_via_git_push() {
+  # Tip #161: contents API needs OAuth workflow scope; SSH/git push often works without it.
+  local WF_PATH=".github/workflows/downstream-stall.yml"
+  local SRC_URL="https://raw.githubusercontent.com/${REPO}/main/ci/downstream-stall.yml"
+  local work="/tmp/hermes-wf-git-oneshot-$$"
+  local src_file="/tmp/hermes-downstream-stall-yml-git-$$.yml"
+  rm -rf "$work"
+  mkdir -p "$work"
+  curl -fsSL "$SRC_URL" -o "$src_file"
+  if ! grep -q 'workflow_dispatch' "$src_file" || ! grep -q 'hermes-dispatcher-downstream.sh' "$src_file"; then
+    echo "WARN tip #161: source workflow incomplete"
+    rm -f "$src_file"
+    rm -rf "$work"
+    return 1
+  fi
+  echo "tip #161: trying git clone+push fallback (SSH first)…"
+  if git clone --depth 1 "git@github.com:${REPO}.git" "$work/repo" >/tmp/hermes-wf-git-clone.out 2>/tmp/hermes-wf-git-clone.err; then
+    echo "OK tip #161 cloned via SSH"
+  elif GIT_TERMINAL_PROMPT=0 gh repo clone "$REPO" "$work/repo" -- --depth 1 >/tmp/hermes-wf-git-clone.out 2>>/tmp/hermes-wf-git-clone.err; then
+    echo "OK tip #161 cloned via gh"
+  else
+    echo "WARN tip #161: git clone failed"
+    cat /tmp/hermes-wf-git-clone.err 2>/dev/null || true
+    rm -f "$src_file"
+    rm -rf "$work"
+    return 1
+  fi
+  mkdir -p "$work/repo/.github/workflows"
+  cp "$src_file" "$work/repo/${WF_PATH}"
+  rm -f "$src_file"
+  (
+    set -euo pipefail
+    cd "$work/repo"
+    git config user.email "hermes-mac-land@local"
+    git config user.name "Hermes ONE-SHOT tip161"
+    git add "$WF_PATH"
+    if git diff --cached --quiet; then
+      echo "OK tip #161: workflow already present in clone"
+      exit 0
+    fi
+    git commit -m "ci: enable downstream-stall workflow under .github/workflows (tip #161 git fallback)"
+    git push origin HEAD:main
+  )
+  local rc=$?
+  rm -rf "$work"
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK tip #161 installed ${WF_PATH} via git push"
+    return 0
+  fi
+  echo "WARN tip #161: git push failed (rc=$rc)"
+  return 1
+}
+
+_run_enable_actions() {
+  echo ""
+  echo "=== Phase 2: ENABLE Downstream Actions (local gh) ==="
+  osascript -e 'display notification "Phase 2: enabling GitHub Actions path…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
+  # Tip #127: same as ENABLE #126 — prefer HERMES_GH_WORKFLOW_PAT when gh lacks workflows scope.
+  _load_mac_hermes_env || true
+  if [[ -n "${HERMES_GH_WORKFLOW_PAT:-}" ]]; then
+    export GH_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+    export GITHUB_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+    echo "OK using HERMES_GH_WORKFLOW_PAT for workflow write (tip #127)"
+  fi
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "FAILED: gh CLI missing. Install GitHub CLI, then: gh auth login"
+    echo "Or web UI: paste Raw ci/downstream-stall.yml into create-file editor"
+    WEBUI_NEW="https://github.com/${REPO}/new/main?filename
