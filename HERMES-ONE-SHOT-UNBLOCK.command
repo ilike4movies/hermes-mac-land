@@ -253,4 +253,61 @@ _run_stall() {
         echo "OK STALL downstream finished for run $HERMES_RUN_ID (once)"
         return 0
       fi
-      echo "WARN once launcher exited $rc — falling 
+      echo "WARN once launcher exited $rc — falling back to dispatcher entrypoint"
+      break
+    fi
+    rm -f "$ONCE"
+  done
+  # Dispatcher entrypoint: tip/main first; optional legacy pin last.
+  local urls=(
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-dispatcher-downstream.sh"
+    "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-dispatcher-downstream.sh"
+  )
+  if [[ -n "$DOWNSTREAM_PIN" ]]; then
+    urls+=("https://raw.githubusercontent.com/${REPO}/${DOWNSTREAM_PIN}/shared-scripts/hermes-dispatcher-downstream.sh")
+  fi
+  for url in "${urls[@]}"; do
+    echo "Trying fetch: $url"
+    if curl -fsSL "$url" -o "$SCRIPT"; then
+      if _is_good_downstream "$SCRIPT"; then
+        FETCHED="$url"
+        break
+      fi
+      rm -f "$SCRIPT"
+    fi
+  done
+  if [[ -z "$FETCHED" || ! -s "$SCRIPT" ]]; then
+    echo "STALL fetch FAILED"
+    return 2
+  fi
+  chmod +x "$SCRIPT" 2>/dev/null || true
+  echo "OK fetched: $FETCHED"
+  set +e
+  bash "$SCRIPT"
+  local rc=$?
+  set -e
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK STALL downstream finished for run $HERMES_RUN_ID"
+    return 0
+  fi
+  echo "STALL downstream exited $rc"
+  return 1
+}
+
+_install_workflow_via_git_push() {
+  # Tip #161: contents API needs OAuth workflow scope; SSH/git push often works without it.
+  local WF_PATH=".github/workflows/downstream-stall.yml"
+  local SRC_URL="https://raw.githubusercontent.com/${REPO}/main/ci/downstream-stall.yml"
+  local work="/tmp/hermes-wf-git-oneshot-$$"
+  local src_file="/tmp/hermes-downstream-stall-yml-git-$$.yml"
+  rm -rf "$work"
+  mkdir -p "$work"
+  curl -fsSL "$SRC_URL" -o "$src_file"
+  if ! grep -q 'workflow_dispatch' "$src_file" || ! grep -q 'hermes-dispatcher-downstream.sh' "$src_file"; then
+    echo "WARN tip #161: source workflow incomplete"
+    rm -f "$src_file"
+    rm -rf "$work"
+    return 1
+  fi
+  echo "tip #161: trying git clone+push fallback (SSH first)…"
+  if git clone --depth 1 "git@github.com:${REPO}.git" "$work/repo" >/tmp/hermes-wf-git-clone.out 2>/tmp/hermes-wf-git-c
