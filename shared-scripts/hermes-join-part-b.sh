@@ -68,7 +68,7 @@ PY
       fi
     fi
   fi
-  printf '%s\n' "${best:-168}"
+  printf '%s\n' "${best:-169}"
 }
 
 
@@ -132,7 +132,7 @@ PY
     if ! ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" python3 - <<'PY'
 import os, re
 path = os.environ["ICS_PATH"]
-expect = int(os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168")
+expect = int(os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "169")
 try:
     text = open(path, encoding="utf-8", errors="replace").read()
 except OSError:
@@ -154,13 +154,13 @@ import os, re
 path = os.environ["ICS_PATH"]
 url = os.environ["AUTHURL_ICS_URL"]
 suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
-tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168"
-tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168"
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "169"
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "169"
 text = open(path, encoding="utf-8", errors="replace").read()
 summary = f"SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})"
 desc = (
     f"DESCRIPTION:Approve NOW: {url}\\n"
-    f"Then Mac ONE-SHOT tip #{tip} (CDN TIP_PIN hot-pick #168; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). "
+    f"Then Mac ONE-SHOT tip #{tip} (CDN TIP_PIN/#169 soft-hold tick; #168 hot-pick; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE; FALLBACK b2b5fc4 tip159). "
     "Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11."
 )
 valarm = f"DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #{tip}"
@@ -201,7 +201,7 @@ import os
 from datetime import datetime, timedelta, timezone
 url = os.environ["AUTHURL_ICS_URL"]
 suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
-tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168"
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "169"
 now = datetime.now(timezone.utc)
 dt = now.strftime("%Y%m%dT%H%M%SZ")
 hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
@@ -218,7 +218,7 @@ DTSTAMP:{dt}
 DTSTART:{dt}
 DTEND:{end}
 SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})
-DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (CDN TIP_PIN hot-pick #168; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (CDN TIP_PIN/#169 soft-hold tick; #168 hot-pick; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
 LOCATION:{url}
 URL:{url}
 STATUS:CONFIRMED
@@ -248,7 +248,7 @@ import os
 from datetime import datetime, timedelta, timezone
 url = os.environ["AUTHURL_ICS_URL"]
 suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
-tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168"
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "169"
 now = datetime.now(timezone.utc)
 dt = now.strftime("%Y%m%dT%H%M%SZ")
 hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
@@ -265,7 +265,7 @@ DTSTAMP:{dt}
 DTSTART:{dt}
 DTEND:{end}
 SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})
-DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (CDN TIP_PIN hot-pick #168; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (CDN TIP_PIN/#169 soft-hold tick; #168 hot-pick; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
 LOCATION:{url}
 URL:{url}
 STATUS:CONFIRMED
@@ -435,7 +435,7 @@ import os
 from datetime import datetime, timedelta, timezone
 url = os.environ["AUTHURL_ICS_URL"]
 suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
-tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168"
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "169"
 now = datetime.now(timezone.utc)
 dt = now.strftime("%Y%m%dT%H%M%SZ")
 hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
@@ -452,7 +452,7 @@ DTSTAMP:{dt}
 DTSTART:{dt}
 DTEND:{end}
 SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})
-DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (CDN TIP_PIN hot-pick #168; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (CDN TIP_PIN/#169 soft-hold tick; #168 hot-pick; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
 LOCATION:{url}
 URL:{url}
 STATUS:CONFIRMED
