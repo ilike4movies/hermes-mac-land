@@ -361,4 +361,43 @@ _run_enable_actions() {
   if ! command -v gh >/dev/null 2>&1; then
     echo "FAILED: gh CLI missing. Install GitHub CLI, then: gh auth login"
     echo "Or web UI: paste Raw ci/downstream-stall.yml into create-file editor"
-    WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflo
+    WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+    WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+    echo "Web UI create: $WEBUI_NEW"
+    echo "Web UI paste source (Raw): $WEBUI_RAW"
+    open "$WEBUI_NEW" 2>/dev/null || true
+    open "$WEBUI_RAW" 2>/dev/null || true
+    return 1
+  fi
+  if ! gh auth status >/dev/null 2>&1; then
+    echo "FAILED: gh not logged in. Run: gh auth login"
+    return 1
+  fi
+  local WF_PATH=".github/workflows/downstream-stall.yml"
+  local SRC_URL="https://raw.githubusercontent.com/${REPO}/main/ci/downstream-stall.yml"
+  local EXISTING_SHA=""
+  if EXISTING_SHA=$(gh api "repos/${REPO}/contents/${WF_PATH}" --jq .sha 2>/dev/null); then
+    echo "OK workflow already on main (sha=${EXISTING_SHA:0:12}…)"
+  else
+    echo "Installing ${WF_PATH}…"
+    local SRC_FILE="/tmp/hermes-downstream-stall-yml-$$.yml"
+    curl -fsSL "$SRC_URL" -o "$SRC_FILE"
+    if ! grep -q 'workflow_dispatch' "$SRC_FILE" || ! grep -q 'hermes-dispatcher-downstream.sh' "$SRC_FILE"; then
+      echo "FAILED: downloaded workflow looks incomplete"
+      rm -f "$SRC_FILE"
+      return 1
+    fi
+    local B64
+    B64=$(base64 < "$SRC_FILE" | tr -d '\n')
+    rm -f "$SRC_FILE"
+    if ! gh api --method PUT "repos/${REPO}/contents/${WF_PATH}" \
+        -f message='ci: enable downstream-stall workflow under .github/workflows' \
+        -f content="$B64" \
+        -f branch=main >/tmp/hermes-wf-put.json 2>/tmp/hermes-wf-put.err; then
+      echo "WARN: contents API PUT failed (likely missing OAuth workflow scope)"
+      cat /tmp/hermes-wf-put.err 2>/dev/null || true
+      if ! _install_workflow_via_git_push; then
+        echo "FAILED: could not write ${WF_PATH} (contents API + tip #161 git fallback)"
+        echo "Fix: set HERMES_GH_WORKFLOW_PAT in ~/.hermes/.env (tip #127) or: gh auth refresh -h github.com -s workflow"
+        echo "Or ensure SSH git@github.com works, or Web UI paste Raw"
+        WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-s
