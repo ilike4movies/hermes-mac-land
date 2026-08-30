@@ -36,4 +36,77 @@ if [[ "${HERMES_ONE_SHOT_SPEAK:-1}" == "1" ]] && command -v say >/dev/null 2>&1;
 fi
 
 _load_mac_hermes_env() {
-  lo
+  local f="${HOME}/.hermes/.env"
+  [[ -f "$f" ]] || return 0
+  local key val
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    case "$line" in
+      ''|\#*) continue ;;
+      LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|HERMES_HOST_SSH_PRIVATE_KEY=*|GH_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*|TS_AUTHKEY=*|HERMES_GH_WORKFLOW_PAT=*)
+        key="${line%%=*}"
+        val="${line#*=}"
+        val="${val%\"}"; val="${val#\"}"
+        val="${val%\'}"; val="${val#\'}"
+        [[ -z "${!key:-}" ]] && export "$key=$val"
+        ;;
+    esac
+  done < "$f"
+}
+
+_preflight_mac_secrets() {
+  _load_mac_hermes_env || true
+  if [[ -z "${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}" ]]; then
+    echo ""
+    echo "FAILED: LINEAR_API_KEY (or LINEAR_API_TOKEN) missing — required for DISPATCH-NOW + Actions."
+    echo " fix: add LINEAR_API_KEY=... to ~/.hermes/.env, then Right-click → Open again."
+    osascript -e 'display notification "Add LINEAR_API_KEY to ~/.hermes/.env" with title "Hermes ONE-SHOT preflight FAILED" sound name "Basso"' 2>/dev/null || true
+    read -r -p "Press Enter to close…" _
+    exit 1
+  fi
+  # Tip #159: pre-export GitHub status token so curl fallback works if gh hangs mid-post.
+  if [[ -z "${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}" ]] && command -v gh >/dev/null 2>&1; then
+    _tok="$(timeout 5 gh auth token 2>/dev/null || true)"
+    if [[ -n "$_tok" ]]; then
+      export HERMES_STATUS_GITHUB_TOKEN="$_tok"
+      echo "OK tip #159 status token exported from gh auth"
+    else
+      echo "WARN tip #159: no gh auth token — Downstream DONE beacon may fail-closed; run: gh auth login"
+    fi
+  fi
+
+}
+
+
+_open_tailscale_approve_early() {
+  # Open Tailscale admin (pending machines) + tip CURRENT_AUTHURL so Mac ONE-SHOT
+  # can also approve the cloud waiter node as a parallel path.
+  # Opt out: HERMES_ONE_SHOT_OPEN_TAILSCALE=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_TAILSCALE:-1}" != "1" ]]; then
+    echo "SKIP early Tailscale approve tabs (HERMES_ONE_SHOT_OPEN_TAILSCALE=0)"
+    return 0
+  fi
+  local ADMIN="https://login.tailscale.com/admin/machines"
+  local AUTH=""
+  local url f="/tmp/hermes-current-authurl-$$.txt"
+  echo ""
+  echo "=== Parallel: Tailscale approve (cloud waiter / pending machines) ==="
+  echo "Admin (approve pending): $ADMIN"
+  rm -f "$f"
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/CURRENT_AUTHURL.md" \
+    "https://raw.githubusercontent.com/${REPO}/main/CURRENT_AUTHURL.md"
+  do
+    if curl -fsSL "$url" -o "$f" 2>/dev/null; then
+      AUTH=$(grep -Eo 'https://login\.tailscale\.com/a/[A-Za-z0-9]+' "$f" | head -1 || true)
+      [[ -n "$AUTH" ]] && break
+    fi
+    rm -f "$f"
+  done
+  rm -f "$f"
+  if [[ -n "$AUTH" ]]; then
+    echo "Live AuthURL: $AUTH"
+    osascript -e 'display notification "Approve Tailscale pending + AuthURL while STALL runs" with title "Hermes ONE-SHOT Tailscale" sound name "Glass"' 2>/dev/null || true
+    open "$ADMIN" 2>/dev/null || true
+    open "$AUTH" 2>/dev/null || true
+  else
+    echo "WARN no tip CURRENT_AUTHURL.md — opening admin machines only"
