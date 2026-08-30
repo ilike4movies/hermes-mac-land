@@ -328,4 +328,78 @@ Or Mac ONE-SHOT: \`curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command htt
             gh_ok=1
           fi
           # Tip #153: first gh 401/Bad credentials → flag so later polls skip gh
-          if [[ "$gh_ok" != "1" ]]
+          if [[ "$gh_ok" != "1" ]] && [[ ! -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]]; then
+            local _gh_probe
+            _gh_probe="$(timeout 5 gh api rate_limit 2>&1 || true)"
+            if printf '%s' "$_gh_probe" | grep -qiE '401|Bad credentials|HTTP 401'; then
+              echo "401 $(date -u +%FT%TZ) gh" >"${SCRIPT_DIR}/GH_TOKEN_INVALID.flag"
+              echo "WARN GH_TOKEN unusable (gh 401) — skip further gh beacons"
+            fi
+          fi
+        fi
+        if [[ "$posted" != "1" ]]; then
+          local tok owner name api_url payload
+          tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+          owner="${gh_repo%%/*}"
+          name="${gh_repo#*/}"
+          api_url="https://api.github.com/repos/${owner}/${name}/issues/${gh_issue}/comments"
+          if [[ -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]]; then
+            tok=""
+          fi
+          if [[ -n "$tok" && ! -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+            _code="$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tok}" -H "Accept: application/vnd.github+json" https://api.github.com/rate_limit 2>/dev/null || echo 000)"
+            if [[ "$_code" == "401" || "$_code" == "403" ]]; then
+              echo "$_code $(date -u +%FT%TZ)" >"${SCRIPT_DIR}/GH_TOKEN_INVALID.flag"
+              echo "WARN GH_TOKEN unusable (HTTP ${_code}) — skip curl beacon"
+              tok=""
+            fi
+          fi
+          if [[ -n "$tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+            payload="$(AUTHURL_BEACON_BODY="$body" python3 -c 'import json,os; print(json.dumps({"body": os.environ["AUTHURL_BEACON_BODY"]}))')"
+            if curl -fsS -X POST \
+              -H "Authorization: Bearer ${tok}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Content-Type: application/json" \
+              --data "$payload" \
+              "$api_url" >/dev/null 2>&1; then
+              posted=1
+            fi
+          fi
+        fi
+        if [[ "$posted" == "1" ]]; then
+          echo "OK AuthURL GitHub beacon posted to ${gh_repo}#${gh_issue}"
+        fi
+        # Keep tip CURRENT_AUTHURL.md in sync so Mac ONE-SHOT (#92) opens the live URL.
+        if [[ "${HERMES_AUTHURL_TIP_FILE:-1}" == "1" ]]; then
+          local tip_path="CURRENT_AUTHURL.md" tip_body tip_sha tip_b64 tip_tok tip_owner tip_name tip_api tip_payload tip_put
+          tip_body="# Live cloud Tailscale AuthURL
+
+**Last refreshed:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+**Approve:** ${url}
+
+Do **not** use older AuthURLs. Prefer Mac ONE-SHOT if Runtime Secrets stay unset.
+
+After approve, cloud still needs \`HERMES_HOST_SSH_PRIVATE_KEY\` (+ preferably \`LINEAR_API_KEY\` / \`TS_AUTHKEY\`) unless Mac ONE-SHOT completes Downstream DONE.
+
+Hostname to approve: \`cursor-cloud-hermes\`
+
+Admin: https://login.tailscale.com/admin/machines
+"
+          tip_tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+          tip_owner="${gh_repo%%/*}"
+          tip_name="${gh_repo#*/}"
+          if [[ -n "$tip_tok" && -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]]; then
+            tip_tok=""
+          elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
+            _code="$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json" https://api.github.com/rate_limit 2>/dev/null || echo 000)"
+            if [[ "$_code" == "401" || "$_code" == "403" ]]; then
+              echo "$_code $(date -u +%FT%TZ)" >"${SCRIPT_DIR}/GH_TOKEN_INVALID.flag"
+              echo "WARN GH_TOKEN unusable (HTTP ${_code}) — skip tip curl path"
+              tip_tok=""
+            fi
+          fi
+          tip_sha=""
+          # Tip #153: never call gh tip APIs when GH_TOKEN_INVALID.flag is set
+          if command -v gh >/dev/null 2>&1 && [[ ! -f "${SCRIPT
