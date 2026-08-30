@@ -296,4 +296,68 @@ ICS
         ics_api="https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${ics_path}"
         ics_payload="$(ICS_B64="$ics_b64" ICS_SHA="$ics_sha" python3 -c 'import json,os; d={"message":"ops: soft-hold refresh HERMES-APPROVE-TAILSCALE.ics (#134)","content":os.environ["ICS_B64"],"branch":"main"}; s=os.environ.get("ICS_SHA") or "";
 print(json.dumps({**d, **({"sha":s} if s else {})}))')"
-        curl -fsS -X PUT -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"          
+        curl -fsS -X PUT -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"           -H "Content-Type: application/json" --data "$ics_payload" "$ics_api" >/dev/null 2>&1 && echo "OK tip HERMES-APPROVE-TAILSCALE.ics soft-hold refreshed on ${gh_repo} (curl)"
+      fi
+    fi
+  fi
+  # Best-effort auto-beacon when AuthURL changes (dedupe by URL).
+  # Order: gh CLI → curl+GitHub token → Linear comment (RAL-823 by default).
+  # Skips when none work — agent MCP can still post.
+  # Tip #153: skip gh when GH_TOKEN_INVALID.flag; timeout gh; MCP handoff writes
+  # lastfile so reminted AuthURLs do not burn wait-login cycles on dead ghs_ forever.
+  if [[ "${HERMES_AUTHURL_GITHUB_BEACON:-1}" == "1" || "${HERMES_AUTHURL_LINEAR_BEACON:-1}" == "1" ]]; then
+    if [[ ! -f "$lastfile" ]] || ! grep -qF "$url" "$lastfile" 2>/dev/null; then
+      local body posted=0 gh_ok=0
+      local gh_to="${HERMES_GH_BEACON_TIMEOUT_SECS:-8}"
+      body="## Fresh Tailscale AuthURL (auto-beacon)
+
+Approve NOW: ${url}
+
+After approve, add Runtime Secrets \`HERMES_HOST_SSH_PRIVATE_KEY\` + \`LINEAR_API_KEY\` (waiters keep looping until SSH arrives).
+
+Or Mac ONE-SHOT: \`curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command\`"
+      if [[ "${HERMES_AUTHURL_GITHUB_BEACON:-1}" == "1" ]]; then
+        if command -v gh >/dev/null 2>&1 && [[ ! -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]]; then
+          if command -v timeout >/dev/null 2>&1; then
+            if timeout "$gh_to" gh issue comment "$gh_issue" --repo "$gh_repo" --body "$body" >/dev/null 2>&1; then
+              posted=1
+              gh_ok=1
+            fi
+          elif gh issue comment "$gh_issue" --repo "$gh_repo" --body "$body" >/dev/null 2>&1; then
+            posted=1
+            gh_ok=1
+          fi
+          # Tip #153: first gh 401/Bad credentials → flag so later polls skip gh
+          if [[ "$gh_ok" != "1" ]] && [[ ! -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]]; then
+            local _gh_probe
+            _gh_probe="$(timeout 5 gh api rate_limit 2>&1 || true)"
+            if printf '%s' "$_gh_probe" | grep -qiE '401|Bad credentials|HTTP 401'; then
+              echo "401 $(date -u +%FT%TZ) gh" >"${SCRIPT_DIR}/GH_TOKEN_INVALID.flag"
+              echo "WARN GH_TOKEN unusable (gh 401) — skip further gh beacons"
+            fi
+          fi
+        fi
+        if [[ "$posted" != "1" ]]; then
+          local tok owner name api_url payload
+          tok="${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+          owner="${gh_repo%%/*}"
+          name="${gh_repo#*/}"
+          api_url="https://api.github.com/repos/${owner}/${name}/issues/${gh_issue}/comments"
+          if [[ -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]]; then
+            tok=""
+          fi
+          if [[ -n "$tok" && ! -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+            _code="$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tok}" -H "Accept: application/vnd.github+json" https://api.github.com/rate_limit 2>/dev/null || echo 000)"
+            if [[ "$_code" == "401" || "$_code" == "403" ]]; then
+              echo "$_code $(date -u +%FT%TZ)" >"${SCRIPT_DIR}/GH_TOKEN_INVALID.flag"
+              echo "WARN GH_TOKEN unusable (HTTP ${_code}) — skip curl beacon"
+              tok=""
+            fi
+          fi
+          if [[ -n "$tok" ]] && command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+            payload="$(AUTHURL_BEACON_BODY="$body" python3 -c 'import json,os; print(json.dumps({"body": os.environ["AUTHURL_BEACON_BODY"]}))')"
+            if curl -fsS -X POST \
+              -H "Authorization: Bearer ${tok}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Content-Type: application/json" \
