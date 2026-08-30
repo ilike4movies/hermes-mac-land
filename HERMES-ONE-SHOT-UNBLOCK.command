@@ -26,7 +26,7 @@ FALLBACK_ACTIONS="${HERMES_ONE_SHOT_FALLBACK_ACTIONS:-1}"
 cd "${TMPDIR:-/tmp}"
 echo "=== Hermes ONE-SHOT UNBLOCK (run=$HERMES_RUN_ID) pin=$PIN ==="
 echo "zombie=$HERMES_STALL_ZOMBIE zombie_passes=$HERMES_STALL_ZOMBIE_PASSES stall_recovery=$HERMES_STALL_RECOVERY"
-echo "tip through #170 (Dropbox public WAKE link; soft-hold tick; Zapier GH+Calendar reconnect; FALLBACK b2b5fc4); approve tip CURRENT_AUTHURL or RAL-823"
+echo "tip through #171 (ONE-SHOT opens Dropbox WAKE + Zapier GH/Calendar reconnect tabs; soft-hold; FALLBACK b2b5fc4); approve tip CURRENT_AUTHURL or RAL-823"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/${REPO}/issues/1"
 echo "Path: Web UI early + STALL first; on fail → ENABLE-ACTIONS (fallback=$FALLBACK_ACTIONS)"
@@ -157,6 +157,29 @@ _open_webui_workflow_early() {
   osascript -e 'display notification "Browser: paste Raw into workflow create tab while STALL runs" with title "Hermes ONE-SHOT Web UI" sound name "Glass"' 2>/dev/null || true
   open "$WEBUI_NEW" 2>/dev/null || true
   open "$WEBUI_RAW" 2>/dev/null || true
+}
+
+_open_pathc_reconnect_early() {
+  # Tip #171: surface Dropbox WAKE + Zapier reconnect tabs while STALL runs.
+  # Cloud Path C (Zapier put_workflow_file_via_git_data) still returns Bad credentials
+  # even when the connection reports is_stale=false — operator must reconnect GH.
+  # Opt out: HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT:-1}" != "1" ]]; then
+    echo "SKIP early Path C reconnect tabs (HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT=0)"
+    return 0
+  fi
+  local DROPBOX_WAKE="${HERMES_DROPBOX_WAKE_URL:-https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1}"
+  local ZAPIER_GH="${HERMES_ZAPIER_GH_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336}"
+  local ZAPIER_CAL="${HERMES_ZAPIER_CAL_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487}"
+  echo ""
+  echo "=== Parallel: Path C reconnect + Dropbox WAKE (tip #171) ==="
+  echo "Dropbox WAKE (public): $DROPBOX_WAKE"
+  echo "Zapier GitHub reconnect (Path C Bad credentials): $ZAPIER_GH"
+  echo "Zapier Google Calendar reconnect (stale): $ZAPIER_CAL"
+  osascript -e 'display notification "Open Dropbox WAKE + Zapier GitHub reconnect if Path C still blocked" with title "Hermes ONE-SHOT Path C" sound name "Glass"' 2>/dev/null || true
+  open "$DROPBOX_WAKE" 2>/dev/null || true
+  open "$ZAPIER_GH" 2>/dev/null || true
+  open "$ZAPIER_CAL" 2>/dev/null || true
 }
 
 _install_downstream_nag() {
@@ -433,6 +456,7 @@ _preflight_mac_secrets
 _open_tailscale_approve_early
 _open_operator_linear_early
 _open_webui_workflow_early
+_open_pathc_reconnect_early
 _install_downstream_nag
 
 STALL_RC=0
