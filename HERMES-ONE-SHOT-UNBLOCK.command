@@ -160,4 +160,85 @@ _open_webui_workflow_early() {
 }
 
 _open_pathc_reconnect_early() {
-  # Tip #171: 
+  # Tip #171: surface Dropbox WAKE + Zapier reconnect tabs while STALL runs.
+  # Cloud Path C (Zapier put_workflow_file_via_git_data) still returns Bad credentials
+  # even when the connection reports is_stale=false — operator must reconnect GH.
+  # Opt out: HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT:-1}" != "1" ]]; then
+    echo "SKIP early Path C reconnect tabs (HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT=0)"
+    return 0
+  fi
+  local DROPBOX_WAKE="${HERMES_DROPBOX_WAKE_URL:-https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1}"
+  local ZAPIER_GH="${HERMES_ZAPIER_GH_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336}"
+  local ZAPIER_CAL="${HERMES_ZAPIER_CAL_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487}"
+  echo ""
+  echo "=== Parallel: Path C reconnect + Dropbox WAKE (tip #171) ==="
+  echo "Dropbox WAKE (public): $DROPBOX_WAKE"
+  echo "Zapier GitHub reconnect (Path C Bad credentials): $ZAPIER_GH"
+  echo "Zapier Google Calendar reconnect (stale): $ZAPIER_CAL"
+  osascript -e 'display notification "Open Dropbox WAKE + Zapier GitHub reconnect if Path C still blocked" with title "Hermes ONE-SHOT Path C" sound name "Glass"' 2>/dev/null || true
+  open "$DROPBOX_WAKE" 2>/dev/null || true
+  open "$ZAPIER_GH" 2>/dev/null || true
+  open "$ZAPIER_CAL" 2>/dev/null || true
+}
+
+_install_downstream_nag() {
+  # Keep Mac reminding every 5 min until "## Downstream DONE" posts on issue #1.
+  # Opt out: HERMES_ONE_SHOT_INSTALL_NAG=0
+  if [[ "${HERMES_ONE_SHOT_INSTALL_NAG:-1}" != "1" ]]; then
+    echo "SKIP downstream nag install (HERMES_ONE_SHOT_INSTALL_NAG=0)"
+    return 0
+  fi
+  echo ""
+  echo "=== Install Downstream nag LaunchAgent (5 min + auto ONE-SHOT until DONE) ==="
+  local NAG="/tmp/hermes-install-downstream-nag-oneshot-$$.command"
+  local url
+  rm -f "$NAG"
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/HERMES-INSTALL-DOWNSTREAM-NAG.command" \
+    "https://raw.githubusercontent.com/${REPO}/main/HERMES-INSTALL-DOWNSTREAM-NAG.command"
+  do
+    if curl -fsSL "$url" -o "$NAG" \
+      && grep -q 'com.hermes.downstream-nag' "$NAG" 2>/dev/null \
+      && grep -q '_machine_downstream_done' "$NAG" 2>/dev/null \
+      && grep -q 'Downstream DONE @' "$NAG" 2>/dev/null; then
+      # Tip #155: require tip#154+ detector (rejects stale pre-154 NAG that false-unloads on prose)
+      # and tip#155 timestamped DONE match (part-c posts "## Downstream DONE @ $WHEN").
+      chmod +x "$NAG"
+      # Noninteractive: skip "Press Enter" (needs tip with HERMES_NAG_NONINTERACTIVE support).
+      if HERMES_NAG_NONINTERACTIVE=1 bash "$NAG"; then
+        echo "OK downstream nag installed/refreshed"
+        rm -f "$NAG"
+        return 0
+      fi
+      echo "WARN nag installer exited non-zero — continuing ONE-SHOT"
+      rm -f "$NAG"
+      return 0
+    fi
+    rm -f "$NAG"
+  done
+  echo "WARN could not fetch HERMES-INSTALL-DOWNSTREAM-NAG.command — continuing"
+  return 0
+}
+
+_run_stall() {
+  echo ""
+  echo "=== Phase 1: STALL downstream (SSH/.11) ==="
+  osascript -e 'display notification "Phase 1: STALL downstream on .11…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
+  local SCRIPT="/tmp/hermes-dispatcher-downstream-oneshot-$$.sh"
+  local ONCE="/tmp/hermes-cloud-run-downstream-once-$$.sh"
+  rm -f "$SCRIPT" "$ONCE"
+  local FETCHED=""
+  local url
+  # Tip #146: prefer tip#142 once launcher + tip main first (tip#145 -f helpers).
+  # Old HERMES_DOWNSTREAM_PIN default pinned a pre-#145 SHA and skipped tip fixes.
+  local DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-}"
+  _is_good_once() {
+    local f="$1"
+    grep -q 'Tip #142' "$f" 2>/dev/null \
+      && grep -q 'hermes-dispatcher-downstream.sh' "$f" 2>/dev/null \
+      && grep -q 'flock' "$f" 2>/dev/null
+  }
+  _is_good_downstream() {
+    local f="$1"
+    if grep -q 'ONE-SHOT safe entrypoint' 
