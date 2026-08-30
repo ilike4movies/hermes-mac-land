@@ -154,3 +154,46 @@ import os, re
 path = os.environ["ICS_PATH"]
 url = os.environ["AUTHURL_ICS_URL"]
 suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "170"
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "170"
+text = open(path, encoding="utf-8", errors="replace").read()
+summary = f"SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})"
+desc = (
+    f"DESCRIPTION:Approve NOW: {url}\\n"
+    f"Then Mac ONE-SHOT tip #{tip} (CDN TIP_PIN/#169 soft-hold tick; #168 hot-pick; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE; FALLBACK b2b5fc4 tip159). "
+    "Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11."
+)
+valarm = f"DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #{tip}"
+out = []
+in_valarm = False
+for line in text.splitlines():
+    if line.startswith("BEGIN:VALARM"):
+        in_valarm = True
+        out.append(line)
+        continue
+    if line.startswith("END:VALARM"):
+        in_valarm = False
+        out.append(line)
+        continue
+    if line.startswith("SUMMARY:"):
+        out.append(summary)
+    elif line.startswith("DESCRIPTION:"):
+        out.append(valarm if in_valarm else desc)
+    else:
+        out.append(line)
+open(path, "w", encoding="utf-8").write("\n".join(out) + ("\n" if text.endswith("\n") else ""))
+print(f"OK tip #{tip} ICS tip-pin soft-hold (DTEND preserved)")
+PY
+      echo "OK tip #${ics_expected_tip} local ICS tip-pin soft-hold (AuthURL/DTEND unchanged)"
+    fi
+  fi
+  # Keep PENDING + local ICS aligned even if CURRENT was written out-of-band
+  # (hard wipe / agent MCP) so cloud agents do not read a stale AuthURL marker.
+  # Tip #134: also rewrite when ICS hold window is nearly expired (soft AuthURL hold).
+  if [[ "$auth_changed" == "1" || "$pending_stale" == "1" || "$ics_need_refresh" == "1" ]]; then
+    {
+      printf '%s\n' "$url"
+      printf 'refreshed=%s\n' "$(date -u +%FT%TZ)"
+    } >"$pending"
+    if command -v python3 >/dev/null 2>&1; then
+      AUTHURL_ICS_URL="$url" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" HERMES_AUTHURL_ICS_HOLD_HOURS="${HERMES_AUTHURL_ICS_HOLD_HOURS:-6}" python3 - <<'ICS' >"${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics" 2>/dev/null || true
