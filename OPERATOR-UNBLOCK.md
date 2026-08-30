@@ -145,4 +145,55 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - [`hermes-cloud-run-downstream-once.sh`](shared-scripts/hermes-cloud-run-downstream-once.sh): resolve dispatcher with `-f`+`bash` (not `-x`-only); if missing locally, curl tip CDN `shared-scripts/hermes-dispatcher-downstream.sh` before fail-closed exit 127.
 - Prevents post-approve on-join/wait-login stall from aborting after AuthURL join when apply-dir scripts are 0644 or not yet synced.
 
-### Tip #143 (on-join/supe
+### Tip #143 (on-join/supervisor once `-f` + CDN)
+
+- [`hermes-downstream-on-join-watcher.sh`](shared-scripts/hermes-downstream-on-join-watcher.sh), [`hermes-cloud-wait-login-supervisor.sh`](shared-scripts/hermes-cloud-wait-login-supervisor.sh), [`hermes-join-part-c.sh`](shared-scripts/hermes-join-part-c.sh): resolve `hermes-cloud-run-downstream-once.sh` with `-f` (+ tip CDN fetch), not `-x`-only.
+- Closes the tip#141/#142 class gap at the caller: 0644 once launcher no longer skips post-approve stall.
+
+### Tip #144 (supervisor/start/join `-f` for bridge + poller)
+
+- `hermes-cloud-wait-login-supervisor.sh`, `hermes-cloud-bootstrap-waiter.sh`, `hermes-cloud-agent-start.sh`, join/wait-join, and `hermes-credentialed-resume-land.sh` now start bridge + secrets-bridge-poller via **`-f` + bash (+ CDN)**, not `-x`-only.
+- Closes the tip#141 class gap at the **caller**: a 0644 poller/bridge download no longer silently skips mid-session Runtime Secrets while AuthURL is held.
+
+### Tip #145 (dispatcher helpers `-f` + CDN)
+
+- `hermes-dispatcher-part-a.sh` / `part-b.sh`: resolve contract/inspect/starve/stack-apply via **`-f`**, fetch on missing, always `chmod +x` before `bash` (0644 curl class).
+- `hermes-cloud-agent-start.sh` + `hermes-credentialed-resume-land.sh`: prefer tip#142 once launcher; `-f`+CDN for downstream helpers.
+- Closes the tip#141–#144 class gap on the **credentialed stall chain** itself so Mac ONE-SHOT / post-approve once launcher cannot skip helpers that landed mode 0644.
+
+### Tip #146 (ONE-SHOT prefers tip once + main)
+
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command): Phase 1 STALL now prefers tip **#142** `hermes-cloud-run-downstream-once.sh`, then tip/`main` dispatcher entrypoint.
+- Removes default stale `HERMES_DOWNSTREAM_PIN` that pinned a pre-#145 SHA ahead of tip (set explicitly only if needed).
+- Banner pinned through **#145+**. Ensures Mac ONE-SHOT picks up tip#145 `-f` helper resolve without CDN-lag pin games.
+
+### Tip #147 (STALL.command tip once + main)
+
+- [`HERMES-DOWNSTREAM-RAL793-STALL.command`](HERMES-DOWNSTREAM-RAL793-STALL.command): same tip#146 class fix — prefer tip#142 once launcher, then tip/`main`; drop stale `a657c617…` pin default.
+- Closes the alternate Mac double-click path that still skipped tip#145 `-f` helpers.
+
+### Tip #148 (DOWNSTREAM-ONLY stall-class parity)
+
+- [`HERMES-DOWNSTREAM-ONLY.command`](HERMES-DOWNSTREAM-ONLY.command): now matches STALL/ONE-SHOT stall-class defaults — pin run `2954673`, `HERMES_AUTO_SURGICAL_LAND=0`, zombie=`1`/`3`, `WAIT_INVENTORY=1`, Linear key preflight, tip#142 once launcher first.
+- Closes the third Mac entrypoint that previously ran bare dispatcher without stall recovery / inventory wait.
+
+### Tip #149 (Stage A preflight `-f`, not `-x`)
+
+- [`hermes-cloud-agent-start.sh`](shared-scripts/hermes-cloud-agent-start.sh) + [`hermes-moltbot-cloud-wait-join-then-apply.sh`](shared-scripts/hermes-moltbot-cloud-wait-join-then-apply.sh): Stage A source/live preflight now resolve with `-f` + `chmod +x` before `bash` (0644 curl class).
+- Closes the tip#141–#145 class gap left on the **post-surgical-land Stage A** path (credentialed-resume already fixed in #145).
+
+### Tip #150 (inventory-wait rejects contract-install SEED)
+
+- [`hermes-dispatcher-part-b.sh`](shared-scripts/hermes-dispatcher-part-b.sh) `_inventory_evidence_ok`: reject `pending` first line + `SEED` / `NOT live inventory` markers **before** accepting EP04/workspace/tts keywords.
+- Proven false-pass: tip#97 SEED embeds `/opt/moltbot`, `tts`, `EP04` in comments → old check returned OK and could mark Downstream DONE without live inventory.
+- Live accept requires dated LIVE / sha / host-verify signals (or EP + real `work/ep` artifact paths), not archaeology prose.
+
+### Tip #151 (DONE requires live inventory present)
+
+- [`hermes-dispatcher-part-c.sh`](shared-scripts/hermes-dispatcher-part-c.sh): bare `## Downstream DONE` only when `inventory wait: present` (INVENTORY_STATUS=present + STARVE_RC=0).
+- `HERMES_WAIT_INVENTORY=0` no longer posts bare DONE with `skipped` — posts `## Downstream COMPLETE (inventory deferred)` instead so obj5 cred_DONE gates cannot false-count.
+- Inventory miss/timeout still posts `## Downstream PARTIAL` + non-zero exit (tip#150 SEED reject remains the wait gate).
+
+### Tip #152 (FALLBACK pin includes tip #150/#151)
+
+- [`hermes-dispatcher-downstream.sh`](shared-scripts/hermes-dispatcher-downstream.sh): default `HERMES_DOWNSTREAM_FALLBACK_REF` bumped `dc1980b` (#118) → **`6c6881a`** (tip
