@@ -160,4 +160,97 @@ _open_webui_workflow_early() {
 }
 
 _install_downstream_nag() {
-  # Keep Mac reminding every 5 min until "## Downst
+  # Keep Mac reminding every 5 min until "## Downstream DONE" posts on issue #1.
+  # Opt out: HERMES_ONE_SHOT_INSTALL_NAG=0
+  if [[ "${HERMES_ONE_SHOT_INSTALL_NAG:-1}" != "1" ]]; then
+    echo "SKIP downstream nag install (HERMES_ONE_SHOT_INSTALL_NAG=0)"
+    return 0
+  fi
+  echo ""
+  echo "=== Install Downstream nag LaunchAgent (5 min + auto ONE-SHOT until DONE) ==="
+  local NAG="/tmp/hermes-install-downstream-nag-oneshot-$$.command"
+  local url
+  rm -f "$NAG"
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/HERMES-INSTALL-DOWNSTREAM-NAG.command" \
+    "https://raw.githubusercontent.com/${REPO}/main/HERMES-INSTALL-DOWNSTREAM-NAG.command"
+  do
+    if curl -fsSL "$url" -o "$NAG" \
+      && grep -q 'com.hermes.downstream-nag' "$NAG" 2>/dev/null \
+      && grep -q '_machine_downstream_done' "$NAG" 2>/dev/null \
+      && grep -q 'Downstream DONE @' "$NAG" 2>/dev/null; then
+      # Tip #155: require tip#154+ detector (rejects stale pre-154 NAG that false-unloads on prose)
+      # and tip#155 timestamped DONE match (part-c posts "## Downstream DONE @ $WHEN").
+      chmod +x "$NAG"
+      # Noninteractive: skip "Press Enter" (needs tip with HERMES_NAG_NONINTERACTIVE support).
+      if HERMES_NAG_NONINTERACTIVE=1 bash "$NAG"; then
+        echo "OK downstream nag installed/refreshed"
+        rm -f "$NAG"
+        return 0
+      fi
+      echo "WARN nag installer exited non-zero — continuing ONE-SHOT"
+      rm -f "$NAG"
+      return 0
+    fi
+    rm -f "$NAG"
+  done
+  echo "WARN could not fetch HERMES-INSTALL-DOWNSTREAM-NAG.command — continuing"
+  return 0
+}
+
+_run_stall() {
+  echo ""
+  echo "=== Phase 1: STALL downstream (SSH/.11) ==="
+  osascript -e 'display notification "Phase 1: STALL downstream on .11…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
+  local SCRIPT="/tmp/hermes-dispatcher-downstream-oneshot-$$.sh"
+  local ONCE="/tmp/hermes-cloud-run-downstream-once-$$.sh"
+  rm -f "$SCRIPT" "$ONCE"
+  local FETCHED=""
+  local url
+  # Tip #146: prefer tip#142 once launcher + tip main first (tip#145 -f helpers).
+  # Old HERMES_DOWNSTREAM_PIN default pinned a pre-#145 SHA and skipped tip fixes.
+  local DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-}"
+  _is_good_once() {
+    local f="$1"
+    grep -q 'Tip #142' "$f" 2>/dev/null \
+      && grep -q 'hermes-dispatcher-downstream.sh' "$f" 2>/dev/null \
+      && grep -q 'flock' "$f" 2>/dev/null
+  }
+  _is_good_downstream() {
+    local f="$1"
+    if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
+       && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
+       && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null \
+       && grep -q '_parts_integrity_ok' "$f" 2>/dev/null \
+       && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
+      # Tip #162: require tip #160 FALLBACK / tip #159 fail-closed markers
+      return 0
+    fi
+    if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
+       && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null \
+       && grep -q 'WAIT_INVENTORY' "$f" 2>/dev/null \
+       && grep -q 'fail-closed' "$f" 2>/dev/null \
+       && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
+      return 0
+    fi
+    return 1
+  }
+  # Prefer tip#142 once launcher (single-flight + CDN dispatcher resolve).
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-cloud-run-downstream-once.sh" \
+    "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-cloud-run-downstream-once.sh"
+  do
+    echo "Trying once launcher: $url"
+    if curl -fsSL "$url" -o "$ONCE" && _is_good_once "$ONCE"; then
+      chmod +x "$ONCE" 2>/dev/null || true
+      echo "OK tip#146 using once launcher: $url"
+      set +e
+      bash "$ONCE"
+      local rc=$?
+      set -e
+      rm -f "$ONCE"
+      if [[ "$rc" -eq 0 ]]; then
+        echo "OK STALL downstream finished for run $HERMES_RUN_ID (once)"
+        return 0
+      fi
+      echo "WARN once launcher exited $rc — falling 
