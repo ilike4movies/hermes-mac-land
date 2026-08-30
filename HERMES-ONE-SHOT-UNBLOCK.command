@@ -63,4 +63,4 @@ _preflight_mac_secrets() {
     read -r -p "Press Enter to close…" _
     exit 1
   fi
-  # Tip #159: pre-export GitHub status token so curl fallback works if gh hangs 
+  # Tip #159: pre-export GitHub status token so curl fallback works if gh hangs mid-post.
