@@ -1,0 +1,3 @@
+## Cloud wait-login → downstream (after Tailscale approve)
+
+SIZE_PROBE_10k_START
