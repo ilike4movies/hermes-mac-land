@@ -188,4 +188,144 @@ PY
     fi
   fi
   # Keep PENDING + local ICS aligned even if CURRENT was written out-of-band
-  # (hard wipe / 
+  # (hard wipe / agent MCP) so cloud agents do not read a stale AuthURL marker.
+  # Tip #134: also rewrite when ICS hold window is nearly expired (soft AuthURL hold).
+  if [[ "$auth_changed" == "1" || "$pending_stale" == "1" || "$ics_need_refresh" == "1" ]]; then
+    {
+      printf '%s\n' "$url"
+      printf 'refreshed=%s\n' "$(date -u +%FT%TZ)"
+    } >"$pending"
+    if command -v python3 >/dev/null 2>&1; then
+      AUTHURL_ICS_URL="$url" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" HERMES_AUTHURL_ICS_HOLD_HOURS="${HERMES_AUTHURL_ICS_HOLD_HOURS:-6}" python3 - <<'ICS' >"${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics" 2>/dev/null || true
+import os
+from datetime import datetime, timedelta, timezone
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168"
+now = datetime.now(timezone.utc)
+dt = now.strftime("%Y%m%dT%H%M%SZ")
+hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
+end = (now + timedelta(hours=hold_h)).strftime("%Y%m%dT%H%M%SZ")
+uid = f"hermes-authurl-{suffix}-{int(now.timestamp())}@hermes-mac-land"
+print(f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Hermes Mac Land//AuthURL Wake//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:{uid}
+DTSTAMP:{dt}
+DTSTART:{dt}
+DTEND:{end}
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (CDN TIP_PIN hot-pick #168; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
+LOCATION:{url}
+URL:{url}
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #{tip}
+TRIGGER:-PT0S
+END:VALARM
+END:VEVENT
+END:VCALENDAR""")
+ICS
+    fi
+  fi
+  # Tip #167/#168: ICS tip-stale soft-hold + dynamic expected tip (TIP_PIN / CURRENT_AUTHURL.md / CDN).
+  # Tip #134: when AuthURL is unchanged but ICS hold expired, still refresh tip ICS
+  # (does not remint AuthURL; throttled by local rewrite above).
+  if [[ "$ics_need_refresh" == "1" && "$auth_changed" != "1" && "${HERMES_AUTHURL_TIP_ICS:-1}" == "1" ]]; then
+    if command -v python3 >/dev/null 2>&1; then
+      local tip_tok="${GITHUB_TOKEN:-${GH_TOKEN:-${HERMES_GH_WORKFLOW_PAT:-}}}"
+      local tip_owner tip_name gh_repo="${HERMES_STATUS_GITHUB_REPO:-ilike4movies/hermes-mac-land}"
+      tip_owner="${gh_repo%%/*}"
+      tip_name="${gh_repo#*/}"
+      local ics_path="HERMES-APPROVE-TAILSCALE.ics" ics_body ics_sha ics_b64 ics_api ics_payload
+      ics_body="$(AUTHURL_ICS_URL="$url" HERMES_AUTHURL_ICS_EXPECTED_TIP="${ics_expected_tip:-$(_resolve_ics_expected_tip)}" HERMES_AUTHURL_ICS_HOLD_HOURS="${HERMES_AUTHURL_ICS_HOLD_HOURS:-6}" python3 - <<'ICS'
+import os
+from datetime import datetime, timedelta, timezone
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168"
+now = datetime.now(timezone.utc)
+dt = now.strftime("%Y%m%dT%H%M%SZ")
+hold_h = max(1, int(os.environ.get("HERMES_AUTHURL_ICS_HOLD_HOURS") or "6"))
+end = (now + timedelta(hours=hold_h)).strftime("%Y%m%dT%H%M%SZ")
+uid = f"hermes-authurl-{suffix}-{int(now.timestamp())}@hermes-mac-land"
+print(f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Hermes Mac Land//AuthURL Wake//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:{uid}
+DTSTAMP:{dt}
+DTSTART:{dt}
+DTEND:{end}
+SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})
+DESCRIPTION:Approve NOW: {url}\\nThen Mac ONE-SHOT tip #{tip} (CDN TIP_PIN hot-pick #168; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11.
+LOCATION:{url}
+URL:{url}
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #{tip}
+TRIGGER:-PT0S
+END:VALARM
+END:VEVENT
+END:VCALENDAR""")
+ICS
+)"
+      ics_sha=""
+      if command -v gh >/dev/null 2>&1; then
+        ics_sha="$(gh api "repos/${gh_repo}/contents/${ics_path}" --jq .sha 2>/dev/null || true)"
+      elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
+        ics_sha="$(curl -fsS -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"           "https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${ics_path}" 2>/dev/null           | python3 -c 'import sys,json; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)"
+      fi
+      ics_b64="$(printf '%s' "$ics_body" | base64 | tr -d '\n')"
+      if command -v gh >/dev/null 2>&1; then
+        if [[ -n "$ics_sha" ]]; then
+          gh api --method PUT "repos/${gh_repo}/contents/${ics_path}" -f message="ops: soft-hold refresh HERMES-APPROVE-TAILSCALE.ics (#134)" -f content="$ics_b64" -f branch=main -f sha="$ics_sha" >/dev/null 2>&1 && echo "OK tip HERMES-APPROVE-TAILSCALE.ics soft-hold refreshed on ${gh_repo}"
+        else
+          gh api --method PUT "repos/${gh_repo}/contents/${ics_path}" -f message="ops: soft-hold refresh HERMES-APPROVE-TAILSCALE.ics (#134)" -f content="$ics_b64" -f branch=main >/dev/null 2>&1 && echo "OK tip HERMES-APPROVE-TAILSCALE.ics soft-hold refreshed on ${gh_repo}"
+        fi
+      elif [[ -n "$tip_tok" ]] && command -v curl >/dev/null 2>&1; then
+        ics_api="https://api.github.com/repos/${tip_owner}/${tip_name}/contents/${ics_path}"
+        ics_payload="$(ICS_B64="$ics_b64" ICS_SHA="$ics_sha" python3 -c 'import json,os; d={"message":"ops: soft-hold refresh HERMES-APPROVE-TAILSCALE.ics (#134)","content":os.environ["ICS_B64"],"branch":"main"}; s=os.environ.get("ICS_SHA") or "";
+print(json.dumps({**d, **({"sha":s} if s else {})}))')"
+        curl -fsS -X PUT -H "Authorization: Bearer ${tip_tok}" -H "Accept: application/vnd.github+json"           -H "Content-Type: application/json" --data "$ics_payload" "$ics_api" >/dev/null 2>&1 && echo "OK tip HERMES-APPROVE-TAILSCALE.ics soft-hold refreshed on ${gh_repo} (curl)"
+      fi
+    fi
+  fi
+  # Best-effort auto-beacon when AuthURL changes (dedupe by URL).
+  # Order: gh CLI → curl+GitHub token → Linear comment (RAL-823 by default).
+  # Skips when none work — agent MCP can still post.
+  # Tip #153: skip gh when GH_TOKEN_INVALID.flag; timeout gh; MCP handoff writes
+  # lastfile so reminted AuthURLs do not burn wait-login cycles on dead ghs_ forever.
+  if [[ "${HERMES_AUTHURL_GITHUB_BEACON:-1}" == "1" || "${HERMES_AUTHURL_LINEAR_BEACON:-1}" == "1" ]]; then
+    if [[ ! -f "$lastfile" ]] || ! grep -qF "$url" "$lastfile" 2>/dev/null; then
+      local body posted=0 gh_ok=0
+      local gh_to="${HERMES_GH_BEACON_TIMEOUT_SECS:-8}"
+      body="## Fresh Tailscale AuthURL (auto-beacon)
+
+Approve NOW: ${url}
+
+After approve, add Runtime Secrets \`HERMES_HOST_SSH_PRIVATE_KEY\` + \`LINEAR_API_KEY\` (waiters keep looping until SSH arrives).
+
+Or Mac ONE-SHOT: \`curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command\`"
+      if [[ "${HERMES_AUTHURL_GITHUB_BEACON:-1}" == "1" ]]; then
+        if command -v gh >/dev/null 2>&1 && [[ ! -f "${SCRIPT_DIR}/GH_TOKEN_INVALID.flag" ]]; then
+          if command -v timeout >/dev/null 2>&1; then
+            if timeout "$gh_to" gh issue comment "$gh_issue" --repo "$gh_repo" --body "$body" >/dev/null 2>&1; then
+              posted=1
+              gh_ok=1
+            fi
+          elif gh issue comment "$gh_issue" --repo "$gh_repo" --body "$body" >/dev/null 2>&1; then
+            posted=1
+            gh_ok=1
+          fi
+          # Tip #153: first gh 401/Bad credentials → flag so later polls skip gh
+          if [[ "$gh_ok" != "1" ]]
