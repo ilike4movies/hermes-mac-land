@@ -1,3 +1,1 @@
-## Cloud wait-login → downstream (after Tailscale approve)
-
-SIZE_PROBE_10k_START
+SIZE_PROBE_10K_PLACEHOLDER_WILL_REPLACE_WITH_REAL
