@@ -400,4 +400,66 @@ _run_enable_actions() {
         echo "FAILED: could not write ${WF_PATH} (contents API + tip #161 git fallback)"
         echo "Fix: set HERMES_GH_WORKFLOW_PAT in ~/.hermes/.env (tip #127) or: gh auth refresh -h github.com -s workflow"
         echo "Or ensure SSH git@github.com works, or Web UI paste Raw"
-        WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-s
+        WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+        WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+        echo "Web UI create: $WEBUI_NEW"
+        echo "Web UI paste source (Raw): $WEBUI_RAW"
+        open "$WEBUI_NEW" 2>/dev/null || true
+        open "$WEBUI_RAW" 2>/dev/null || true
+        return 1
+      fi
+    fi
+    echo "OK installed ${WF_PATH}"
+  fi
+  echo "Action secrets required: TS_AUTHKEY HERMES_HOST_SSH_PRIVATE_KEY LINEAR_API_KEY"
+  echo "Secrets UI: https://github.com/${REPO}/settings/secrets/actions"
+  if gh workflow run downstream-stall.yml --repo "$REPO"; then
+    echo "OK workflow_dispatch accepted"
+    echo "Watch: https://github.com/${REPO}/actions"
+    echo "Inbox: https://github.com/${REPO}/issues/1"
+    open "https://github.com/${REPO}/actions" 2>/dev/null || true
+    return 0
+  fi
+  echo "FAILED: gh workflow run — check secrets / Actions enabled"
+  open "https://github.com/${REPO}/actions" 2>/dev/null || true
+  open "https://github.com/${REPO}/settings/secrets/actions" 2>/dev/null || true
+  return 1
+}
+
+xattr -d com.apple.quarantine "$0" 2>/dev/null || true
+chmod +x "$0" 2>/dev/null || true
+_preflight_mac_secrets
+
+_open_tailscale_approve_early
+_open_operator_linear_early
+_open_webui_workflow_early
+_install_downstream_nag
+
+STALL_RC=0
+_run_stall || STALL_RC=$?
+if [[ "$STALL_RC" -eq 0 ]]; then
+  osascript -e 'display notification "STALL OK. Watch Linear + GitHub #1." with title "Hermes ONE-SHOT OK" sound name "Hero"' 2>/dev/null || true
+  say "Hermes one shot stall complete. Watch Linear for inventory." 2>/dev/null || true
+  read -r -p "Press Enter to close…" _
+  exit 0
+fi
+
+echo ""
+echo "Phase 1 STALL did not complete (rc=$STALL_RC)."
+if [[ "$FALLBACK_ACTIONS" != "1" ]]; then
+  echo "HERMES_ONE_SHOT_FALLBACK_ACTIONS=0 — not running Actions fallback."
+  osascript -e 'display notification "STALL FAILED. Actions fallback disabled." with title "Hermes ONE-SHOT FAILED" sound name "Basso"' 2>/dev/null || true
+  read -r -p "Press Enter to close…" _
+  exit "$STALL_RC"
+fi
+
+if _run_enable_actions; then
+  osascript -e 'display notification "Actions path started. Watch Actions + issue #1." with title "Hermes ONE-SHOT PARTIAL→Actions" sound name "Hero"' 2>/dev/null || true
+  say "Hermes Actions downstream started. Watch GitHub." 2>/dev/null || true
+  read -r -p "Press Enter to close…" _
+  exit 0
+fi
+
+osascript -e 'display notification "STALL and Actions both failed. See Terminal." with title "Hermes ONE-SHOT FAILED" sound name "Basso"' 2>/dev/null || true
+read -r -p "Press Enter to close…" _
+exit 1
