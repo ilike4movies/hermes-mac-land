@@ -344,4 +344,56 @@ _install_workflow_via_git_push() {
     rm -rf "$work"
     return 1
   fi
-  mkdir -p "$work/repo/.github/workfl
+  mkdir -p "$work/repo/.github/workflows"
+  cp "$src_file" "$work/repo/${WF_PATH}"
+  rm -f "$src_file"
+  (
+    set -euo pipefail
+    cd "$work/repo"
+    git config user.email "hermes-mac-land@local"
+    git config user.name "Hermes ONE-SHOT tip161"
+    git add "$WF_PATH"
+    if git diff --cached --quiet; then
+      echo "OK tip #161: workflow already present in clone"
+      exit 0
+    fi
+    git commit -m "ci: enable downstream-stall workflow under .github/workflows (tip #161 git fallback)"
+    git push origin HEAD:main
+  )
+  local rc=$?
+  rm -rf "$work"
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK tip #161 installed ${WF_PATH} via git push"
+    return 0
+  fi
+  echo "WARN tip #161: git push failed (rc=$rc)"
+  return 1
+}
+
+_run_enable_actions() {
+  echo ""
+  echo "=== Phase 2: ENABLE Downstream Actions (local gh) ==="
+  osascript -e 'display notification "Phase 2: enabling GitHub Actions path…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
+  # Tip #127: same as ENABLE #126 — prefer HERMES_GH_WORKFLOW_PAT when gh lacks workflows scope.
+  _load_mac_hermes_env || true
+  if [[ -n "${HERMES_GH_WORKFLOW_PAT:-}" ]]; then
+    export GH_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+    export GITHUB_TOKEN="$HERMES_GH_WORKFLOW_PAT"
+    echo "OK using HERMES_GH_WORKFLOW_PAT for workflow write (tip #127)"
+  fi
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "FAILED: gh CLI missing. Install GitHub CLI, then: gh auth login"
+    echo "Or web UI: paste Raw ci/downstream-stall.yml into create-file editor"
+    WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+    WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+    echo "Web UI create: $WEBUI_NEW"
+    echo "Web UI paste source (Raw): $WEBUI_RAW"
+    open "$WEBUI_NEW" 2>/dev/null || true
+    open "$WEBUI_RAW" 2>/dev/null || true
+    return 1
+  fi
+  if ! gh auth status >/dev/null 2>&1; then
+    echo "FAILED: gh not logged in. Run: gh auth login"
+    return 1
+  fi
+  local WF_PATH=".github/work
