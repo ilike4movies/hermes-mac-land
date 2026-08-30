@@ -1,1 +1,38 @@
-LOAD_FROM_FILE:/tmp/grow6500_exact.sh
+_resolve_ics_expected_tip() {
+  # Tip #167: prefer env, then TIP_PIN, then CURRENT_AUTHURL.md "Tip through **#N**".
+  # Tip #168: also CDN-fetch TIP_PIN from main so long-lived wait-login soft-holds
+  # pick tip advances without remint/respawn. Returns max(local, CDN); env still wins.
+  if [[ -n "${HERMES_AUTHURL_ICS_EXPECTED_TIP:-}" ]]; then
+    printf '%s\n' "$HERMES_AUTHURL_ICS_EXPECTED_TIP"
+    return 0
+  fi
+  local best="" pin="" parsed="" cdn_pin="" cdn_md=""
+  local pinfile="${SCRIPT_DIR}/TIP_PIN"
+  local md="${SCRIPT_DIR}/CURRENT_AUTHURL.md"
+  local repo="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
+  _tip_max() {
+    local a="${1:-}" b="${2:-}"
+    if [[ -z "$a" ]]; then printf '%s\n' "$b"; return 0; fi
+    if [[ -z "$b" ]]; then printf '%s\n' "$a"; return 0; fi
+    if (( 10#$a > 10#$b )); then printf '%s\n' "$a"; else printf '%s\n' "$b"; fi
+  }
+  if [[ -f "$pinfile" ]]; then
+    pin="$(tr -dc '0-9' <"$pinfile" | head -c 8 || true)"
+    best="$(_tip_max "$best" "$pin")"
+  fi
+  if [[ -f "$md" ]] && command -v python3 >/dev/null 2>&1; then
+    parsed="$(python3 - "$md" <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+m = re.search(r"Tip through \*\*#(\d+)\*\*", text)
+if not m:
+    m = re.search(r"tip through \*\*#(\d+)\*\*", text, re.I)
+if not m:
+    m = re.search(r"tip through #(\d+)", text, re.I)
+if m:
+    print(m.group(1))
+    raise SystemExit(0)
+raise SystemExit(1)
+PY
+)" || parsed=""
+    best="$(_tip_max "$best" "$
