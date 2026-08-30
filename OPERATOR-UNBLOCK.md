@@ -213,4 +213,24 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - Curl path **paginates** all comment pages (issue #1 >100 comments); `gh --paginate` unchanged.
 - Explicitly ignores `## Downstream COMPLETE (inventory deferred)` (tip #151) so nag keeps firing until live inventory DONE.
 
-### Tip #155 (NAG matches timestamped Dow
+### Tip #155 (NAG matches timestamped Downstream DONE)
+
+- Part-c machine beacons post `## Downstream DONE @ $WHEN` (not bare `## Downstream DONE`).
+- Tip #154 exact-line match would **never unload** after real success — tip #155 accepts `## Downstream DONE` **or** `## Downstream DONE @ …` first line + `host=`.
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command): nag install requires `_machine_downstream_done` + `Downstream DONE @` so stale pre-#154/#155 NAG is not reinstalled from CDN.
+
+### Tip #156 (Downstream status post: timeout gh + curl fallback)
+
+- [`hermes-dispatcher-part-a.sh`](shared-scripts/hermes-dispatcher-part-a.sh) `_post_github_status`: was gh-only, silent fail — Mac ONE-SHOT/STALL could finish inventory wait and still leave issue #1 without `## Downstream DONE @ …` (obj5 gates + tip#154/#155 NAG never see success).
+- Now: `timeout` around `gh issue comment` (default 8s); curl+token fallback (`HERMES_STATUS_GITHUB_TOKEN` / `GH_TOKEN` / `GITHUB_TOKEN` / `gh auth token`); OK/WARN log lines.
+
+### Tip #157 (FALLBACK pin includes tip #156 DONE-post)
+
+- [`hermes-dispatcher-downstream.sh`](shared-scripts/hermes-dispatcher-downstream.sh): default `HERMES_DOWNSTREAM_FALLBACK_REF` bumped `6c6881a` (#151) → **`ff0ccac`** (tip #156 OPERATOR restore / tip156 part-a on main).
+- CDN fail on `main` must not assemble pre-#156 parts (silent `gh` status fail → Mac success without issue #1 Downstream DONE).
+- Still includes tip #150/#151 inventory-integrity (SEED reject + DONE only when inventory present).
+
+### Tip #158 (reject pre-#156/#150/#151 assembled parts)
+
+- [`hermes-dispatcher-downstream.sh`](shared-scripts/hermes-dispatcher-downstream.sh): `_parts_integrity_ok` requires tip #156 DONE-post markers + tip #150/#151 inventory markers before assemble; stale co-located/CDN parts fall back to `ff0ccac`.
+- Mac STALL / DOWNSTREAM-ONLY / ONE-SHOT: entrypoint integrity requires `_parts_integrity_ok`; legacy monolithic check requires `HERMES_GH_BEACON_TIMEOUT_SECS` (not bare `_post_github_statu
