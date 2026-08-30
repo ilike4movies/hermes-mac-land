@@ -105,3 +105,52 @@ _refresh_authurl_file() {
   local ics_tip_stale=0
   local ics_local="${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics"
   # Tip #167/#168: resolve expected tip from env / TIP_PIN / CURRENT_AUTHURL.md / CDN (default 168).
+  local ics_expected_tip
+  ics_expected_tip="$(_resolve_ics_expected_tip)"
+  if [[ ! -f "$ics_local" ]]; then
+    ics_need_refresh=1
+  elif command -v python3 >/dev/null 2>&1; then
+    if ! ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_REFRESH_REMAIN_SECS="${HERMES_AUTHURL_ICS_REFRESH_REMAIN_SECS:-1800}" python3 - <<'PY'
+import os, re
+from datetime import datetime, timezone
+path = os.environ["ICS_PATH"]
+remain = int(os.environ.get("HERMES_AUTHURL_ICS_REFRESH_REMAIN_SECS") or "1800")
+try:
+    text = open(path, encoding="utf-8", errors="replace").read()
+except OSError:
+    raise SystemExit(1)
+m = re.search(r"^DTEND:([0-9]{8}T[0-9]{6}Z)$", text, re.M)
+if not m:
+    raise SystemExit(1)
+end = datetime.strptime(m.group(1), "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
+now = datetime.now(timezone.utc)
+raise SystemExit(0 if (end - now).total_seconds() > remain else 1)
+PY
+    then
+      ics_need_refresh=1
+    fi
+    if ! ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" python3 - <<'PY'
+import os, re
+path = os.environ["ICS_PATH"]
+expect = int(os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "170")
+try:
+    text = open(path, encoding="utf-8", errors="replace").read()
+except OSError:
+    raise SystemExit(1)
+m = re.search(r"^SUMMARY:.*\(tip #(\d+)\)", text, re.M)
+if not m:
+    raise SystemExit(1)
+raise SystemExit(0 if int(m.group(1)) >= expect else 1)
+PY
+    then
+      ics_tip_stale=1
+    fi
+  fi
+  # Tip #166: tip-pin soft-hold — rewrite SUMMARY/DESCRIPTION/VALARM only; keep DTEND/UID/URL.
+  if [[ "$ics_tip_stale" == "1" && "$ics_need_refresh" != "1" && "$auth_changed" != "1" ]]; then
+    if command -v python3 >/dev/null 2>&1; then
+      AUTHURL_ICS_URL="$url" ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" python3 - <<'PY' 2>/dev/null || true
+import os, re
+path = os.environ["ICS_PATH"]
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
