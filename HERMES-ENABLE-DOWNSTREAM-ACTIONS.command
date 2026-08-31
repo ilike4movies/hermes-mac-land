@@ -14,7 +14,7 @@ cd "${TMPDIR:-/tmp}"
 echo "=== Hermes ENABLE Downstream Actions ==="
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Repo: $REPO"
-echo "tip through #178 (STALL nag install tip#178; Path C early tip#177; ONE-SHOT secrets tab tip#177; NAG Raw tip#176; ENABLE Web UI tip#175; FALLBACK b2b5fc4 tip159)"
+echo "tip through #179 (Phase2 secrets tab tip#179; STALL nag tip#178; Path C tip#177; NAG Raw tip#176; ENABLE tip#175; FALLBACK b2b5fc4 tip159)"
 echo "Prefer for tonight (if Tailscale+SSH OK):"
 echo "  https://github.com/${REPO}/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command"
 
@@ -158,10 +158,13 @@ else
       echo "  3) Web UI: paste Raw ci/downstream-stall.yml into create-file editor"
       WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
       WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+      SECRETS_UI="https://github.com/${REPO}/settings/secrets/actions"
       echo "     create: $WEBUI_NEW"
       echo "     Raw:    $WEBUI_RAW"
+      echo "     secrets: $SECRETS_UI"
       open "$WEBUI_NEW" 2>/dev/null || true
       open "$WEBUI_RAW" 2>/dev/null || true
+      open "$SECRETS_UI" 2>/dev/null || true
       osascript -e 'display notification "Need workflow scope, SSH push, or web UI paste" with title "Hermes Actions enable FAILED" sound name "Basso"' 2>/dev/null || true
       read -r -p "Press Enter to close…" _
       exit 1
@@ -174,7 +177,7 @@ echo ""
 echo "Action secrets required (Settings → Secrets and variables → Actions):"
 echo "  TS_AUTHKEY"
 echo "  HERMES_HOST_SSH_PRIVATE_KEY"
-echo "  LINEAR_API_KEY"
+  echo "  LINEAR_API_KEY"
 echo "Secrets UI: https://github.com/${REPO}/settings/secrets/actions"
 
 if [[ "$RUN_AFTER" != "1" ]]; then
