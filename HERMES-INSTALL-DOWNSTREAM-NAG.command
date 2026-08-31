@@ -130,7 +130,7 @@ fi
 open "$ISSUE_URL" 2>/dev/null || true
 open "$ONESHOT_URL" 2>/dev/null || true
 open "$WEBUI_WORKFLOW_URL" 2>/dev/null || true
-# Tip #172: Path C reconnect + Dropbox WAKE (throttled ≤1/30m — nag fires every 5m).
+# Tip #172/#176: Path C reconnect + Dropbox WAKE + Raw paste + secrets (throttled ≤1/30m).
 # Opt out: HERMES_NAG_OPEN_PATHC_RECONNECT=0
 if [[ "${HERMES_NAG_OPEN_PATHC_RECONNECT:-1}" == "1" ]]; then
   stamp="${HOME}/.hermes/nag-pathc-last.txt"
@@ -141,9 +141,14 @@ if [[ "${HERMES_NAG_OPEN_PATHC_RECONNECT:-1}" == "1" ]]; then
     DROPBOX_WAKE="${HERMES_DROPBOX_WAKE_URL:-https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1}"
     ZAPIER_GH="${HERMES_ZAPIER_GH_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336}"
     ZAPIER_CAL="${HERMES_ZAPIER_CAL_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487}"
+    WEBUI_RAW="${HERMES_WEBUI_RAW_URL:-https://github.com/${REPO}/raw/main/ci/downstream-stall.yml}"
+    SECRETS_UI="${HERMES_ACTIONS_SECRETS_URL:-https://github.com/${REPO}/settings/secrets/actions}"
+    echo "tip #176: Path C Raw paste + secrets + Dropbox/Zapier (≤1/30m)"
     open "$DROPBOX_WAKE" 2>/dev/null || true
     open "$ZAPIER_GH" 2>/dev/null || true
     open "$ZAPIER_CAL" 2>/dev/null || true
+    open "$WEBUI_RAW" 2>/dev/null || true
+    open "$SECRETS_UI" 2>/dev/null || true
     mkdir -p "${HOME}/.hermes" 2>/dev/null || true
     echo "$now_s" >"$stamp" 2>/dev/null || true
   fi
@@ -213,7 +218,7 @@ echo "OK installed downstream nag LaunchAgent"
 echo "  plist: $PLIST"
 echo "  script: $NAG_BIN"
 echo "  interval: 5 min — notifies until issue #1 has machine '## Downstream DONE' + host= (tip #154)"
-echo "  tip #172: opens Dropbox WAKE + Zapier GH/Calendar reconnect ≤1/30m (HERMES_NAG_OPEN_PATHC_RECONNECT=0 to skip)"
+echo "  tip #176: opens Raw+secrets + Dropbox WAKE + Zapier ≤1/30m (tip#172 base) (HERMES_NAG_OPEN_PATHC_RECONNECT=0 to skip)"
 echo "  note: auto-opens ONE-SHOT by default (HERMES_NAG_AUTO_ONESHOT=0 for confirm-only); never unattended DISPATCH"
 echo "Uninstall: launchctl unload $PLIST && rm $PLIST $NAG_BIN"
 
