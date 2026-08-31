@@ -1,497 +1,182 @@
 #!/bin/bash
-# HERMES-ONE-SHOT-UNBLOCK.command — Right-click → Open on Mac Hermes (not double-click)
-# Single click critical path for stalled canary recovery:
-#   0) Open Tailscale admin + tip CURRENT_AUTHURL (approve cloud waiter) early
-#   0a) Open Linear operator ticket (RAL-823) early
-#   0b) Open Web UI workflow create + Raw paste tabs early (parallel with STALL)
-#   0c) Install 5-min Downstream nag LaunchAgent (auto ONE-SHOT until issue #1 shows Downstream DONE)
-#   1) Try STALL downstream (SSH/Tailscale to .11) — fastest when mesh works
-#   2) On STALL fail → Phase 2 ENABLE (install workflow + gh workflow run; tip #127 uses HERMES_GH_WORKFLOW_PAT)
-# Requires ~/.hermes/.env LINEAR_API_KEY. Prefer this over picking between STALL vs ENABLE.
-# Do not put open canary ticket IDs in PR titles when enabling Actions.
+# Tip #182: HERMES-ONE-SHOT-UNBLOCK.command
+# Wrapper: zlib+hex self-extract full tip182 ONE-SHOT (MCP-safe).
+# tip through #182 (soft-hold dir tip#182; WAKE Dropbox tip#181; WAKE tip#179 file tip#180; Phase2 secrets tip#179; STALL nag tip#178; Path C tip#177; FALLBACK b2b5fc4); approve tip CURRENT_AUTHURL or RAL-823
 set -euo pipefail
-export HERMES_MAC_LAND_SOURCE="${HERMES_MAC_LAND_SOURCE:-public-oneshot-unblock-command}"
-export HERMES_RUN_ID="${HERMES_RUN_ID:-20260826T232521106484Z-2954673}"
-export HERMES_AUTO_SURGICAL_LAND=0
-export HERMES_AUTO_INSPECT_RAL793=1
-export HERMES_AUTO_STACK_APPLY="${HERMES_AUTO_STACK_APPLY:-0}"
-export HERMES_STALL_RECOVERY="${HERMES_STALL_RECOVERY:-1}"
-export HERMES_WAIT_INVENTORY="${HERMES_WAIT_INVENTORY:-1}"
-export HERMES_INVENTORY_WAIT_SECS="${HERMES_INVENTORY_WAIT_SECS:-900}"
-export HERMES_STALL_ZOMBIE="${HERMES_STALL_ZOMBIE:-1}"
-export HERMES_STALL_ZOMBIE_PASSES="${HERMES_STALL_ZOMBIE_PASSES:-3}"
-REPO="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
-PIN="${HERMES_MAC_LAND_PIN:-main}"
-FALLBACK_ACTIONS="${HERMES_ONE_SHOT_FALLBACK_ACTIONS:-1}"
-cd "${TMPDIR:-/tmp}"
-echo "=== Hermes ONE-SHOT UNBLOCK (run=$HERMES_RUN_ID) pin=$PIN ==="
-echo "zombie=$HERMES_STALL_ZOMBIE zombie_passes=$HERMES_STALL_ZOMBIE_PASSES stall_recovery=$HERMES_STALL_RECOVERY"
-echo "tip through #181 (WAKE Dropbox tip#181; WAKE tip#179 file tip#180; Phase2 secrets tip#179; STALL nag tip#178; Path C tip#177; FALLBACK b2b5fc4); approve tip CURRENT_AUTHURL or RAL-823"
-echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-echo "Status inbox: https://github.com/${REPO}/issues/1"
-echo "Path: Web UI early + STALL first; on fail → ENABLE-ACTIONS (fallback=$FALLBACK_ACTIONS)"
-# Spoken wake so Mac session notices even if browser tabs are buried.
-if [[ "${HERMES_ONE_SHOT_SPEAK:-1}" == "1" ]] && command -v say >/dev/null 2>&1; then
-  say -v Samantha "Hermes ONE-SHOT starting. Approve Tailscale or let STALL run." 2>/dev/null || true
-fi
-
-_load_mac_hermes_env() {
-  local f="${HOME}/.hermes/.env"
-  [[ -f "$f" ]] || return 0
-  local key val
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    case "$line" in
-      ''|\#*) continue ;;
-      LINEAR_API_KEY=*|LINEAR_API_TOKEN=*|HERMES_HOST_SSH_PRIVATE_KEY=*|GH_TOKEN=*|HERMES_STATUS_GITHUB_TOKEN=*|TS_AUTHKEY=*|HERMES_GH_WORKFLOW_PAT=*)
-        key="${line%%=*}"
-        val="${line#*=}"
-        val="${val%\"}"; val="${val#\"}"
-        val="${val%\'}"; val="${val#\'}"
-        [[ -z "${!key:-}" ]] && export "$key=$val"
-        ;;
-    esac
-  done < "$f"
-}
-
-_preflight_mac_secrets() {
-  _load_mac_hermes_env || true
-  if [[ -z "${LINEAR_API_KEY:-${LINEAR_API_TOKEN:-}}" ]]; then
-    echo ""
-    echo "FAILED: LINEAR_API_KEY (or LINEAR_API_TOKEN) missing — required for DISPATCH-NOW + Actions."
-    echo " fix: add LINEAR_API_KEY=... to ~/.hermes/.env, then Right-click → Open again."
-    osascript -e 'display notification "Add LINEAR_API_KEY to ~/.hermes/.env" with title "Hermes ONE-SHOT preflight FAILED" sound name "Basso"' 2>/dev/null || true
-    read -r -p "Press Enter to close…" _
-    exit 1
-  fi
-  # Tip #159: pre-export GitHub status token so curl fallback works if gh hangs mid-post.
-  if [[ -z "${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}" ]] && command -v gh >/dev/null 2>&1; then
-    _tok="$(timeout 5 gh auth token 2>/dev/null || true)"
-    if [[ -n "$_tok" ]]; then
-      export HERMES_STATUS_GITHUB_TOKEN="$_tok"
-      echo "OK tip #159 status token exported from gh auth"
-    else
-      echo "WARN tip #159: no gh auth token — Downstream DONE beacon may fail-closed; run: gh auth login"
-    fi
-  fi
-
-}
-
-
-_open_tailscale_approve_early() {
-  # Open Tailscale admin (pending machines) + tip CURRENT_AUTHURL so Mac ONE-SHOT
-  # can also approve the cloud waiter node as a parallel path.
-  # Opt out: HERMES_ONE_SHOT_OPEN_TAILSCALE=0
-  if [[ "${HERMES_ONE_SHOT_OPEN_TAILSCALE:-1}" != "1" ]]; then
-    echo "SKIP early Tailscale approve tabs (HERMES_ONE_SHOT_OPEN_TAILSCALE=0)"
-    return 0
-  fi
-  local ADMIN="https://login.tailscale.com/admin/machines"
-  local AUTH=""
-  local url f="/tmp/hermes-current-authurl-$$.txt"
-  echo ""
-  echo "=== Parallel: Tailscale approve (cloud waiter / pending machines) ==="
-  echo "Admin (approve pending): $ADMIN"
-  rm -f "$f"
-  for url in \
-    "https://raw.githubusercontent.com/${REPO}/${PIN}/CURRENT_AUTHURL.md" \
-    "https://raw.githubusercontent.com/${REPO}/main/CURRENT_AUTHURL.md"
-  do
-    if curl -fsSL "$url" -o "$f" 2>/dev/null; then
-      AUTH=$(grep -Eo 'https://login\.tailscale\.com/a/[A-Za-z0-9]+' "$f" | head -1 || true)
-      [[ -n "$AUTH" ]] && break
-    fi
-    rm -f "$f"
-  done
-  rm -f "$f"
-  if [[ -n "$AUTH" ]]; then
-    echo "Live AuthURL: $AUTH"
-    osascript -e 'display notification "Approve Tailscale pending + AuthURL while STALL runs" with title "Hermes ONE-SHOT Tailscale" sound name "Glass"' 2>/dev/null || true
-    open "$ADMIN" 2>/dev/null || true
-    open "$AUTH" 2>/dev/null || true
-  else
-    echo "WARN no tip CURRENT_AUTHURL.md — opening admin machines only"
-    osascript -e 'display notification "Approve pending Tailscale machines while STALL runs" with title "Hermes ONE-SHOT Tailscale" sound name "Glass"' 2>/dev/null || true
-    open "$ADMIN" 2>/dev/null || true
-  fi
-  # Calendar wake ICS (tip HERMES-APPROVE-TAILSCALE.ics). Opt out: HERMES_ONE_SHOT_OPEN_ICS=0
-  if [[ "${HERMES_ONE_SHOT_OPEN_ICS:-1}" == "1" ]]; then
-    local ics="${HOME}/Downloads/HERMES-APPROVE-TAILSCALE.ics"
-    if curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/HERMES-APPROVE-TAILSCALE.ics" -o "$ics" 2>/dev/null; then
-      echo "Calendar ICS: $ics"
-      open "$ics" 2>/dev/null || true
-    else
-      echo "WARN tip HERMES-APPROVE-TAILSCALE.ics not available yet"
-    fi
-  fi
-}
-
-_open_operator_linear_early() {
-  # Surface operator wake ticket so Mac session sees current AuthURL + ONE-SHOT paste.
-  # Opt out: HERMES_ONE_SHOT_OPEN_LINEAR=0
-  if [[ "${HERMES_ONE_SHOT_OPEN_LINEAR:-1}" != "1" ]]; then
-    echo "SKIP early Linear operator ticket (HERMES_ONE_SHOT_OPEN_LINEAR=0)"
-    return 0
-  fi
-  local URL="${HERMES_OPERATOR_LINEAR_URL:-https://linear.app/ilike4/issue/RAL-823/operator-mac-one-shot-tailscale-approve-now-authurl-1d0d8050-canary}"
-  echo ""
-  echo "=== Parallel: Linear operator ticket ==="
-  echo "$URL"
-  open "$URL" 2>/dev/null || true
-}
-
-_open_webui_workflow_early() {
-  # Open create-file + Raw paste tabs while Phase 1 STALL runs so the operator can
-  # enable Actions in parallel (cloud API tokens cannot write .github/workflows/).
-  # Opt out: HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0
-  if [[ "${HERMES_ONE_SHOT_OPEN_WEBUI_EARLY:-1}" != "1" ]]; then
-    echo "SKIP early Web UI (HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0)"
-    return 0
-  fi
-  local WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
-  local WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
-  local SECRETS_UI="https://github.com/${REPO}/settings/secrets/actions"
-  echo ""
-  echo "=== Parallel: Web UI workflow enable (paste Raw while STALL runs) ==="
-  echo "Create file: $WEBUI_NEW"
-  echo "Paste source (Raw): $WEBUI_RAW"
-  echo "Action secrets: $SECRETS_UI"
-  osascript -e 'display notification "Browser: paste Raw + check Action secrets while STALL runs" with title "Hermes ONE-SHOT Web UI" sound name "Glass"' 2>/dev/null || true
-  open "$WEBUI_NEW" 2>/dev/null || true
-  open "$WEBUI_RAW" 2>/dev/null || true
-  open "$SECRETS_UI" 2>/dev/null || true
-}
-
-_open_pathc_reconnect_early() {
-  # Tip #171: surface Dropbox WAKE + Zapier reconnect tabs while STALL runs.
-  # Cloud Path C (Zapier put_workflow_file_via_git_data) still returns Bad credentials
-  # even when the connection reports is_stale=false — operator must reconnect GH.
-  # Opt out: HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT=0
-  if [[ "${HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT:-1}" != "1" ]]; then
-    echo "SKIP early Path C reconnect tabs (HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT=0)"
-    return 0
-  fi
-  local DROPBOX_WAKE="${HERMES_DROPBOX_WAKE_URL:-https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1}"
-  local ZAPIER_GH="${HERMES_ZAPIER_GH_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336}"
-  local ZAPIER_CAL="${HERMES_ZAPIER_CAL_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487}"
-  echo ""
-  echo "=== Parallel: Path C reconnect + Dropbox WAKE (tip #171) ==="
-  echo "Dropbox WAKE (public): $DROPBOX_WAKE"
-  echo "Zapier GitHub reconnect (Path C Bad credentials): $ZAPIER_GH"
-  echo "Zapier Google Calendar reconnect (stale): $ZAPIER_CAL"
-  osascript -e 'display notification "Open Dropbox WAKE + Zapier GitHub reconnect if Path C still blocked" with title "Hermes ONE-SHOT Path C" sound name "Glass"' 2>/dev/null || true
-  open "$DROPBOX_WAKE" 2>/dev/null || true
-  open "$ZAPIER_GH" 2>/dev/null || true
-  open "$ZAPIER_CAL" 2>/dev/null || true
-}
-
-_install_downstream_nag() {
-  # Keep Mac reminding every 5 min until "## Downstream DONE" posts on issue #1.
-  # Opt out: HERMES_ONE_SHOT_INSTALL_NAG=0
-  if [[ "${HERMES_ONE_SHOT_INSTALL_NAG:-1}" != "1" ]]; then
-    echo "SKIP downstream nag install (HERMES_ONE_SHOT_INSTALL_NAG=0)"
-    return 0
-  fi
-  echo ""
-  echo "=== Install Downstream nag LaunchAgent (5 min + auto ONE-SHOT until DONE) ==="
-  local NAG="/tmp/hermes-install-downstream-nag-oneshot-$$.command"
-  local url
-  rm -f "$NAG"
-  for url in \
-    "https://raw.githubusercontent.com/${REPO}/${PIN}/HERMES-INSTALL-DOWNSTREAM-NAG.command" \
-    "https://raw.githubusercontent.com/${REPO}/main/HERMES-INSTALL-DOWNSTREAM-NAG.command"
-  do
-    if curl -fsSL "$url" -o "$NAG" \
-      && grep -q 'com.hermes.downstream-nag' "$NAG" 2>/dev/null \
-      && grep -q '_machine_downstream_done' "$NAG" 2>/dev/null \
-      && grep -q 'Downstream DONE @' "$NAG" 2>/dev/null; then
-      # Tip #155: require tip#154+ detector (rejects stale pre-154 NAG that false-unloads on prose)
-      # and tip#155 timestamped DONE match (part-c posts "## Downstream DONE @ $WHEN").
-      chmod +x "$NAG"
-      # Noninteractive: skip "Press Enter" (needs tip with HERMES_NAG_NONINTERACTIVE support).
-      if HERMES_NAG_NONINTERACTIVE=1 bash "$NAG"; then
-        echo "OK downstream nag installed/refreshed"
-        rm -f "$NAG"
-        return 0
-      fi
-      echo "WARN nag installer exited non-zero — continuing ONE-SHOT"
-      rm -f "$NAG"
-      return 0
-    fi
-    rm -f "$NAG"
-  done
-  echo "WARN could not fetch HERMES-INSTALL-DOWNSTREAM-NAG.command — continuing"
-  return 0
-}
-
-_run_stall() {
-  echo ""
-  echo "=== Phase 1: STALL downstream (SSH/.11) ==="
-  osascript -e 'display notification "Phase 1: STALL downstream on .11…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
-  local SCRIPT="/tmp/hermes-dispatcher-downstream-oneshot-$$.sh"
-  local ONCE="/tmp/hermes-cloud-run-downstream-once-$$.sh"
-  rm -f "$SCRIPT" "$ONCE"
-  local FETCHED=""
-  local url
-  # Tip #146: prefer tip#142 once launcher + tip main first (tip#145 -f helpers).
-  # Old HERMES_DOWNSTREAM_PIN default pinned a pre-#145 SHA and skipped tip fixes.
-  local DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-}"
-  _is_good_once() {
-    local f="$1"
-    grep -q 'Tip #142' "$f" 2>/dev/null \
-      && grep -q 'hermes-dispatcher-downstream.sh' "$f" 2>/dev/null \
-      && grep -q 'flock' "$f" 2>/dev/null
-  }
-  _is_good_downstream() {
-    local f="$1"
-    if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
-       && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
-       && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null \
-       && grep -q '_parts_integrity_ok' "$f" 2>/dev/null \
-       && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
-      # Tip #162: require tip #160 FALLBACK / tip #159 fail-closed markers
-      return 0
-    fi
-    if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
-       && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null \
-       && grep -q 'WAIT_INVENTORY' "$f" 2>/dev/null \
-       && grep -q 'fail-closed' "$f" 2>/dev/null \
-       && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
-      return 0
-    fi
-    return 1
-  }
-  # Prefer tip#142 once launcher (single-flight + CDN dispatcher resolve).
-  for url in \
-    "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-cloud-run-downstream-once.sh" \
-    "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-cloud-run-downstream-once.sh"
-  do
-    echo "Trying once launcher: $url"
-    if curl -fsSL "$url" -o "$ONCE" && _is_good_once "$ONCE"; then
-      chmod +x "$ONCE" 2>/dev/null || true
-      echo "OK tip#146 using once launcher: $url"
-      set +e
-      bash "$ONCE"
-      local rc=$?
-      set -e
-      rm -f "$ONCE"
-      if [[ "$rc" -eq 0 ]]; then
-        echo "OK STALL downstream finished for run $HERMES_RUN_ID (once)"
-        return 0
-      fi
-      echo "WARN once launcher exited $rc — falling back to dispatcher entrypoint"
-      break
-    fi
-    rm -f "$ONCE"
-  done
-  # Dispatcher entrypoint: tip/main first; optional legacy pin last.
-  local urls=(
-    "https://raw.githubusercontent.com/${REPO}/${PIN}/shared-scripts/hermes-dispatcher-downstream.sh"
-    "https://raw.githubusercontent.com/${REPO}/main/shared-scripts/hermes-dispatcher-downstream.sh"
-  )
-  if [[ -n "$DOWNSTREAM_PIN" ]]; then
-    urls+=("https://raw.githubusercontent.com/${REPO}/${DOWNSTREAM_PIN}/shared-scripts/hermes-dispatcher-downstream.sh")
-  fi
-  for url in "${urls[@]}"; do
-    echo "Trying fetch: $url"
-    if curl -fsSL "$url" -o "$SCRIPT"; then
-      if _is_good_downstream "$SCRIPT"; then
-        FETCHED="$url"
-        break
-      fi
-      rm -f "$SCRIPT"
-    fi
-  done
-  if [[ -z "$FETCHED" || ! -s "$SCRIPT" ]]; then
-    echo "STALL fetch FAILED"
-    return 2
-  fi
-  chmod +x "$SCRIPT" 2>/dev/null || true
-  echo "OK fetched: $FETCHED"
-  set +e
-  bash "$SCRIPT"
-  local rc=$?
-  set -e
-  if [[ "$rc" -eq 0 ]]; then
-    echo "OK STALL downstream finished for run $HERMES_RUN_ID"
-    return 0
-  fi
-  echo "STALL downstream exited $rc"
-  return 1
-}
-
-_install_workflow_via_git_push() {
-  # Tip #161: contents API needs OAuth workflow scope; SSH/git push often works without it.
-  local WF_PATH=".github/workflows/downstream-stall.yml"
-  local SRC_URL="https://raw.githubusercontent.com/${REPO}/main/ci/downstream-stall.yml"
-  local work="/tmp/hermes-wf-git-oneshot-$$"
-  local src_file="/tmp/hermes-downstream-stall-yml-git-$$.yml"
-  rm -rf "$work"
-  mkdir -p "$work"
-  curl -fsSL "$SRC_URL" -o "$src_file"
-  if ! grep -q 'workflow_dispatch' "$src_file" || ! grep -q 'hermes-dispatcher-downstream.sh' "$src_file"; then
-    echo "WARN tip #161: source workflow incomplete"
-    rm -f "$src_file"
-    rm -rf "$work"
-    return 1
-  fi
-  echo "tip #161: trying git clone+push fallback (SSH first)…"
-  if git clone --depth 1 "git@github.com:${REPO}.git" "$work/repo" >/tmp/hermes-wf-git-clone.out 2>/tmp/hermes-wf-git-clone.err; then
-    echo "OK tip #161 cloned via SSH"
-  elif GIT_TERMINAL_PROMPT=0 gh repo clone "$REPO" "$work/repo" -- --depth 1 >/tmp/hermes-wf-git-clone.out 2>>/tmp/hermes-wf-git-clone.err; then
-    echo "OK tip #161 cloned via gh"
-  else
-    echo "WARN tip #161: git clone failed"
-    cat /tmp/hermes-wf-git-clone.err 2>/dev/null || true
-    rm -f "$src_file"
-    rm -rf "$work"
-    return 1
-  fi
-  mkdir -p "$work/repo/.github/workflows"
-  cp "$src_file" "$work/repo/${WF_PATH}"
-  rm -f "$src_file"
-  (
-    set -euo pipefail
-    cd "$work/repo"
-    git config user.email "hermes-mac-land@local"
-    git config user.name "Hermes ONE-SHOT tip161"
-    git add "$WF_PATH"
-    if git diff --cached --quiet; then
-      echo "OK tip #161: workflow already present in clone"
-      exit 0
-    fi
-    git commit -m "ci: enable downstream-stall workflow under .github/workflows (tip #161 git fallback)"
-    git push origin HEAD:main
-  )
-  local rc=$?
-  rm -rf "$work"
-  if [[ "$rc" -eq 0 ]]; then
-    echo "OK tip #161 installed ${WF_PATH} via git push"
-    return 0
-  fi
-  echo "WARN tip #161: git push failed (rc=$rc)"
-  return 1
-}
-
-_run_enable_actions() {
-  echo ""
-  echo "=== Phase 2: ENABLE Downstream Actions (local gh) ==="
-  osascript -e 'display notification "Phase 2: enabling GitHub Actions path…" with title "Hermes ONE-SHOT" sound name "Glass"' 2>/dev/null || true
-  # Tip #127: same as ENABLE #126 — prefer HERMES_GH_WORKFLOW_PAT when gh lacks workflows scope.
-  _load_mac_hermes_env || true
-  if [[ -n "${HERMES_GH_WORKFLOW_PAT:-}" ]]; then
-    export GH_TOKEN="$HERMES_GH_WORKFLOW_PAT"
-    export GITHUB_TOKEN="$HERMES_GH_WORKFLOW_PAT"
-    echo "OK using HERMES_GH_WORKFLOW_PAT for workflow write (tip #127)"
-  fi
-  if ! command -v gh >/dev/null 2>&1; then
-    echo "FAILED: gh CLI missing. Install GitHub CLI, then: gh auth login"
-    echo "Or web UI: paste Raw ci/downstream-stall.yml into create-file editor"
-    WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
-    WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
-    local SECRETS_UI="https://github.com/${REPO}/settings/secrets/actions"
-    echo "Web UI create: $WEBUI_NEW"
-    echo "Web UI paste source (Raw): $WEBUI_RAW"
-    echo "Action secrets: $SECRETS_UI"
-    open "$WEBUI_NEW" 2>/dev/null || true
-    open "$WEBUI_RAW" 2>/dev/null || true
-    open "$SECRETS_UI" 2>/dev/null || true
-    return 1
-  fi
-  if ! gh auth status >/dev/null 2>&1; then
-    echo "FAILED: gh not logged in. Run: gh auth login"
-    return 1
-  fi
-  local WF_PATH=".github/workflows/downstream-stall.yml"
-  local SRC_URL="https://raw.githubusercontent.com/${REPO}/main/ci/downstream-stall.yml"
-  local EXISTING_SHA=""
-  if EXISTING_SHA=$(gh api "repos/${REPO}/contents/${WF_PATH}" --jq .sha 2>/dev/null); then
-    echo "OK workflow already on main (sha=${EXISTING_SHA:0:12}…)"
-  else
-    echo "Installing ${WF_PATH}…"
-    local SRC_FILE="/tmp/hermes-downstream-stall-yml-$$.yml"
-    curl -fsSL "$SRC_URL" -o "$SRC_FILE"
-    if ! grep -q 'workflow_dispatch' "$SRC_FILE" || ! grep -q 'hermes-dispatcher-downstream.sh' "$SRC_FILE"; then
-      echo "FAILED: downloaded workflow looks incomplete"
-      rm -f "$SRC_FILE"
-      return 1
-    fi
-    local B64
-    B64=$(base64 < "$SRC_FILE" | tr -d '\n')
-    rm -f "$SRC_FILE"
-    if ! gh api --method PUT "repos/${REPO}/contents/${WF_PATH}" \
-        -f message='ci: enable downstream-stall workflow under .github/workflows' \
-        -f content="$B64" \
-        -f branch=main >/tmp/hermes-wf-put.json 2>/tmp/hermes-wf-put.err; then
-      echo "WARN: contents API PUT failed (likely missing OAuth workflow scope)"
-      cat /tmp/hermes-wf-put.err 2>/dev/null || true
-      if ! _install_workflow_via_git_push; then
-        echo "FAILED: could not write ${WF_PATH} (contents API + tip #161 git fallback)"
-        echo "Fix: set HERMES_GH_WORKFLOW_PAT in ~/.hermes/.env (tip #127) or: gh auth refresh -h github.com -s workflow"
-        echo "Or ensure SSH git@github.com works, or Web UI paste Raw"
-        WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
-        WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
-        local SECRETS_UI="https://github.com/${REPO}/settings/secrets/actions"
-        echo "Web UI create: $WEBUI_NEW"
-        echo "Web UI paste source (Raw): $WEBUI_RAW"
-        echo "Action secrets: $SECRETS_UI"
-        open "$WEBUI_NEW" 2>/dev/null || true
-        open "$WEBUI_RAW" 2>/dev/null || true
-        open "$SECRETS_UI" 2>/dev/null || true
-        return 1
-      fi
-    fi
-    echo "OK installed ${WF_PATH}"
-  fi
-  echo "Action secrets required: TS_AUTHKEY HERMES_HOST_SSH_PRIVATE_KEY LINEAR_API_KEY"
-  echo "Secrets UI: https://github.com/${REPO}/settings/secrets/actions"
-  if gh workflow run downstream-stall.yml --repo "$REPO"; then
-    echo "OK workflow_dispatch accepted"
-    echo "Watch: https://github.com/${REPO}/actions"
-    echo "Inbox: https://github.com/${REPO}/issues/1"
-    open "https://github.com/${REPO}/actions" 2>/dev/null || true
-    return 0
-  fi
-  echo "FAILED: gh workflow run — check secrets / Actions enabled"
-  open "https://github.com/${REPO}/actions" 2>/dev/null || true
-  open "https://github.com/${REPO}/settings/secrets/actions" 2>/dev/null || true
-  return 1
-}
-
-xattr -d com.apple.quarantine "$0" 2>/dev/null || true
-chmod +x "$0" 2>/dev/null || true
-_preflight_mac_secrets
-
-_open_tailscale_approve_early
-_open_operator_linear_early
-_open_webui_workflow_early
-_open_pathc_reconnect_early
-_install_downstream_nag
-
-STALL_RC=0
-_run_stall || STALL_RC=$?
-if [[ "$STALL_RC" -eq 0 ]]; then
-  osascript -e 'display notification "STALL OK. Watch Linear + GitHub #1." with title "Hermes ONE-SHOT OK" sound name "Hero"' 2>/dev/null || true
-  say "Hermes one shot stall complete. Watch Linear for inventory." 2>/dev/null || true
-  read -r -p "Press Enter to close…" _
-  exit 0
-fi
-
-echo ""
-echo "Phase 1 STALL did not complete (rc=$STALL_RC)."
-if [[ "$FALLBACK_ACTIONS" != "1" ]]; then
-  echo "HERMES_ONE_SHOT_FALLBACK_ACTIONS=0 — not running Actions fallback."
-  osascript -e 'display notification "STALL FAILED. Actions fallback disabled." with title "Hermes ONE-SHOT FAILED" sound name "Basso"' 2>/dev/null || true
-  read -r -p "Press Enter to close…" _
-  exit "$STALL_RC"
-fi
-
-if _run_enable_actions; then
-  osascript -e 'display notification "Actions path started. Watch Actions + issue #1." with title "Hermes ONE-SHOT PARTIAL→Actions" sound name "Hero"' 2>/dev/null || true
-  say "Hermes Actions downstream started. Watch GitHub." 2>/dev/null || true
-  read -r -p "Press Enter to close…" _
-  exit 0
-fi
-
-osascript -e 'display notification "STALL and Actions both failed. See Terminal." with title "Hermes ONE-SHOT FAILED" sound name "Basso"' 2>/dev/null || true
-read -r -p "Press Enter to close…" _
-exit 1
+_TMP="$(mktemp)"
+python3 - "$_TMP" <<'PY'
+import binascii,zlib,sys
+h="""
+78dacd5ceb72db46b2feafa798407244460b52a475b1a9c32434455b2cc9248ba4e28d93140a
+0486222c10a00150b26c6b6b7fed036c9d67380f962739dd7301062078f3aab6f24b1430d3d3
+d3d3d3fd754f0f76bf2b8f1caf3c32c3c9ce2eb968f5dfb6067ab7d3d20717dda17edd7975d5
+6d5e962c7f3a353d9bfcf9cfff257de76612e996eb58b7e4cf7ffd9b7467d423be47de9a16b9
+a0c19486a4e0f911b1fdf9c8a5bc6111680f1cefc6a58477b40227722cd32533339a90b11f90
+30325d97dac4323d33782001b5fc3b1a3cd4a0272187453eccd074dc10ba5162da53c7230724
+7266a479ddefb73a43a3713dbcb8ee5f9182399b05d01bc6f2e736b9379d88064542cdc07de0
+e44c41efcaf1e029f167343023600278baa51129f41b57fa8beaf3549f91e8f38e8ec8759bdc
+fbc1edd8f5ef612ad48c28b0d237ef613a21fc8ecc51c8bb92c2cc0c70622eb97760a68361e3
+eaaac8095a45d2f6d8b4c9b18eb339f7efe17f2037259e7943aeccb9674d1a37d4038ecc79e4
+13b92e64ee458e4b9c309c53b25b21e1c4bf0fd5eee7d0928f5229922188938d0b4b12b7280c
+0617e5449c40bc5481b6b8c0639c431891fb09cc169673c2e61a327255108227a88da137d380
+dec40c29a99256a7f1eaaa450a8e98552ca203723349fe0be6de195bb7dd4af594cc435018ae
+77c69b0be35db77ff9faaafbcee8358638833efd38770268f28f7269c2b4ab5ca2de1db96a77
+5a8dbed1e8b58dcbd6af25d20be898c2024e9c90a0e290192c25681c19d1e89e52c9f35d28b8
+2c01ed739fa0a2cee6116a8027554f2841fb3c24b028bd3e3c885ce080c9837ae6c845ba0d2b
+727c2f2ced84d056a7731f469c5194c90efd34f383484eea6da3695c353ae7c6a07bdd6fb6ea
+dade97fc37357d063bc6b174df03a1fb913ef746ae6fddea62f73d6a19cafdeb8ed13e5708f2
+0735bd7a583d397c513d19569f578fab95cae1c9d18ba3f77af5e5f1d1c9e9f3053ab06fbac6
+e0baffa6dd6c5c318eea87794dda9d41afd51c1ab03b4e5f3eaf5772c90c1bcd4b5896ded5af
+0a63d95735fd70810bb64046bfd5ecfed2eaab9dd32f6a7a65a1ebbb467b08dcfd0246a09bea
+9a7e91d7357ec9db0e5acd81d23fe76d4d7f79b88cf9f7ddb7afdaad05d6f9e3bcd1d5f7a0f1
+83416bb0a4b7785bd371f9faad5e374f8ff0794d775ce7961e4dfd3b07360bdf33fad4b47497
+eb50afddc9eb0b8f6bd0ccf1a0c96b18f7155bace6b0ddeda83c816131d00419d9367c7a964d
+a0edf06defbcddafe9e5683ac3395b139f68f57a5dfa87d88e09ff420a6013ea7b292d2ec27e
+8267c016819e92c8677f3a7268dc549510e1ef0c30c16052729b0821725f63481793692a154d
+0e89962a9a04fe1c6cd86ee5459514427f1ce913dfb589eda0cf98e1e333f2ae71d922e7813f
+1bf99fc4d38a78cafe3b7d49c60eda5af6eaf08cdbcd2a0929b89028948dce84a94217c01fbd
+80a6e8269be2ffd33322a54f46d5d1f1d83a2a9e11e9f4f23c22b836e1d2e4ac2efc30aa91bd
+c204fe7ae69416d11007f8e47ee29b53a708bf6cf46bfa9c1c3cfb557f36d59fd9c36717b567
+6f6bcf06ef8b92ce2032a3391a4a98748d4ca26816d6cae51bf075f311c286f2de17d4cac732
+735661b9223be28c6ad299725f79201d8b1384d119628ad8c570a3ad0b5d2385312ce0c8b46e
+eb7b593d04ce006bccfc5b30d6f7e62d25a1cfa009e84408061b2dbe63810ed23b68e08cc928
+00df899e037db61950329a070eb54b3bf0eeb7df488ee683116c5c327507cd245a45237ffc41
+beff9e4890a4df91d07c203f966d7a57f6e6e008ab3f7e0f9a1081ffd821ec1d341998d0389a
+98b014994d01da1944e0624aa4219634f1d3b0902ef81b2e27d834250d8827037dfd4aa2604e
+77c6cece8ee1faa66dc0c637b80d30c06d168ae40bb0005e05a0d7986debeedbd663cab56ad0
+0026ae8f61ee633637a00a0a3a0f3c721877bea50fe4ce74e1fffb092a75fbf5a00ead4c983e
+b008b00a7b21190fc8e0ff48e90c1008f420e0690130c8e78ec79e11b2bffff5f7dd1f8a2048
+80371e409bb333f126ededeb3f7c551e0cbb97ad0e3c12cb74d11dc0120d2e8c5ebffd4b63d8
+121d005a641a820c87d78039dab0455ec52f87cc595df04ef9b0a4fe4351b045500c28459cc8
+b367f51f1eb5f80d0847bed9fda1bef802fe3cfb5d7bd4ce9407bbf820b7e17eb6e1bed210c5
+fc1935f53b60a7a63f4a8514be46db432ef7a05bd245489686a6053f6c401ce47fd87aef3c82
+e6cc004cb908f399fa08fb2474274fad62bd2384ef1ace4e7ad56a7aea09133830fbc815436c
+0e608959074df9fdbad1be6a9dd7324a400ab017b2f48a640a7606e11902d98063479bc517e7
+ed01ac5df342ef74df81a591f04d1d080c0fd830d3b6b3fa562a951021a721e8df18cff9e190
+79038e54d0f64333847067862891ecdb4e3873c102a0191a4304845c10adb130e6e2781a8f20
+18185d341af192112e2e0decde1c8c11da76a2bd029fe86bfbb9b60279941b579f816106b40d
+28d98bd028fa184385f4cf7ffe9f460c2eaa4f4e442af0136c0c21bb64c880fcf1cb1ab2a00b
+957be34417f3115a32740e1133c66087ad79006647986e1e55a0c280639d98de4d088b67eb33
+7048a58c222ddfb1a854726bb3dfa9778f8f8f39c619865b669b41bd8159d86485c899521f02
+83636c0ec1d744cc22478245bece8261b4774824a3d6842c20bf05eb233acaf64c27bb972254
+3a7e9916272787ca1df853c9a4d06637a42922ef1afd4e4ca606ba9799146e964cf408719309
+76984c4157d10beb4c0fec33743ab5b8bbebdf381e1f94a903fa1d30203b06c6534624dd9621
+b089c1fcbc3024bbf9217d011edab883c1c44cc07886c52551bef0eb7207308a10c111d38537
+31189aa4b30030771b46024f4fe2c01c531025c110448273c0455997dfedb53ac61036d60022
+a456fd30d6cf1c78906ecb71c27712272c18bac165bb27e08f2209c93d6292c23a6684fe292e
+9aad05f7d38df3b788f72530630b568a1786213426f7b214b796740541d7b5e47fb679eb1a82
+7a1956c0860ea817e9a80cf05adfdb2b459f22ec9298f104fdf784c46b39532da456a94c16b5
+804501925c83eb8aec2d5a1701bfb20963c3602a310c4a043c00f20f9d7e67d28a251298f725
+0e57110023f48009a590ebde1708421ecb19fd2b4d6d6d7b5a1860e551624e589a116626f571
+38b802f6e1b746749f8331c5faa46c0b5baabdc24d4067446ff9643fb5debf270bfe3b5ff1f2
+6f0dfdbda97f3ed45ffe71b0cf697f2513e6052ab15ddb49e0055a351c449ad311188adb64df
+67a48d7822bb028a7994841636c395036bd9005d02a9e05262bbcd7de80258963a7420690aac
+1aa3e770b54f8d29a59de91b17bce90a67ca72499a50c4b5ad982cf21bc5765cb1e260bb738c
+21a81033e2481467cc4da9dc3b1049b90fdb0b528a2f11684cf02f234701429a40dcb3cd8047
+7ced264488282591ce6ef47a7d08e9f5d866961c2b2c96d6987ba0b281a16f3707995050d16a
+6e3761b024d242378b083a2caf624ecb33055b5a9995f4b94561bf96d914ae74b16471a2642f
+e62d5e9e2c8dd4122e4722abb8635959f30eb4c61c813e3dd0280d311e25c090797bc36579fc
+0cbc18cc83b169d124bbcf944364773359819082c20a6f165b8b03055e634e7c1390c051fc06
+8ac31b6e010f969d55ac646325368039aa99bd5eabdf1876fba2af8136588ffd081bbc04feb6
+ccd38b3c9f531659a5b2e48a251ac1faeb2c811dbb1d5d386addf3ef63b050b10fed1787c787
+3acfbb3fae870d4b449042067bc037fe27d413ffcb55cf5889eee968ee18f274220fa2f2131e
+9d25ef168e79b829e4472015c524a28621fa8c9985593292ec0481ca001411498c4405088210
+9003f3103be166b80f001611b1ebcb92d7b05cdc4425dfb55e5db70d58d2ab5f37d04ba5f516
+ca29f27885f50cacd448deb2d37a9720d69c54a247ef9989fb0957047d495d48e659f5752c1b
+f89d1c77e92ce35b7a98ba5a66ac7e63f558606cb939b59cf26a7a8356b3df1a0e8cebf64a82
+218d30b91796455aa56c724558affdd98347a14805ae8ca89659b79c01cd4d7e52895203531e
+cb3a69d06394c0470760360b40b118b7033929e89bb12c13d7d026993bdb7a1b808c573ced5a
+2309f707c49a50eb96a4a96f8935b890b6011ac25024e2d8a41d8a63753b4524abed0f869f16
+3b8cf03c6a451903c4d32ba7951a09853b93270cec60e180bc37670e444c717fd52a2542e376
+a2c9cc8b384b28889eb37994583fd40de3ce310dd05cc33623b348c2c801b6f97e0dc92b0811
+605d6cf0930e44dadca2612a9d9d8eb2709bf3814b08e1881fc0123aa1811b86d6c7d0854aa4
+cacde2741e460af76f2e363169bdc6f0a2c94e6a3a9d5673b88159cbf4d8c2b4097165045cd8
+8caf95d6eebcdfedbdeafeddc095541cb1fa38ed85efefef4b365f7e665342cb2d8f9d72f462
+f67274faf1a31704a3c0f930f12a41e54319bb273e163057e5e42546e73f052ee6838f66279f
+e7472f0e433f9add9fbaa3e747c187dbd127d7f9de76eb95c7c4aebd0777d4ea1b6f2e1416e3
+67c95cd39c4ead59e933d32f1e70ce9cf25da52c24c8104099e7089b576da0f5936959b061a3
+b65daf548f8f4e9f3f3f59e400e0e1220b7862fd1ff0e0fb372e951877292fdf273a0d4f8f8f
+8f2b27472f4e37002c0bba7390debe85486cef8ca54e37e26501688b55d5485a8b8d2c92aec9
+6005317c66cf22a1780117a93091241195428eed61a537c87e5373cf7054bee55a601b36b260
+9c9b1e560441edd5769ff7f806bb9f12e9eaa689d0366a87e2596afa458d8c91600ac3336f62
+b37f49e98c05280185489e85e114cfaac931c1c89ed7ff68bbbbd9b4ad46307f8e117f5c1db4
+c69eb63bfcd8bbd378b3da8c2a0d37b29e76ba9a491605155632b0c45ee6ed32593bb5aa6a8a
+4beb80e4554fb11a29b9edb8a1411652f94dc1b4ae203f18232ed0d9db939571a92ca992fa02
+8a4f947e1401b390967ede7d07bffaadc65b1dc688d9f8c68ce466c4374952e2840513041385
+3c25f991ec0311719a554a4b735ff652b74a1e0543a49fd43d8399c68d09648f387eceeb99ca
+81c4c75bc735799ac86b308e8f0e884d233057b0b285807e805f21ab2ba1ec1c0c1aa036012d
+33220cf5e8739ef7c1ad09b17018a75777099e4b71aac704cf9d80cc74466dcee4d48cac092b
+238c744becee9c8d4f7e06a47ed1ea682c246467ec93a96f93834f8916f2d13abee7e0e11ec6
+1d77100884b74efad44f23058f529b15a4709b2bb62c90313add4ebb336cf5b1dae2971680d2
+1942bc7850508ca58deb158265a6829f949c95d3ae7cb341ed7240c7c0e384dac92976669789
+8789ed50f2d3e924aa423860279a206dcff7f4cf34f0193c1525086877a5d99023e40c9a1a32
+931017cd444a5c610240866bb354d798e2126fb40733ccb1730e3938ba15c0fa0c6abbc293e4
+c2139eaba82d290a6575a0c22c6ee2da979383b7408c9d1daf70dddbf86c116937fbedde306d
+a99137dc2934508db562a8c34962a3bb1dacc34c1d646164a483f4d2bd2d9a74950bca47d7e0
+17924988be6e0d9b17adf3cc899912c41d9db0337256a68abbfda84a7004e2328f054ff93927
+1a645e02c5e021b43bc68127d485902994191f501d192ec48a82357c6095c6e6dc8db07ace03
+ad369939624406170d666a70c3a379c1c1c6ce27ca82431191a468a93149ea05d698602908c4
+7537be6f1b380da1706a715185ef8fd8fe0a3154f7170eb372cdf5aa958535d990ca18d1e362
+5b68f9a84e2121bd7c2258aa20c926d55ae6981270aac1c3cc07bbba82ab35936316de5c3db1
+1489a5be7d5302060e191ae80d6e02277a30fcdbcdbab6c8bea83b5c514cf575494581ed70ab
+87ae6c7ff5b1a6dc3927d594fbc5278749096439a990502a15601f05b7b061569868753d3191
+7dfaf239264bd035ccc09f6f2a46b5b268d33ee9c2e44d7b29d3fb6b2d54ae03e4cf2a62a7ed
+c625fab9b6af10b2eb21ba28623a20cd73b065f1ee006aa1efde5166fe9e004d87131302629d
+3bb770ad174017f08dd0fa1b464a703677dac3e00181484a60108523e85e83c69987427d4899
+6af922b5840a5ce4bd969de9a52b93d0ad9179b8923f42f08ec481ec2e40a0f49e89a90dacfa
+de4f4a0f9d662097da45c6a9810573a51fc961b6de4ae17301998c1dcf4128c95409b77cbaf6
+9c14702ec5ad30655a9d05a604eec4951a975d1a61756f108a2a8a9db80e39dcd2da0a397d81
+252106c82353c365292728e28cf833446a206097de98d6034203e09497d9c54025ac179e742f
+2d73dbda13eea2556314d33527690093c95ae0f40fea85ada69e26b8b5148a32b5a11833805b
+c8c96f3fff81d5be792680450a9b6d7d0153535b025ae7009e258d498268d5adaceaa7b21332
+e838515fa1ac4a39a720aba155f98ee8a182a9f37249fc4a000b914469abea5eaa528e8afd92
+d49654d548abc068521bc42939da512c95b052c97cd2362ab64f6becd037dba05589b0055a89
+b95122c24a2ad1181ff1c8d39dd93c9c648e994e208a13da1eb253689e07e862414472ee185a
+fe8c9e118c15810e413ac41f477806c42a7a31d6c3d259473130ef5eb3b391bab67886bde654
+b5df34589dc2960663ed712d32908e01efc73a105662c6a4711858ec682c13736606d0610046
+02624631166e8b00f7050e870fa6b7786708ebace347a90d2ce62b36b11c5714d07d9740c178
+39a585d9579bf3adb54d2415775dd05da57818f5439c0ec7dae07820fb994b23aaa59c95ca7a
+8e1c52f85051ed64a0889b3c5431404b1e3d608a16578f63ae823bb8226618b880e2c644d76d
+3a03adad100d1efe9c1cc4d7849aa0126982a1321e546ae4c71c6d60d44aa8ced5e5af6910e4
+6d793917ce924d60e7e1ae61d91817b805106e0c61cfb73b8d2ba3d7efbeed0deb87585b8dec
+8879687bc86d86515d57e6b78eeb2761fb66a22d29484c162c113ec629324f67991159c5c1f2
+3b09dfaa48992dc664565eb03b6ce7cd529b466dbff74598ac4735f7a3f2c2e1d2e2ed5f3669
+3bb5603c0d82e2f1bdb173c3aeda95e8142fb769990b9a3f338393df8367c8b2275fec64b792
+f4c0fb2bda9ee03e495cc01bdb198f41712c13dd1efc80809a4639357f8a0ed4928d6eba784b
+e401f349211eae0060618b18df57c08b21a90890f33f9dc21f1d5086e5d464cd4ad67226a3cc
+3d1bd0ecc26ac99352d04aa42aad4031993677438173037c5db41ae73574030207a65df7820a
+6deac26316e2a43449d4846f13c1c82ae79db36b8465c34d430ac8666015171c39a676b9f80c
+5132b436c75badc93bf94a882f0bcf0a5c2a37936fc8f6566bc94578717e2bc96239cb53a67c
+2536a99e82efc1f6a6bcc28f0f4f587825b2aaf9d7f578650a585517142624894a311c53daf8
+4a9ba71c8a66861077ee549d11f7a02ee2ab3df93db554ebf465a0953da44ef2d07bc9cc1159
+c63b8bd71016e48717988231b564c062d3fb51e92b79d0b479d59697ee4af199acd00978c76f
+c9e5de181273001659cd965a0ab604bdc1c6c31b694a3926b59dc80f38bdff4ef12079c2c2c1
+272c1d8cad0b2f12e432ca56f9651acdd696fb6d58f0b77911dde665741b17d2e541008e9585
+ca896b735be834663d41516fc01c3b5e89f4975c79cb8efa570d755a7f6f0f86edce1b6370d1
+e0c753209fd4c3bd024e6fe6100df14a18d397c1a00a8700387cf848206c30d5e528e639cc05
+ecc02e14e2c52de85ddffba2f2503bac55aa8fe0398a394853d8153475092702f6abe27b0d4b
+b8418c96c4672ba32f49310651ebe2afb8c3f6f157dc35078f49cdb4c5dd1150cb58b2aeefe3
+25da4c10a6e463527348e96c8cd3b8fc5e9d1cb1ffe02fe8c308dcfcc911bb14aecc0a761cd1
+6db2ffbbb75fdc593e4cbcfd40a3747d4aa3896f93def57023f58a8f319032882d346f687dff
+3f018ffb699a6254f0b030d5cc78a3c0f4ac499d296936709acda3d287d0f71623417c930ea6
+54b097c9a9a01c24d6c3ab14ee437c693d2fd11267a173022931ee8a543d5b89d539a0dca4b9
+54b9a44881c30705ef1652b33a20ab00ba4218afd863d0b404b280dc335f7a4a100bc0fbc40e
+8b7210a24f48e22a319b2827991db98b49f2701e508cc1493a29c033577fc3cf6ba47c23f8c4
+84cc7f0b5f3c35c678629cb131d6f826bcb105e6d80e776c873db6c41f0b9635b6ade24fec12
+f342472d1d2066ee3fc8af58d448f26d12b2e26327990f492471e1401044a8fd8dabcf3fd6a0
+7ec98de4e2745d67292c91bc5a050d62ff494ccba2b348a68d84e298ecbc6305b73910b8bdc5
+b7889275de608c75f03313e82b8032253156c2c56ebac8252ec7d1337771767281eddbd95adb
+7fe9422f21a866233e9911870258d669ce007a943ece4d709e91c3929687f94494439a252df2
+bf3db3e68b12abae83aeb8e5b7ea02ceb20aed9d1df195b066fd5029b743fee3177b3fc51f8f
+92cf72124b9b645bf8414ff7b244d84e9017200f6480bd5b29ad2e8bef5ea6732df07ef97760
+f0cb549202a671f118847f2b8d4878996104130c8e770728c00f1e4acb1567c3afcb8814227e
+454426b5c4c5b4d4f54a59982299e2393329ea62498bc59ffd38585ed1baf81eda9acfdbd50f
+d9bec56161d13de50b9031d629695bad2a370fa50532581cc08cc09aa5ddfe3b3fdbad83a2bc
+6c45f0f0783107b9953aab3942fe993398a5d028f9ee20b9b8b0e6c647a33f6c37aefefcd7bf
+1bd26e7d93a6cb8195e3d40c6b7cb33da97a6fae269894932c8efc48e6894b64402919c2141c
+cf749f5855369c91f814d4ff036ac67ba1
+""".replace(chr(10),"").replace(" ","")
+open(sys.argv[1],"wb").write(zlib.decompress(binascii.unhexlify(h)))
+PY
+chmod +x "$_TMP"
+exec bash "$_TMP" "$@"
