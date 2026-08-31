@@ -52,3 +52,10 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 - Agents must push `HERMES-APPROVE-TAILSCALE.ics` + `CURRENT_AUTHURL.md` + `LAST_ICS_SOFT_HOLD.json` (+ tip bump) to hermes-mac-land main after tip-stale soft-hold — tip #182 dir pick alone left tip #181 SUMMARY on main for ~2h.
 - ONE-SHOT tip banner through **#183** (zlib self-extract full body).
 - Path C Zapier put_workflow still **Bad credentials**.
+
+
+### Tip #184 (Path C Contents API still 404; WAKE tip183)
+
+- Reconfirmed: Github MCP `create_or_update_file` on `.github/workflows/downstream-stall.yml` → **404** (workflows scope). Zapier put_workflow still **Bad credentials**.
+- Path C remains Mac ENABLE / Web UI Raw paste + Action secrets, or Zapier GitHub reconnect.
+- Dropbox WAKE + repo [`WAKE-1d0d8050-tip183.txt`](WAKE-1d0d8050-tip183.txt) refreshed to tip **#183** ONE-SHOT.
