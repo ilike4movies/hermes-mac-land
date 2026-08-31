@@ -59,3 +59,11 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 - Reconfirmed: Github MCP `create_or_update_file` on `.github/workflows/downstream-stall.yml` → **404** (workflows scope). Zapier put_workflow still **Bad credentials**.
 - Path C remains Mac ENABLE / Web UI Raw paste + Action secrets, or Zapier GitHub reconnect.
 - Dropbox WAKE + repo [`WAKE-1d0d8050-tip183.txt`](WAKE-1d0d8050-tip183.txt) refreshed to tip **#183** ONE-SHOT.
+
+
+### Tip #185 (Path C exhaust: git push 403 + Contents 404 on branch)
+
+- `cursor[bot]` `git push` of `.github/workflows/downstream-stall.yml` → **403** Permission denied.
+- Github MCP Contents PUT on main **and** branch `cursor/pathc-downstream-stall-3436` → **404** (workflows scope).
+- Zapier put_workflow still **Bad credentials**.
+- Path C remains: Mac ENABLE / Web UI Raw paste + Action secrets, or Zapier GitHub reconnect. Prefer Mac ONE-SHOT tip **#183** body.
