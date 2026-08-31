@@ -1,4 +1,5 @@
 #!/bin/bash
+# Tip #183: after tip-stale/TTL ICS rewrite, stamp ICS_SOFT_HOLD_PUSH_NEEDED so agents push hermes-mac-land ICS+CURRENT+LAST (tip#182 dir pick).
 # Tip #182: hermes-ics-soft-hold.sh - prefer hermes-mac-land over cloud-apply
 # Thin tip182 wrapper: dir-pick + exec tip181 soft-hold body from tip CDN pin.
 set -euo pipefail
@@ -27,10 +28,19 @@ else
   [[ -n "$best" ]] && SCRIPT_DIR="$best"
 fi
 export HERMES_ICS_SOFT_HOLD_DIR="$SCRIPT_DIR"
-# Run tip181 soft-hold body (ICS rewrite) with tip182 dir already selected.
 _BODY="$(mktemp)"
 curl -fsSL --max-time 10 \
   "https://raw.githubusercontent.com/${REPO}/0d34461565d0927222c77f83924de12291444d94/shared-scripts/hermes-ics-soft-hold.sh" \
   -o "$_BODY"
-# Force SCRIPT_DIR via env so tip181 body does not re-pick cloud-apply first.
-HERMES_ICS_SOFT_HOLD_DIR="$SCRIPT_DIR" bash "$_BODY"
+_OUT="$(mktemp)"
+set +e
+HERMES_ICS_SOFT_HOLD_DIR="$SCRIPT_DIR" bash "$_BODY" | tee "$_OUT"
+_rc=${PIPESTATUS[0]}
+set -e
+# Tip #183: stamp push-needed when soft-hold rewrote ICS (agents must push hermes-mac-land)
+if grep -q 'ICS_SOFT_HOLD_REWRITE=1' "$_OUT" 2>/dev/null; then
+  echo "1" > "$SCRIPT_DIR/ICS_SOFT_HOLD_PUSH_NEEDED"
+  echo "OK tip #183 stamped ICS_SOFT_HOLD_PUSH_NEEDED under $SCRIPT_DIR — push HERMES-APPROVE-TAILSCALE.ics + CURRENT_AUTHURL.md + LAST_ICS_SOFT_HOLD.json to main"
+fi
+rm -f "$_BODY" "$_OUT"
+exit "$_rc"
