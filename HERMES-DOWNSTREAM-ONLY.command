@@ -67,41 +67,181 @@ _preflight_mac_secrets() {
       echo "WARN tip #159: no gh auth token — Downstream DONE beacon may fail-closed; run: gh auth login"
     fi
   fi
+
 }
 
 _open_stall_parallel_pathc() {
-  if [[ "${HERMES_STALL_OPEN_PATHC_EARLY:-1}" != "1" ]]; then return 0; fi
+  if [[ "${HERMES_STALL_OPEN_PATHC_EARLY:-1}" != "1" ]]; then
+    echo "SKIP STALL parallel Path C (HERMES_STALL_OPEN_PATHC_EARLY=0)"
+    return 0
+  fi
   local REPO="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
+  local WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+  local WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+  local SECRETS_UI="https://github.com/${REPO}/settings/secrets/actions"
+  local DROPBOX_WAKE="${HERMES_DROPBOX_WAKE_URL:-https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1}"
+  local ZAPIER_GH="${HERMES_ZAPIER_GH_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336}"
+  local ZAPIER_CAL="${HERMES_ZAPIER_CAL_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487}"
+  echo ""
+  echo "=== Parallel: Path C + Tailscale approve (tip #177) while STALL runs ==="
   open "https://login.tailscale.com/admin/machines" 2>/dev/null || true
+  local auth=""
+  local f="/tmp/hermes-stall-current-authurl-$$.md"
+  if curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/CURRENT_AUTHURL.md" -o "$f" 2>/dev/null; then
+    auth=$(grep -Eo 'https://login\.tailscale\.com/a/[A-Za-z0-9]+' "$f" | head -1 || true)
+  fi
+  rm -f "$f"
+  [[ -n "$auth" ]] && open "$auth" 2>/dev/null || true
+  open "$WEBUI_NEW" 2>/dev/null || true
+  open "$WEBUI_RAW" 2>/dev/null || true
+  open "$SECRETS_UI" 2>/dev/null || true
+  open "$DROPBOX_WAKE" 2>/dev/null || true
+  open "$ZAPIER_GH" 2>/dev/null || true
+  open "$ZAPIER_CAL" 2>/dev/null || true
 }
 
 _install_downstream_nag() {
-  if [[ "${HERMES_STALL_INSTALL_NAG:-1}" != "1" ]]; then return 0; fi
-  echo "=== Install Downstream nag LaunchAgent (tip #178) ==="
+  if [[ "${HERMES_STALL_INSTALL_NAG:-1}" != "1" ]]; then
+    echo "SKIP downstream nag install (HERMES_STALL_INSTALL_NAG=0)"
+    return 0
+  fi
+  local REPO="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
+  local PIN="${HERMES_MAC_LAND_PIN:-main}"
+  echo ""
+  echo "=== Install Downstream nag LaunchAgent (5 min + auto ONE-SHOT until DONE) ==="
+  local NAG="/tmp/hermes-install-downstream-nag-only-$$.command"
+  local url
+  rm -f "$NAG"
+  for url in \
+    "https://raw.githubusercontent.com/${REPO}/${PIN}/HERMES-INSTALL-DOWNSTREAM-NAG.command" \
+    "https://raw.githubusercontent.com/${REPO}/main/HERMES-INSTALL-DOWNSTREAM-NAG.command"
+  do
+    if curl -fsSL "$url" -o "$NAG" \
+      && grep -q 'com.hermes.downstream-nag' "$NAG" 2>/dev/null \
+      && grep -q '_machine_downstream_done' "$NAG" 2>/dev/null \
+      && grep -q 'Downstream DONE @' "$NAG" 2>/dev/null; then
+      chmod +x "$NAG"
+      if HERMES_NAG_NONINTERACTIVE=1 bash "$NAG"; then
+        echo "OK downstream nag installed/refreshed (tip #178)"
+        rm -f "$NAG"
+        return 0
+      fi
+      echo "WARN nag installer exited non-zero — continuing DOWNSTREAM"
+      rm -f "$NAG"
+      return 0
+    fi
+    rm -f "$NAG"
+  done
+  echo "WARN could not fetch HERMES-INSTALL-DOWNSTREAM-NAG.command — continuing DOWNSTREAM"
+  return 0
 }
 
 _preflight_mac_secrets
 _open_stall_parallel_pathc
 _install_downstream_nag
 
+osascript -e 'display notification "Running stall-class downstream gates on .11…" with title "Hermes DOWNSTREAM" sound name "Glass"' 2>/dev/null || true
+xattr -d com.apple.quarantine "$0" 2>/dev/null || true
+chmod +x "$0" 2>/dev/null || true
+
 SCRIPT="/tmp/hermes-dispatcher-downstream-fetched-$$.sh"
 ONCE="/tmp/hermes-cloud-run-downstream-once-$$.sh"
 rm -f "$SCRIPT" "$ONCE"
 FETCHED=""
 DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-}"
-_is_good_once() { local f="$1"; grep -q 'Tip #142' "$f" 2>/dev/null && grep -q 'hermes-dispatcher-downstream.sh' "$f" 2>/dev/null && grep -q 'flock' "$f" 2>/dev/null; }
+_is_good_once() {
+  local f="$1"
+  grep -q 'Tip #142' "$f" 2>/dev/null \
+    && grep -q 'hermes-dispatcher-downstream.sh' "$f" 2>/dev/null \
+    && grep -q 'flock' "$f" 2>/dev/null
+}
 _is_good_downstream() {
   local f="$1"
-  if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null && grep -q '_parts_integrity_ok' "$f" 2>/dev/null && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then return 0; fi
-  if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null && grep -q 'fail-closed' "$f" 2>/dev/null && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then return 0; fi
+  if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
+     && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
+     && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null \
+     && grep -q '_parts_integrity_ok' "$f" 2>/dev/null \
+     && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
+    return 0
+  fi
+  if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
+     && grep -q 'stack-apply' "$f" 2>/dev/null \
+     && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null \
+     && grep -q 'RAL-634 starvation verify' "$f" 2>/dev/null \
+     && grep -q 'HERMES_GH_BEACON_TIMEOUT_SECS' "$f" 2>/dev/null \
+     && grep -q 'STALL_DISPATCH_PASSES' "$f" 2>/dev/null \
+     && grep -q 'WAIT_INVENTORY' "$f" 2>/dev/null \
+     && grep -q 'fail-closed' "$f" 2>/dev/null \
+     && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
+    return 0
+  fi
   return 1
 }
-for url in "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/shared-scripts/hermes-cloud-run-downstream-once.sh" "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-run-downstream-once.sh"; do
-  if curl -fsSL "$url" -o "$ONCE" && _is_good_once "$ONCE"; then chmod +x "$ONCE"; set +e; bash "$ONCE"; rc=$?; set -e; rm -f "$ONCE"; [[ "$rc" -eq 0 ]] && exit 0; break; fi; rm -f "$ONCE"; done
-urls=("https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/shared-scripts/hermes-dispatcher-downstream.sh" "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh")
-[[ -n "$DOWNSTREAM_PIN" ]] && urls+=("https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${DOWNSTREAM_PIN}/shared-scripts/hermes-dispatcher-downstream.sh")
+for url in \
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/shared-scripts/hermes-cloud-run-downstream-once.sh" \
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-run-downstream-once.sh"
+do
+  echo "Trying once launcher: $url"
+  if curl -fsSL "$url" -o "$ONCE" && _is_good_once "$ONCE"; then
+    chmod +x "$ONCE" 2>/dev/null || true
+    echo "OK tip#148 using once launcher: $url"
+    set +e
+    bash "$ONCE"
+    rc=$?
+    set -e
+    rm -f "$ONCE"
+    if [[ "$rc" -eq 0 ]]; then
+      echo "OK downstream gates finished for run $HERMES_RUN_ID (once)"
+      echo "NEXT: confirm Linear inventory evidence (not WORK-PACKET-DONE alone)"
+      echo " watch GitHub issue #1 for Downstream DONE receipt"
+      osascript -e 'display notification "Downstream OK. Watch Linear + GitHub #1." with title "Hermes DOWNSTREAM OK" sound name "Hero"' 2>/dev/null || true
+      say "Hermes downstream complete. Watch Linear for inventory evidence." 2>/dev/null || true
+      read -r -p "Press Enter to close…" _
+      exit 0
+    fi
+    echo "WARN once launcher exited $rc — falling back to dispatcher entrypoint"
+    break
+  fi
+  rm -f "$ONCE"
+done
+urls=(
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/shared-scripts/hermes-dispatcher-downstream.sh"
+  "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-dispatcher-downstream.sh"
+)
+if [[ -n "$DOWNSTREAM_PIN" ]]; then
+  urls+=("https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${DOWNSTREAM_PIN}/shared-scripts/hermes-dispatcher-downstream.sh")
+fi
 for url in "${urls[@]}"; do
-  if curl -fsSL "$url" -o "$SCRIPT" && _is_good_downstream "$SCRIPT"; then FETCHED="$url"; break; fi; rm -f "$SCRIPT"; done
-[[ -z "$FETCHED" || ! -s "$SCRIPT" ]] && exit 1
-chmod +x "$SCRIPT"; bash "$SCRIPT" && exit 0
-RC=$?; exit "$RC"
+  echo "Trying fetch: $url"
+  if curl -fsSL "$url" -o "$SCRIPT"; then
+    if _is_good_downstream "$SCRIPT"; then
+      FETCHED="$url"
+      break
+    fi
+    rm -f "$SCRIPT"
+  fi
+done
+
+if [[ -z "$FETCHED" || ! -s "$SCRIPT" ]]; then
+  echo "FAILED: could not download hermes-dispatcher-downstream.sh (need inspect + stack-apply + dual-dispatch + inventory-wait + GitHub beacon chain)"
+  osascript -e 'display notification "Download FAILED." with title "Hermes DOWNSTREAM FAILED" sound name "Basso"' 2>/dev/null || true
+  read -r -p "Press Enter to close…" _
+  exit 1
+fi
+
+chmod +x "$SCRIPT" 2>/dev/null || true
+echo "OK fetched from: $FETCHED"
+if bash "$SCRIPT"; then
+  echo "OK downstream gates finished for run $HERMES_RUN_ID"
+  echo "NEXT: confirm Linear inventory evidence (not WORK-PACKET-DONE alone)"
+  echo " watch GitHub issue #1 for Downstream DONE receipt"
+  osascript -e 'display notification "Downstream OK. Watch Linear + GitHub #1." with title "Hermes DOWNSTREAM OK" sound name "Hero"' 2>/dev/null || true
+  say "Hermes downstream complete. Watch Linear for inventory evidence." 2>/dev/null || true
+  read -r -p "Press Enter to close…" _
+  exit 0
+fi
+RC=$?
+echo "FAILED: downstream exited $RC"
+osascript -e 'display notification "Downstream FAILED. See Terminal." with title "Hermes DOWNSTREAM FAILED" sound name "Basso"' 2>/dev/null || true
+read -r -p "Press Enter to close…" _
+exit "$RC"
