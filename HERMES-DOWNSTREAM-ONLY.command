@@ -23,7 +23,7 @@ cd "${TMPDIR:-/tmp}"
 echo "=== Hermes DOWNSTREAM ONLY / stall-class (run=$HERMES_RUN_ID) pin=$PIN ==="
 echo "stack-apply=$HERMES_AUTO_STACK_APPLY stall_recovery=$HERMES_STALL_RECOVERY wait_inventory=$HERMES_WAIT_INVENTORY"
 echo "zombie=$HERMES_STALL_ZOMBIE zombie_passes=$HERMES_STALL_ZOMBIE_PASSES"
-echo "tip through #176 (NAG Raw tip#176; ENABLE tip#175; soft-hold #174; ONE-SHOT #171; #162 ONLY; FALLBACK b2b5fc4 tip159)"
+echo "tip through #177 (STALL Path C early tip#177; ONE-SHOT secrets tab tip#177; NAG Raw tip#176; ENABLE tip#175; FALLBACK b2b5fc4 tip159)"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/ilike4movies/hermes-mac-land/issues/1"
 
@@ -71,7 +71,39 @@ _preflight_mac_secrets() {
 
 }
 
+_open_stall_parallel_pathc() {
+  # Tip #177: STALL/ONLY had no parallel Path C tabs (ONE-SHOT #171/#176 and ENABLE #175 did).
+  if [[ "${HERMES_STALL_OPEN_PATHC_EARLY:-1}" != "1" ]]; then
+    echo "SKIP STALL parallel Path C (HERMES_STALL_OPEN_PATHC_EARLY=0)"
+    return 0
+  fi
+  local REPO="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
+  local WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+  local WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+  local SECRETS_UI="https://github.com/${REPO}/settings/secrets/actions"
+  local DROPBOX_WAKE="${HERMES_DROPBOX_WAKE_URL:-https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1}"
+  local ZAPIER_GH="${HERMES_ZAPIER_GH_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336}"
+  local ZAPIER_CAL="${HERMES_ZAPIER_CAL_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487}"
+  echo ""
+  echo "=== Parallel: Path C + Tailscale approve (tip #177) while STALL runs ==="
+  open "https://login.tailscale.com/admin/machines" 2>/dev/null || true
+  local auth=""
+  local f="/tmp/hermes-stall-current-authurl-$$.md"
+  if curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/CURRENT_AUTHURL.md" -o "$f" 2>/dev/null; then
+    auth=$(grep -Eo 'https://login\.tailscale\.com/a/[A-Za-z0-9]+' "$f" | head -1 || true)
+  fi
+  rm -f "$f"
+  [[ -n "$auth" ]] && open "$auth" 2>/dev/null || true
+  open "$WEBUI_NEW" 2>/dev/null || true
+  open "$WEBUI_RAW" 2>/dev/null || true
+  open "$SECRETS_UI" 2>/dev/null || true
+  open "$DROPBOX_WAKE" 2>/dev/null || true
+  open "$ZAPIER_GH" 2>/dev/null || true
+  open "$ZAPIER_CAL" 2>/dev/null || true
+}
+
 _preflight_mac_secrets
+_open_stall_parallel_pathc
 
 osascript -e 'display notification "Running stall-class downstream gates on .11…" with title "Hermes DOWNSTREAM" sound name "Glass"' 2>/dev/null || true
 xattr -d com.apple.quarantine "$0" 2>/dev/null || true
