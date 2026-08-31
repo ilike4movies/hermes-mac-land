@@ -1,6 +1,5 @@
 #!/bin/bash
 # HERMES-ONE-SHOT-UNBLOCK.command — Right-click → Open on Mac Hermes (not double-click)
-# tip through #175 (ENABLE Web UI Path C early tip#175) — GROWING CONTENT, recovering from PLACEHOLDER
 # Single click critical path for stalled canary recovery:
 #   0) Open Tailscale admin + tip CURRENT_AUTHURL (approve cloud waiter) early
 #   0a) Open Linear operator ticket (RAL-823) early
@@ -31,3 +30,8 @@ echo "tip through #175 (ENABLE Web UI Path C early tip#175; soft-hold CURRENT ti
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/${REPO}/issues/1"
 echo "Path: Web UI early + STALL first; on fail → ENABLE-ACTIONS (fallback=$FALLBACK_ACTIONS)"
+# Spoken wake so Mac session notices even if browser tabs are buried.
+if [[ "${HERMES_ONE_SHOT_SPEAK:-1}" == "1" ]] && command -v say >/dev/null 2>&1; then
+  say -v Samantha "Hermes ONE-SHOT starting. Approve Tailscale or let STALL run." 2>/dev/null || true
+fi
+
