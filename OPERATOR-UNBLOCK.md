@@ -405,4 +405,22 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 ### Tip #186 (restore truncated hermes-join-part-b — stop wait-login syntax flood)
 
-- Live `hermes-join-part-b.sh` on tip was truncated @ tip#170 (~9932 bytes / EOF mid-ICS) → `sy
+- Live `hermes-join-part-b.sh` on tip was truncated @ tip#170 (~9932 bytes / EOF mid-ICS) → `syntax error: unexpected end of file` flooding wait-login (~1100+ hits).
+- Restored tip **#168** full body (CDN TIP_PIN hot-pick + tip#166/#167 soft-hold) to cloud-apply + hermes-mac-land `shared-scripts/hermes-join-part-b.sh`.
+- Closes wasted waiter cycles (obj4) and unblocks post-approve join AuthURL tip sync path for obj5.
+
+
+### Tip #187 (ENABLE tip-pin catch-up + Path C Zapier reconnect surface)
+
+- `ENABLE-WORKFLOW.md` tip pin lagged at **#162**; bumped through **#187** with live Path C reconnect URL.
+- Zapier `put_workflow_file_via_git_data` still **Bad credentials** @ 09:53Z — reconnect: https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336
+- Dropbox WAKE restored Path C reconnect line (was dropped in tip#186 rewrite).
+- Prefer Mac ONE-SHOT / Tailscale approve; Path C is secondary.
+
+### Tip #188 (Zapier GitHub+Calendar auth rot — reconnect required)
+
+- Regenerated `put_workflow_file_via_git_data` code action (Zapier connected-account auth only) — still **Bad credentials** on GET ref.
+- `list_zapier_connections` shows GitHub `is_stale=false` but Git Data API returns Bad credentials — reconnect anyway:
+  https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336&connectionId=55525043
+- Google Calendar enum resolve fails: `access_token` not found inside `refreshAccessToken` — reconnect Calendar too (see CURRENT).
+- Prefer Mac ONE-SHOT / Tailscale approve; Path C/Calendar wakes stay secondary until reconnect.
