@@ -301,4 +301,38 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 ### Tip #170 (Dropbox public WAKE link + Zapier Calendar reconnect note)
 
-- Public Dropbox WAKE: `https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijh
+- Public Dropbox WAKE: `https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1`
+- Zapier Google Calendar connection **stale** — reconnect `https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487` (same class as GitHub Bad credentials for Path C).
+
+### Tip #171 (ONE-SHOT opens Path C reconnect + Dropbox WAKE tabs)
+
+- Mac [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command) early-opens (parallel with STALL):
+  - Dropbox public WAKE
+  - Zapier GitHub reconnect (Path C `put_workflow_file_via_git_data` still **Bad credentials** even when Zapier reports `is_stale=false`)
+  - Zapier Google Calendar reconnect (stale)
+- Opt out: `HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT=0`
+- Closes: Mac session had to dig CURRENT_AUTHURL / OPERATOR for reconnect URLs; Path C stayed dead after tip#170 docs-only note.
+- Cloud retry @ tip#171 still Bad credentials until operator reconnects GitHub at `https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336`.
+
+### Tip #172 (NAG opens Path C reconnect tabs ≤1/30m)
+
+- [`HERMES-INSTALL-DOWNSTREAM-NAG.command`](HERMES-INSTALL-DOWNSTREAM-NAG.command) / installed LaunchAgent now opens Dropbox WAKE + Zapier GH/Calendar reconnect while Downstream DONE missing.
+- Throttled to ≤1/30m (`~/.hermes/nag-pathc-last.txt`) so 5-min nag ticks do not spam tabs.
+- Opt out: `HERMES_NAG_OPEN_PATHC_RECONNECT=0`
+- Closes: installed nag kept opening ONE-SHOT/Web UI/Tailscale but never surfaced Path C reconnect after tip#171 ONE-SHOT-only opens.
+- Cloud Path C alts @ tip#172 still fail: Github MCP Contents API **404** on `.github/workflows/`; Zapier `put_file_from_repo` **Bad credentials**.
+- Tip #169 soft-hold tick + Quo SMS remain the primary non-Gmail wakes while AuthURL holds.
+
+### Tip #173 (Dropbox WAKE content refresh — same public link)
+
+- Overwrote `/Hermes/WAKE-1d0d8050-tip169.txt` with tip **#173** wake text (AuthURL `1d0d8050` + ONE-SHOT + Path C Zapier reconnect URLs).
+- Public link unchanged: `https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1`
+- Path C cloud retry @ tip#173 still **Bad credentials** / workflow Contents **404**.
+
+### Tip #174 (soft-hold marker + CURRENT ICS DTEND stamp)
+
+- [`hermes-ics-soft-hold.sh`](shared-scripts/hermes-ics-soft-hold.sh) now writes `LAST_ICS_SOFT_HOLD.json` after every run (`ts`, `tip`, `url`, `dtend`, `rewrite=ttl|tip|none`).
+- Stamps [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md) with `**ICS hold (soft):** DTEND \`...\` (tip #N)` so agents/timers see the live hold window without parsing ICS.
+- Tip-stale soft-hold still preserves UID/DTEND/URL; TTL rewrite still extends hold hours.
+- Closes: soft-hold rewrites left CURRENT without a durable DTEND line; agents could not tell whether ICS was current after tip-pin bumps.
+- Path C cloud still blocked until Zapier GitHub reconnect / Web UI workflow / Mac ENABLE tip#161.
