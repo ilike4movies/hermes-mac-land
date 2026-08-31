@@ -14,12 +14,35 @@ cd "${TMPDIR:-/tmp}"
 echo "=== Hermes ENABLE Downstream Actions ==="
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Repo: $REPO"
-echo "tip through #174 (soft-hold CURRENT tip#174; NAG Path C #172; ONE-SHOT #171; #161 ENABLE; FALLBACK b2b5fc4 tip159)"
+echo "tip through #175 (ENABLE Web UI Path C early; soft-hold CURRENT tip#174; NAG #172; ONE-SHOT #171; #161 ENABLE; FALLBACK b2b5fc4 tip159)"
 echo "Prefer for tonight (if Tailscale+SSH OK):"
 echo "  https://github.com/${REPO}/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command"
 
 xattr -d com.apple.quarantine "$0" 2>/dev/null || true
 chmod +x "$0" 2>/dev/null || true
+
+# Tip #175: open Web UI Path C tabs at START (create + Raw + secrets) while gh/git install runs.
+# Cloud Contents/Zapier cannot write .github/workflows/ (404 / Bad credentials). Opt out:
+#   HERMES_ENABLE_OPEN_WEBUI_EARLY=0
+_open_enable_webui_pathc_early() {
+  if [[ "${HERMES_ENABLE_OPEN_WEBUI_EARLY:-1}" != "1" ]]; then
+    echo "SKIP early ENABLE Web UI (HERMES_ENABLE_OPEN_WEBUI_EARLY=0)"
+    return 0
+  fi
+  local WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+  local WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+  local SECRETS_UI="https://github.com/${REPO}/settings/secrets/actions"
+  echo ""
+  echo "=== Parallel: Web UI Path C (tip #175) — paste Raw into create while install runs ==="
+  echo "Create file: $WEBUI_NEW"
+  echo "Paste source (Raw): $WEBUI_RAW"
+  echo "Action secrets: $SECRETS_UI"
+  osascript -e 'display notification "Paste Raw ci/downstream-stall.yml into create-file tab (Path C)" with title "Hermes ENABLE Path C" sound name "Glass"' 2>/dev/null || true
+  open "$WEBUI_NEW" 2>/dev/null || true
+  open "$WEBUI_RAW" 2>/dev/null || true
+  open "$SECRETS_UI" 2>/dev/null || true
+}
+_open_enable_webui_pathc_early
 
 if ! command -v gh >/dev/null 2>&1; then
   echo "FAILED: gh CLI missing. Install GitHub CLI, then: gh auth login"
