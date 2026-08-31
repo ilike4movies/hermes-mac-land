@@ -141,8 +141,8 @@ if [[ "${HERMES_NAG_OPEN_PATHC_RECONNECT:-1}" == "1" ]]; then
     DROPBOX_WAKE="${HERMES_DROPBOX_WAKE_URL:-https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1}"
     ZAPIER_GH="${HERMES_ZAPIER_GH_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336}"
     ZAPIER_CAL="${HERMES_ZAPIER_CAL_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487}"
-    WEBUI_RAW="${HERMES_WEBUI_RAW_URL:-https://github.com/${REPO}/raw/main/ci/downstream-stall.yml}"
-    SECRETS_UI="${HERMES_ACTIONS_SECRETS_URL:-https://github.com/${REPO}/settings/secrets/actions}"
+    WEBUI_RAW="${HERMES_WEBUI_RAW_URL:-https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+    SECRETS_UI="${HERMES_ACTIONS_SECRETS_URL:-https://github.com/${REPO}/settings/secrets/actions"
     echo "tip #176: Path C Raw paste + secrets + Dropbox/Zapier (≤1/30m)"
     open "$DROPBOX_WAKE" 2>/dev/null || true
     open "$ZAPIER_GH" 2>/dev/null || true
