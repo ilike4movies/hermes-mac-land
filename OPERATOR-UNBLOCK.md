@@ -125,4 +125,24 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 ### Tip #139 (ONE-SHOT RAL-823 URL + tip banner)
 
-- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command) Linear default URL points at li
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command) Linear default URL points at live RAL-823 slug (`…authurl-1d0d8050-canary`), not the retired `…silent-36h` slug.
+- Banner notes tip through #138 AuthURL hold flock so Mac operators open CURRENT_AUTHURL / RAL-823 first.
+- `.github/workflows/downstream-stall.yml` still requires Mac/`HERMES_GH_WORKFLOW_PAT`/Web UI (GitHub App 404 on workflows scope). Source of truth remains [`ci/downstream-stall.yml`](ci/downstream-stall.yml).
+
+### Tip #140 (Running-without-SSH beacon)
+
+- [`hermes-downstream-on-join-watcher.sh`](shared-scripts/hermes-downstream-on-join-watcher.sh): when BackendState is `Running` but `HERMES_HOST_SSH_PRIVATE_KEY` is still missing, post **once** to GitHub #1 / Linear RAL-823 (and write `RUNNING_NO_SSH_MCP_SURFACE_NEEDED.txt` for agents when gh/token blocked).
+- Makes approve-without-secrets visible instead of silent 30s wait loops. Mac ONE-SHOT remains preferred when Runtime Secrets stay unset on Ooterverse.
+
+### Tip #141 (secrets-bridge `-f` + heartbeat)
+
+- [`hermes-cloud-secrets-bridge-poller.sh`](shared-scripts/hermes-cloud-secrets-bridge-poller.sh): run bridge scripts with `bash` when the file **exists**, not only when `+x` (curl|raw downloads often land `0644`). Prefer tip-named `hermes-moltbot-cloud-bridge-secrets-from-env.sh`.
+- Heartbeat every `HERMES_SECRETS_BRIDGE_HEARTBEAT_EVERY` polls (default 30 ≈5m at 10s interval) so log mtime proves the poller is alive.
+- Live bug: poller pid stayed up for 12h+ but never invoked the bridge because `-x` failed — mid-session Runtime Secrets would not arm waiters until this tip.
+
+### Tip #142 (run-downstream-once bash + tip CDN fetch)
+
+- [`hermes-cloud-run-downstream-once.sh`](shared-scripts/hermes-cloud-run-downstream-once.sh): resolve dispatcher with `-f`+`bash` (not `-x`-only); if missing locally, curl tip CDN `shared-scripts/hermes-dispatcher-downstream.sh` before fail-closed exit 127.
+- Prevents post-approve on-join/wait-login stall from aborting after AuthURL join when apply-dir scripts are 0644 or not yet synced.
+
+### Tip #143 (on-
