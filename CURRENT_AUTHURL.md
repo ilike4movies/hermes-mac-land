@@ -1,22 +1,22 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-31T04:57:00Z
+**Last refreshed:** 2026-08-31T05:22:00Z
 
 **Approve:** https://login.tailscale.com/a/1d0d805013867
 
 **ICS hold (soft):** DTEND `20260831T095855Z` (tip #176).
 
-Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#179** (Phase 2 secrets tab tip#179; #178 STALL nag install; #177 Path C early; #176 NAG Raw+secrets). **Ignore retired** predecessors.
+Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#180** (WAKE file tip#179; #179 Phase2 secrets tab; #178 STALL nag; #177 Path C early). **Ignore retired** predecessors.
 
-**Dropbox WAKE (public, tip#175/#176 text):** [https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1](https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1)
+**Dropbox WAKE (public link; repo text [`WAKE-1d0d8050-tip179.txt`](WAKE-1d0d8050-tip179.txt)):** [https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1](https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1) — Dropbox body may lag; prefer repo WAKE file or ONE-SHOT raw below.
 
-Prefer **Mac ONE-SHOT** tip #179:
+Prefer **Mac ONE-SHOT** tip #180:
 
 ```bash
 curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
 ```
 
-Expect `zombie=1 zombie_passes=3` + tip through **#179**. Success = GitHub #1 `## Downstream DONE @ <ts>` + `host=` + **live** RAL-793 inventory.
+Expect `zombie=1 zombie_passes=3` + tip through **#180**. Success = GitHub #1 `## Downstream DONE @ <ts>` + `host=` + **live** RAL-793 inventory.
 
 **Path C Zapier reconnects (Bad credentials / stale):**
 - GitHub: [https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336](https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336)
