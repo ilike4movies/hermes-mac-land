@@ -1,12 +1,12 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-31T10:21:32Z
+**Last refreshed:** 2026-08-31T11:42:13Z
 
 **Approve:** https://login.tailscale.com/a/1d0d805013867
 
-**ICS hold (soft):** DTEND `20260831T153443Z` (tip #188).
+**ICS hold (soft):** DTEND `20260831T153443Z` (tip #189).
 
-Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#188** (Zapier auth tip#188; ENABLE tip#187; join-part-b tip#186; Path C tip#185). **Ignore retired** predecessors.
+Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#189** (Path C re-probe tip#189; Zapier auth tip#188; ENABLE tip#187; join-part-b tip#186). **Ignore retired** predecessors.
 
 **Dropbox WAKE (public link; repo text [`WAKE-1d0d8050-tip183.txt`](WAKE-1d0d8050-tip183.txt)):** [https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1](https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1) — Dropbox body may lag; prefer repo WAKE file or ONE-SHOT raw below.
 
@@ -16,7 +16,7 @@ Prefer **Mac ONE-SHOT** tip #183:
 curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
 ```
 
-Expect `zombie=1 zombie_passes=3` + tip through **#188**. Success = GitHub #1 `## Downstream DONE @ <ts>` + `host=` + **live** RAL-793 inventory.
+Expect `zombie=1 zombie_passes=3` + tip through **#189**. Success = GitHub #1 `## Downstream DONE @ <ts>` + `host=` + **live** RAL-793 inventory.
 
 **Path C Zapier reconnects (Bad credentials / stale):**
 - GitHub: [https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336&connectionId=55525043](https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336&connectionId=55525043)
