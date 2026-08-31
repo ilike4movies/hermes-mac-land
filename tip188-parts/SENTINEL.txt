@@ -1,0 +1,3 @@
+tip188-push-connectivity-ok
+md5_expect=53da2a0dd45b5a1d4334aaabffa6175f
+len_expect=41470
