@@ -19,10 +19,12 @@ curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ili
 
 Watch [issue #1](../../issues/1) for `## Downstream DONE`.
 
-Tip through **#188** on main (join-part-b restore tip#186; Path C exhaust tip#185; ENABLE tip pin catch-up tip#187). Prefer Mac ONE-SHOT tip **#183** body. STALL/ONE-SHOT still tip-first fetch.
+Tip through **#189** on main (Path C re-probe tip#189 still Bad credentials; tip#188 Zapier auth rot; tip#186 join-part-b restore). Prefer Mac ONE-SHOT tip **#183** body. STALL/ONE-SHOT still tip-first fetch.
 
-**Path C Zapier GitHub reconnect** (put_workflow still Bad credentials despite is_stale=false):
+**Path C Zapier GitHub reconnect** (put_workflow / put_file_from_repo still Bad credentials despite is_stale=false):
 https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336&connectionId=55525043
+
+Tip **#189**: Path C re-probe exhausted — Zapier Git Data Bad credentials, Github MCP Contents/trees 404 on `.github/workflows/`, git push auth fail. Operator must approve AuthURL `1d0d8050`, Mac ONE-SHOT, or reconnect Zapier GH / Web UI paste workflow.
 
 Tip **#188**: Zapier GitHub connection returns Bad credentials despite is_stale=false — reconnect with connectionId before Path C works. Tip **#187**: ENABLE-WORKFLOW tip pin catch-up + Path C Zapier reconnect URL (Actions `total_count=0` until workflow file lands on main).
 
