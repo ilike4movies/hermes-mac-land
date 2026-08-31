@@ -1,0 +1,13 @@
+HERMES WAKE tip #179 — AuthURL UNCHANGED
+Approve: https://login.tailscale.com/a/1d0d805013867
+
+Mac ONE-SHOT tip #179:
+curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
+
+Expect zombie=1 zombie_passes=3. STALL/ONLY install nag + Path C tabs (tip#178/#177). Phase 2 opens secrets tab (tip#179).
+
+Path C Raw: https://github.com/ilike4movies/hermes-mac-land/raw/main/ci/downstream-stall.yml
+Create: https://github.com/ilike4movies/hermes-mac-land/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml
+Secrets: https://github.com/ilike4movies/hermes-mac-land/settings/secrets/actions
+
+Do NOT remint AuthURL.
