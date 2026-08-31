@@ -1,10 +1,10 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-31T08:43:52Z
+**Last refreshed:** 2026-08-31T09:34:43Z
 
 **Approve:** https://login.tailscale.com/a/1d0d805013867
 
-**ICS hold (soft):** DTEND `20260831T095855Z` (tip #186).
+**ICS hold (soft):** DTEND `20260831T153443Z` (tip #186).
 
 Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#186** (join-part-b restore tip#186; Path C exhaust tip#185; soft-hold auto-push tip#183). **Ignore retired** predecessors.
 
