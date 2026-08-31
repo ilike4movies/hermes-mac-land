@@ -1,9 +1,9 @@
 {
-  "ts": "2026-08-31T09:57:53Z",
-  "tip": "187",
+  "ts": "2026-08-31T10:21:32Z",
+  "tip": "188",
   "url": "https://login.tailscale.com/a/1d0d805013867",
   "dtend": "20260831T153443Z",
-  "summary": "ACTION: Approve Hermes Tailscale AuthURL 1d0d805013867 (tip #187)",
+  "summary": "ACTION: Approve Hermes Tailscale AuthURL 1d0d805013867 (tip #188)",
   "rewrite": "tip",
   "tip174": true
 }
