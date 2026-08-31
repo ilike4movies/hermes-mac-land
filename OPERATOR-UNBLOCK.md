@@ -11,4 +11,36 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 
 # Hermes dispatcher — operator unblock (RAL-800)
 
-**Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not
+**Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
+
+**Updated:** 2026-08-29T04:52Z
+
+## ⚠️ Linear auto-Done hygiene
+
+**Do NOT attach GitHub PRs to open canaries** while they are open — Linear auto-Dones on PR merge and falsely closes tickets before `.11` prove-out.
+
+**Also:** do **not** put open canary ticket IDs in **PR titles** — GitHub auto-links on merge even when you do not attach manually.
+
+| Incident | Cause | Fix |
+|----------|-------|-----|
+| 20:48Z | #18 merged + attached | Reverted; attachment detached @ 21:02Z |
+| 21:29Z | #20 title contained canary ID → auto-attach | Reverted @ 21:30Z; attachment detached |
+| 21:38Z | MCP comment used wrong issue UUID → posted on RAL-800 | Corrected @ 21:40Z; see UUID table below |
+| 01:04Z | Cloud subagent `bc-3914e61d` booted on **Ooterverse** (not hermes-mac-land) | Downstream FAILED pre-SSH; use Mac or web-UI LEGACY `.11` agent |
+| 03:49Z | #40 auto-attached to RAL-634 (Done) | Detach if needed; do not re-open RAL-634 for doc-only merges |
+| 04:22Z | Cloud subagent `bc-cf21d38f` spawned from Ooterverse | Skipped downstream to avoid FAILED spam; use Mac or web-UI `hermes-mac-land` + LEGACY `.11` |
+| 23:45Z | OPERATOR UUID table had RAL-799/RAL-820 swapped; RAL-798 missing | Corrected: RAL-798=`52e94e17…`, RAL-799=`0d76e06f…`, RAL-820=`144b087c…` |
+| **00:17Z** | hermes-mac-land **#57** title contained canary ID → auto-Done @ 00:17:02Z | Status restored In Progress @ 00:18Z; attachment detached; PR title renamed |
+
+## ⚠️ Ooterverse cloud agents cannot run downstream
+
+**Do not spawn Hermes subagents from Ooterverse-Saturns-Quest** — they inherit the wrong repo/env and cannot receive `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` at boot.
+
+**Paths that work for live gates:**
+1. **Mac Hermes ONE-SHOT (preferred)** — **Right-click → Open** [`HERMES-ONE-SHOT-UNBLOCK.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command) (not double-click — Gatekeeper). Tries STALL downstream first; on fail auto-runs ENABLE-DOWNSTREAM-ACTIONS. Needs `LINEAR_API_KEY` in `~/.hermes/.env`.
+
+ONE-SHOT opens **Linear RAL-823** + **Tailscale admin + tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md)** + tip [`HERMES-APPROVE-TAILSCALE.ics`](HERMES-APPROVE-TAILSCALE.ics) early (`HERMES_ONE_SHOT_OPEN_TAILSCALE=0` to skip) so the Mac can approve the cloud waiter while STALL runs; then opens the GitHub Web UI workflow create + Raw paste tabs (`HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0` to skip). It also **auto-installs** the 5-min Downstream nag LaunchAgent (`HERMES_ONE_SHOT_INSTALL_NAG=0` to skip; auto-opens ONE-SHOT each tick unless `HERMES_NAG_AUTO_ONESHOT=0`) so the Mac keeps reminding until issue #1 shows `## Downstream DONE`. Inventory wait default is **900s** for ultra-stale canaries.
+
+2. **Mac Terminal paste (same ONE-SHOT)** — when Finder Right-click is awkward:
+   ```bash
+   curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-S
