@@ -1,0 +1,12 @@
+HERMES WAKE tip #175 — AuthURL UNCHANGED
+Approve: https://login.tailscale.com/a/1d0d805013867
+
+Mac ONE-SHOT tip #175:
+curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
+
+ENABLE / Path C: opens Web UI create-workflow + Raw paste at START (tip#175).
+Or paste: https://github.com/ilike4movies/hermes-mac-land/raw/main/ci/downstream-stall.yml
+into: https://github.com/ilike4movies/hermes-mac-land/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml
+
+Zapier GH reconnect: https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336
+Do NOT remint AuthURL.
