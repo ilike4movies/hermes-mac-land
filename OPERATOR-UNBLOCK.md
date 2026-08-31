@@ -67,3 +67,10 @@ Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`
 - Github MCP Contents PUT on main **and** branch `cursor/pathc-downstream-stall-3436` → **404** (workflows scope).
 - Zapier put_workflow still **Bad credentials**.
 - Path C remains: Mac ENABLE / Web UI Raw paste + Action secrets, or Zapier GitHub reconnect. Prefer Mac ONE-SHOT tip **#183** body.
+
+
+### Tip #186 (restore truncated hermes-join-part-b — stop wait-login syntax flood)
+
+- Live `hermes-join-part-b.sh` on tip was truncated @ tip#170 (~9932 bytes / EOF mid-ICS) → `syntax error: unexpected end of file` flooding wait-login (~1100+ hits).
+- Restored tip **#168** full body (CDN TIP_PIN hot-pick + tip#166/#167 soft-hold) to cloud-apply + hermes-mac-land `shared-scripts/hermes-join-part-b.sh`.
+- Closes wasted waiter cycles (obj4) and unblocks post-approve join AuthURL tip sync path for obj5.
