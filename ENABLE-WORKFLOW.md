@@ -19,7 +19,12 @@ curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ili
 
 Watch [issue #1](../../issues/1) for `## Downstream DONE`.
 
-Tip through **#162** on main (STALL/ONLY tip-pin + tip #159/#160 fetch integrity; #161 ENABLE git-push; FALLBACK→b2b5fc4). STALL/ONE-SHOT still prefer tip-first fetch.
+Tip through **#187** on main (join-part-b restore tip#186; Path C exhaust tip#185; ENABLE tip pin catch-up tip#187). Prefer Mac ONE-SHOT tip **#183** body. STALL/ONE-SHOT still tip-first fetch.
+
+**Path C Zapier GitHub reconnect** (put_workflow still Bad credentials):
+https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336
+
+Tip **#187**: ENABLE-WORKFLOW tip pin catch-up + Path C Zapier reconnect URL (Actions `total_count=0` until workflow file lands on main).
 
 Tip **#162**: STALL / DOWNSTREAM-ONLY banners + `_is_good_downstream` require tip #160/`b2b5fc4` or tip #159 fail-closed markers (reject pre-#159 silent WARN entrypoints).
 
