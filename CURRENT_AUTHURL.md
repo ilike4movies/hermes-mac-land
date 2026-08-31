@@ -1,10 +1,10 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-31T06:14:00Z
+**Last refreshed:** 2026-08-31T06:30:51Z
 
 **Approve:** https://login.tailscale.com/a/1d0d805013867
 
-**ICS hold (soft):** DTEND `20260831T095855Z` (tip #181).
+**ICS hold (soft):** DTEND `20260831T095855Z` (tip #182).
 
 Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#182** (soft-hold dir pick tip#182; #181 Dropbox WAKE; #180 repo WAKE; #179 Phase2 secrets). **Ignore retired** predecessors.
 
