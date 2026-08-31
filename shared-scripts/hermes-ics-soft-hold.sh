@@ -9,17 +9,28 @@ REPO="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
 if [[ -n "${HERMES_ICS_SOFT_HOLD_DIR:-}" ]]; then
   SCRIPT_DIR="$HERMES_ICS_SOFT_HOLD_DIR"
 else
-  SCRIPT_DIR="${SCRIPT_DIR:-}"
-  if [[ -z "${SCRIPT_DIR}" ]]; then
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-  fi
-  # Prefer apply/cloud dir when present (live wait-login mirror).
-  for d in /tmp/hermes-cloud-apply /tmp/hermes-mac-land "$SCRIPT_DIR"; do
+  # Tip #182: prefer hermes-mac-land (git tip agents push from) over cloud-apply
+  # mirror. Old order broke on first hit in /tmp/hermes-cloud-apply — tip-stale
+  # rewrites landed in a stale mirror and never reached main until manual copy.
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+  best=""; best_tip=-1
+  for d in /tmp/hermes-mac-land /tmp/hermes-cloud-apply "$SCRIPT_DIR" "$(dirname "$SCRIPT_DIR")"; do
+    [[ -z "$d" || ! -d "$d" ]] && continue
     if [[ -f "$d/HERMES-APPROVE-TAILSCALE.ics" || -f "$d/TIP_PIN" ]]; then
-      SCRIPT_DIR="$d"
-      break
+      t=0
+      if [[ -f "$d/TIP_PIN" ]]; then
+        t="$(tr -dc '0-9' <"$d/TIP_PIN" | head -c 8 || true)"
+        t="${t:-0}"
+      fi
+      if [[ -z "$best" ]] || (( 10#$t > 10#$best_tip )); then
+        best="$d"
+        best_tip="$t"
+      elif (( 10#$t == 10#$best_tip )) && [[ "$d" == /tmp/hermes-mac-land ]]; then
+        best="$d"
+      fi
     fi
   done
+  [[ -n "$best" ]] && SCRIPT_DIR="$best"
 fi
 ICS="${SCRIPT_DIR}/HERMES-APPROVE-TAILSCALE.ics"
 PINFILE="${SCRIPT_DIR}/TIP_PIN"
@@ -175,7 +186,7 @@ for line in text.splitlines():
         out.append(valarm if in_valarm else desc)
     else:
         out.append(line)
-open(path,"w",encoding="utf-8").write("\n".join(out)+("\n" if text.endswith("\n") else ""))
+open(path,"w",encoding="utf-8").write("\\n".join(out)+("\\n" if text.endswith("\\n") else ""))
 print(f"OK tip #{tip} ICS tip-pin soft-hold (DTEND preserved)")
 PY
 else
@@ -214,7 +225,7 @@ marker={
   "tip174": True,
 }
 path=os.path.join(base, "LAST_ICS_SOFT_HOLD.json")
-open(path, "w", encoding="utf-8").write(json.dumps(marker, indent=2) + "\n")
+open(path, "w", encoding="utf-8").write(json.dumps(marker, indent=2) + "\\n")
 print(f"OK tip174 marker {path} rewrite={kind} dtend={dtend or '-'}")
 # Stamp CURRENT_AUTHURL.md ICS hold line when present (preserve rest).
 cur=os.path.join(base, "CURRENT_AUTHURL.md")
@@ -222,16 +233,16 @@ if os.path.isfile(cur) and dtend:
     body=open(cur, encoding="utf-8", errors="replace").read()
     line=f"**ICS hold (soft):** DTEND `{dtend}` (tip #{tip})."
     if "**ICS hold (soft):**" in body:
-        body=re.sub(r"\*\*ICS hold \(soft\):\*\*[^\n]*", line, body, count=1)
+        body=re.sub(r"\\*\\*ICS hold \\(soft\\):\\*\\*[^\\n]*", line, body, count=1)
     else:
         # Insert after Approve line if possible
         if "**Approve:**" in body:
-            body=re.sub(r"(\*\*Approve:\*\*[^\n]*\n)", r"\1\n"+line+"\n", body, count=1)
+            body=re.sub(r"(\\*\\*Approve:\\*\\*[^\\n]*\\n)", r"\\1\\n"+line+"\\n", body, count=1)
         else:
-            body=line+"\n\n"+body
+            body=line+"\\n\\n"+body
     # Bump Last refreshed when we rewrote ICS
     if kind != "none":
-        body=re.sub(r"(\*\*Last refreshed:\*\* )[^\n]+", r"\g<1>"+now, body, count=1)
+        body=re.sub(r"(\\*\\*Last refreshed:\\*\\* )[^\\n]+", r"\\g<1>"+now, body, count=1)
     open(cur, "w", encoding="utf-8").write(body)
     print(f"OK tip174 CURRENT stamped dtend={dtend}")
 if kind != "none":
