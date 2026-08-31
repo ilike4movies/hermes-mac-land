@@ -132,4 +132,60 @@ PY
     if ! ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" python3 - <<'PY'
 import os, re
 path = os.environ["ICS_PATH"]
-expec
+expect = int(os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168")
+try:
+    text = open(path, encoding="utf-8", errors="replace").read()
+except OSError:
+    raise SystemExit(1)
+m = re.search(r"^SUMMARY:.*\(tip #(\d+)\)", text, re.M)
+if not m:
+    raise SystemExit(1)
+raise SystemExit(0 if int(m.group(1)) >= expect else 1)
+PY
+    then
+      ics_tip_stale=1
+    fi
+  fi
+  # Tip #166: tip-pin soft-hold — rewrite SUMMARY/DESCRIPTION/VALARM only; keep DTEND/UID/URL.
+  if [[ "$ics_tip_stale" == "1" && "$ics_need_refresh" != "1" && "$auth_changed" != "1" ]]; then
+    if command -v python3 >/dev/null 2>&1; then
+      AUTHURL_ICS_URL="$url" ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" python3 - <<'PY' 2>/dev/null || true
+import os, re
+path = os.environ["ICS_PATH"]
+url = os.environ["AUTHURL_ICS_URL"]
+suffix = url.rstrip("/").rsplit("/", 1)[-1]  # tip #166+: full AuthURL id (no [:12] truncate)
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168"
+tip = os.environ.get("HERMES_AUTHURL_ICS_EXPECTED_TIP") or "168"
+text = open(path, encoding="utf-8", errors="replace").read()
+summary = f"SUMMARY:ACTION: Approve Hermes Tailscale AuthURL {suffix} (tip #{tip})"
+desc = (
+    f"DESCRIPTION:Approve NOW: {url}\\n"
+    f"Then Mac ONE-SHOT tip #{tip} (CDN TIP_PIN hot-pick #168; #166 tip-stale; #162 STALL/ONLY; #161 ENABLE git-push; FALLBACK b2b5fc4 tip159). "
+    "Runtime Secrets HERMES_HOST_SSH_PRIVATE_KEY + LINEAR_API_KEY also OK on LEGACY .11."
+)
+valarm = f"DESCRIPTION:Approve Tailscale AuthURL {suffix} NOW — Mac ONE-SHOT tip #{tip}"
+out = []
+in_valarm = False
+for line in text.splitlines():
+    if line.startswith("BEGIN:VALARM"):
+        in_valarm = True
+        out.append(line)
+        continue
+    if line.startswith("END:VALARM"):
+        in_valarm = False
+        out.append(line)
+        continue
+    if line.startswith("SUMMARY:"):
+        out.append(summary)
+    elif line.startswith("DESCRIPTION:"):
+        out.append(valarm if in_valarm else desc)
+    else:
+        out.append(line)
+open(path, "w", encoding="utf-8").write("\n".join(out) + ("\n" if text.endswith("\n") else ""))
+print(f"OK tip #{tip} ICS tip-pin soft-hold (DTEND preserved)")
+PY
+      echo "OK tip #${ics_expected_tip} local ICS tip-pin soft-hold (AuthURL/DTEND unchanged)"
+    fi
+  fi
+  # Keep PENDING + local ICS aligned even if CURRENT was written out-of-band
+  # (hard w
