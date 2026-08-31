@@ -218,7 +218,7 @@ echo "OK installed downstream nag LaunchAgent"
 echo "  plist: $PLIST"
 echo "  script: $NAG_BIN"
 echo "  interval: 5 min — notifies until issue #1 has machine '## Downstream DONE' + host= (tip #154)"
-echo "  tip #176: opens Raw+secrets + Dropbox WAKE + Zapier ≤1/30m (tip#172 base) (HERMES_NAG_OPEN_PATHC_RECONNECT=0 to skip)"
+echo "  tip #177: STALL/ONLY open Path C early; ONE-SHOT opens secrets tab (tip#176 NAG Raw+secrets base)"
 echo "  note: auto-opens ONE-SHOT by default (HERMES_NAG_AUTO_ONESHOT=0 for confirm-only); never unattended DISPATCH"
 echo "Uninstall: launchctl unload $PLIST && rm $PLIST $NAG_BIN"
 
