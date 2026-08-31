@@ -1,34 +1,74 @@
 #!/bin/bash
-# hermes-ics-soft-hold.sh — tip #168/#169/#174
-# Standalone CDN TIP_PIN hot-pick + ICS tip-stale/TTL soft-hold.
-# Safe to curl|bash from cloud agents/timers without reminting AuthURL or
-# respawning wait-login. Preserves UID/DTEND/URL on tip-stale rewrite.
-# Tip #174: writes LAST_ICS_SOFT_HOLD.json + stamps CURRENT_AUTHURL.md ICS hold.
+# Tip #182: hermes-ics-soft-hold.sh - prefer hermes-mac-land over cloud-apply
+# Exact tip182 payload via zlib+b64 self-extract (MCP-safe).
 set -euo pipefail
-REPO="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
-if [[ -n "${HERMES_ICS_SOFT_HOLD_DIR:-}" ]]; then
-  SCRIPT_DIR="$HERMES_ICS_SOFT_HOLD_DIR"
-else
-  # Tip #182: prefer hermes-mac-land (git tip agents push from) over cloud-apply
-  # mirror. Old order broke on first hit in /tmp/hermes-cloud-apply — tip-stale
-  # rewrites landed in a stale mirror and never reached main until manual copy.
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-  best=""; best_tip=-1
-  for d in /tmp/hermes-mac-land /tmp/hermes-cloud-apply "$SCRIPT_DIR" "$(dirname "$SCRIPT_DIR")"; do
-    [[ -z "$d" || ! -d "$d" ]] && continue
-    if [[ -f "$d/HERMES-APPROVE-TAILSCALE.ics" || -f "$d/TIP_PIN" ]]; then
-      t=0
-      if [[ -f "$d/TIP_PIN" ]]; then
-        t="$(tr -dc '0-9' <"$d/TIP_PIN" | head -c 8 || true)"
-        t="${t:-0}"
-      fi
-      if [[ -z "$best" ]] || (( 10#$t > 10#$best_tip )); then
-        best="$d"
-        best_tip="$t"
-      elif (( 10#$t == 10#$best_tip )) && [[ "$d" == /tmp/hermes-mac-land ]]; then
-        best="$d"
-      fi
-    fi
-  done
-  [[ -n "$best" ]] && SCRIPT_DIR="$best"
-fi
+_TMP="$(mktemp)"
+python3 - "$_TMP" <<'PY'
+import base64,zlib,sys
+b="""
+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
+""".replace(chr(10),"").replace(" ","")
+open(sys.argv[1],"wb").write(zlib.decompress(base64.b64decode(b)))
+PY
+chmod +x "$_TMP"
+exec bash "$_TMP" "$@"
