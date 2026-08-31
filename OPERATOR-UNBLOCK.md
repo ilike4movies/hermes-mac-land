@@ -1,197 +1,70 @@
-<!-- tip176: keep Tip #134–#175 bodies byte-identical; tip176 only appends Tip #176. -->
+## Cloud wait-login → downstream (after Tailscale approve)
 
-# OPERATOR UNBLOCK — Hermes Mac Land (Aug 26, 2026)
+When a cloud agent is waiting on interactive Tailscale login and `HERMES_AUTO_SURGICAL_LAND=0`,
+joining the mesh (`BackendState=Running`) auto-runs `hermes-dispatcher-downstream.sh`
+(stalled-canary defaults) instead of surgical land — **only after** `HERMES_HOST_SSH_PRIVATE_KEY`
+(+ `LINEAR_API_KEY`) is present. Waiters keep looping if Tailscale joins before secrets arrive
+(Runtime Secrets / `/tmp/hermes-cloud-apply/host-ssh-key` / `/tmp/cursor/cloud-agent-secrets`); they do not one-shot-and-exit on Running alone. Tip **#103–#133**: on-join exports `COMPOSER_REPO_URL=hermes-mac-land`; join/supervisor/bridge poll `/tmp/cursor/cloud-agent-secrets`; on-join posts a one-shot #1 beacon when SSH arrives while still NeedsLogin (Linear RAL-823 fallback when `gh` blocked — #109); bridge default poll 10s; PENDING AuthURL tip sync (#110); hard AuthURL rotate helper when soft refresh reissues the same URL; wait-login single-instance flock + throttled NeedsLogin status (#112/#113); skip dead GH_TOKEN + AUTHURL_MCP_SURFACE_NEEDED (#114); ~45m refresh soft keep-alive by default (#123; hard opt-in); soft restart young-up guard (#117); curl|bash/ONE-SHOT-safe downstream entrypoint fetches part-a/b/c when missing (#118); Mac ONE-SHOT/STALL accept entrypoint (#119); tip-CDN pin fallback to known-good commit (#120); ONE-SHOT/STALL pin to #120 entrypoint SHA (#121). Jump-host ping is warn-only on the downstream-only path (direct `.11` SSH).
 
-**Goal:** Clear the stuck Mac Hermes agent and land the remaining tip stack through Tip #175 without inventing a parallel workflow.
+Interactive AuthURLs (~1h TTL) auto-refresh after ~45m while still NeedsLogin (`HERMES_TAILSCALE_AUTHURL_REFRESH_SECS`, default 2700) — see pod `CURRENT_AUTHURL.txt` and tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md). Soft `restart-authurl.sh` often **reissues the same** login URL — tip **#123** makes wait-login ~45m refresh **default SOFT keep-alive**; tip **#124** exports that soft default on supervisor wait-login respawn; tip **#125** skips soft remint while status still advertises a live AuthURL (avoids mid-approve link invalidation) so Gmail/RAL-823/Notion/tip approve links stay valid mid-wait; tip **#128** throttles the soft-skip OK echo to `HERMES_WAIT_LOGIN_STATUS_EVERY_SECS` (default 60s) so wait-login logs stay small. Tip **#129** defaults interactive `tailscale up --timeout` to **4h** (`HERMES_TAILSCALE_LOGIN_WAIT_SECS=14400`) so #125 soft-skip can hold the same AuthURL past the old 1h up expiry (which reminted `7a69b1a0`→`80d5b860` @ ~22:18Z). Tip **#130** upgrades leftover short-timeout ups (e.g. still-running `--timeout=3600s`) to the desired 4h window near expiry (`HERMES_TAILSCALE_UP_UPGRADE_LEAD_SECS`, default 900) instead of soft-skipping until surprise remint; disable with `HERMES_TAILSCALE_UP_UPGRADE_SHORT=0`. Tip **#131** defaults interactive `tailscale up --timeout` to **0s (forever)** (`HERMES_TAILSCALE_UP_TIMEOUT_SECS=0`) so soft-skip can hold AuthURL without up-process expiry remints; script-level wait stays `HERMES_TAILSCALE_LOGIN_WAIT_SECS=14400`. Tip **#132** skips finite→forever soft upgrades while status still advertises a live AuthURL (tip#130 upgrade reminted `80d5b860`→`184ff33a`); forever-up starts only after AuthURL is gone (or `HERMES_AUTHURL_FORCE_REFRESH=1`). Tip **#133**; tip **#134**; tip **#135** (finite AuthURL hold-roll near expiry while AuthURL live — avoid forever/expiry remint); tip **#136** (persist `DESIRED_UP_TIMEOUT` + exclusive up-lock before kill+re-up; cold-start prefers finite while AuthURL live — stops sibling forever=0 remint); tip **#137** (`hermes-cloud-attach-wait-login.sh` attach-only respawn — never pkill-self / never kill live up; supervisor adopts DESIRED_UP_TIMEOUT on spawn); tip **#138** (attach+supervisor share `$DIR/wait-login.flock`; attach no-op when one healthy wait+up holds live AuthURL — stops attach↔supervisor duplicate spawn remints); tip **#139** (ONE-SHOT RAL-823 AuthURL-1d0d8050 slug + tip banner; workflow still Web UI/PAT); tip **#140** (Running-without-SSH once-beacon to #1/RAL-823); tip **#141** (secrets-bridge `-f` bash + heartbeat) (AuthURL ICS hold default **6h** via `HERMES_AUTHURL_ICS_HOLD_HOURS`, soft-hold tip ICS refresh when DTEND within `HERMES_AUTHURL_ICS_REFRESH_REMAIN_SECS` default 1800s) single-flight credentialed downstream (`hermes-cloud-run-downstream-once.sh`: flock + success-only marker) so wait-login/supervisor/on-join do not triple-run stall, and transient FAIL can retry. Opt in to hard wipe: `HERMES_AUTHURL_HARD_ON_REFRESH=1` or [`restart-authurl-hard.sh`](restart-authurl-hard.sh). `GH_TOKEN_INVALID` / `AUTHURL_MCP_SURFACE_NEEDED` no longer force hard (those flags only mean tip/beacon via MCP). Do **not** soft-kill a young `tailscale up` waiter (<~45m) — Soft `restart-authurl.sh` on tip now **refuses** young ups unless `HERMES_FORCE_AUTHURL_RESTART=1` (tip **#117**). Incomplete kills (EPERM on root-owned `up`) spawn a second `up` and mint a **new** AuthURL mid-approve; prefer attaching wait-login only. Tip **#110** keeps `PENDING_AUTHURL_TIP.txt` + local ICS aligned even if CURRENT was written out-of-band. Tip **#109**: secrets-ready on-join beacon falls back to Linear RAL-823 when `gh` is blocked. When `gh`/token can write, URL changes also auto-post to [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1) (`HERMES_AUTHURL_GITHUB_BEACON=1`, default on; deduped via `LAST_POSTED_AUTHURL.txt`) and refresh tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md) + [`HERMES-APPROVE-TAILSCALE.ics`](HERMES-APPROVE-TAILSCALE.ics) for Mac ONE-SHOT (`HERMES_AUTHURL_TIP_FILE=1`, `HERMES_AUTHURL_TIP_ICS=1`). Linear AuthURL beacon needs `LINEAR_API_KEY` (`HERMES_AUTHURL_LINEAR_BEACON=1`). Cloud `GH_TOKEN` may be an expired installation token (`ghs_` → 401); tip/#114 writes `AUTHURL_MCP_SURFACE_NEEDED.txt` so agents use GitHub MCP instead of retrying dead tokens.
 
-## What "stuck" means right now
 
-- Cloud agent / Hermes Mac Land work is blocked waiting on operator/auth steps.
-- Soft-hold and tip pin state may already be advanced; do not regress `TIP_PIN`.
-- Prefer the landed soft-hold + pin path; finish docs/launchers that still lag tip #175.
+# Hermes dispatcher — operator unblock (RAL-800)
 
-## Non-negotiables
+**Hard gate:** Media Studio canary must show Hermes **CLAIMED** on live `.11` with inventory progress (do not put open canary ticket IDs in PR titles).
 
-1. Do **not** lower `TIP_PIN` below 175 once tip #175 soft-hold is on main.
-2. Prefer Github MCP `push_files` / `create_or_update_file` for hermes-mac-land contents when local `gh`/PAT is 403.
-3. Keep art/title canon: **Ooterverse: Saturn’s Quest**; Ooter is human; Saturn is a dark teal 1990s sedan.
-4. One composition per operator surface; no dashboard clutter in launch copy.
+**Updated:** 2026-08-29T04:52Z
 
-## Fast path (when soft-hold + TIP_PIN already landed)
+## ⚠️ Linear auto-Done hygiene
 
-1. Confirm `TIP_PIN` is the expected tip number on `main`.
-2. Land missing tip bodies into `OPERATOR-UNBLOCK.md` (append-only for tip sections).
-3. Refresh one-shot / enable / nag / only / stall launchers so banner text matches tip through #N.
-4. Verify three gates: TIP_PIN, one-shot banner, `### Tip #N` in OPERATOR-UNBLOCK.md.
-5. Report success/failure with commit + blob SHAs.
+**Do NOT attach GitHub PRs to open canaries** while they are open — Linear auto-Dones on PR merge and falsely closes tickets before `.11` prove-out.
 
-## Auth reality (recurring)
+**Also:** do **not** put open canary ticket IDs in **PR titles** — GitHub auto-links on merge even when you do not attach manually.
 
-- Local `gh` / `GH_TOKEN` / `GITHUB_PERSONAL_ACCESS_TOKEN` often return **403 Resource not accessible by integration**.
-- Github MCP OAuth path can write Contents API when CLI cannot.
-- Zapier GitHub CLI actions are a fallback for large files when MCP argument size is painful; prefer Github MCP when it works.
+| Incident | Cause | Fix |
+|----------|-------|-----|
+| 20:48Z | #18 merged + attached | Reverted; attachment detached @ 21:02Z |
+| 21:29Z | #20 title contained canary ID → auto-attach | Reverted @ 21:30Z; attachment detached |
+| 21:38Z | MCP comment used wrong issue UUID → posted on RAL-800 | Corrected @ 21:40Z; see UUID table below |
+| 01:04Z | Cloud subagent `bc-3914e61d` booted on **Ooterverse** (not hermes-mac-land) | Downstream FAILED pre-SSH; use Mac or web-UI LEGACY `.11` agent |
+| 03:49Z | #40 auto-attached to RAL-634 (Done) | Detach if needed; do not re-open RAL-634 for doc-only merges |
+| 04:22Z | Cloud subagent `bc-cf21d38f` spawned from Ooterverse | Skipped downstream to avoid FAILED spam; use Mac or web-UI `hermes-mac-land` + LEGACY `.11` |
+| 23:45Z | OPERATOR UUID table had RAL-799/RAL-820 swapped; RAL-798 missing | Corrected: RAL-798=`52e94e17…`, RAL-799=`0d76e06f…`, RAL-820=`144b087c…` |
+| **00:17Z** | hermes-mac-land **#57** title contained canary ID → auto-Done @ 00:17:02Z | Status restored In Progress @ 00:18Z; attachment detached; PR title renamed |
 
-## Tip stack notes
+## ⚠️ Ooterverse cloud agents cannot run downstream
 
-Earlier tips (#134–#174) document soft-hold reclaim, Linear preflight, downstream apply, alarm dedup, boot defaults, credentialed resume, stage-A preflight, worker finalizer, cloud tarball upload, mac curl land, and operator env troubleshooting. Keep those sections stable; tip #175 appends only its own section unless an exact full-file replace is required for verify.
+**Do not spawn Hermes subagents from Ooterverse-Saturns-Quest** — they inherit the wrong repo/env and cannot receive `TS_AUTHKEY` / `HERMES_HOST_SSH_PRIVATE_KEY` at boot.
 
-### Tip #134
-Soft-hold + pin baseline for Mac land reclaim.
+**Paths that work for live gates:**
+1. **Mac Hermes ONE-SHOT (preferred)** — **Right-click → Open** [`HERMES-ONE-SHOT-UNBLOCK.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command) (not double-click — Gatekeeper). Tries STALL downstream first; on fail auto-runs ENABLE-DOWNSTREAM-ACTIONS. Needs `LINEAR_API_KEY` in `~/.hermes/.env`.
 
-### Tip #135
-Linear preflight alignment with stall gates.
+ONE-SHOT opens **Linear RAL-823** + **Tailscale admin + tip [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md)** + tip [`HERMES-APPROVE-TAILSCALE.ics`](HERMES-APPROVE-TAILSCALE.ics) early (`HERMES_ONE_SHOT_OPEN_TAILSCALE=0` to skip) so the Mac can approve the cloud waiter while STALL runs; then opens the GitHub Web UI workflow create + Raw paste tabs (`HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0` to skip). It also **auto-installs** the 5-min Downstream nag LaunchAgent (`HERMES_ONE_SHOT_INSTALL_NAG=0` to skip; auto-opens ONE-SHOT each tick unless `HERMES_NAG_AUTO_ONESHOT=0`) so the Mac keeps reminding until issue #1 shows `## Downstream DONE`. Inventory wait default is **900s** for ultra-stale canaries.
 
-### Tip #136
-Downstream stack apply without regressing pin.
+2. **Mac Terminal paste (same ONE-SHOT)** — when Finder Right-click is awkward:
+   ```bash
+   curl -fsSL -o ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-ONE-SHOT-UNBLOCK.command \
+     && xattr -d com.apple.quarantine ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command \
+     ; open ~/Downloads/HERMES-ONE-SHOT-UNBLOCK.command
+   ```
+3. **Mac STALL only** — [`HERMES-DOWNSTREAM-RAL793-STALL.command`](https://github.com/ilike4movies/hermes-mac-land/raw/main/HERMES-DOWNSTREAM-RAL793-STALL.command) when Tailscale+SSH already known-good.
+4. **Web-UI LEGACY `.11` cloud agent** with Runtime Secrets — only when Mac path is unavailable.
 
-### Tip #137
-RAL-634 alarm dedup stable ids.
+**Never:** spawn from Ooterverse; never expect Ooterverse-boot agents to land Hermes.
 
-### Tip #138
-Hermes stall boot defaults.
+## UUID quick reference (Linear)
 
-### Tip #139
-Operator unblock Aug 26 sync.
+| Ticket | UUID |
+|--------|------|
+| RAL-800 | (see live Linear) |
+| RAL-823 | (AuthURL / approve) |
+| RAL-793 | stall / run-inspect |
+| RAL-634 | alarm dedup (Done — do not re-open for docs) |
+| RAL-799 | canary marker |
+| RAL-733 | worker finalizer |
 
-### Tip #140
-RAL-793 run inspect helpers.
+## Tip pin / soft-hold
 
-### Tip #141
-Operator env troubleshoot checklist.
+Soft-hold + `TIP_PIN` advance on main first; finish OPERATOR + launcher banners after. Do not regress `TIP_PIN`.
 
-### Tip #142
-Cloud agent start doc.
-
-### Tip #143
-Downstream auto-chain.
-
-### Tip #144
-RAL-799 canary marker.
-
-### Tip #145
-Hermes auto-land on boot.
-
-### Tip #146
-Verify unblock hints.
-
-### Tip #147
-Cloud tarball upload fix.
-
-### Tip #148
-Hermes env verify.
-
-### Tip #149
-Hermes mac curl land.
-
-### Tip #150
-Operator unblock PR93.
-
-### Tip #151
-Live thermal gate docs.
-
-### Tip #152
-Credentialed resume land.
-
-### Tip #153
-Cloud auto preflight.
-
-### Tip #154
-Stage-A preflight.
-
-### Tip #155
-Operator unblock PR86 gate.
-
-### Tip #156
-RAL-733 worker finalizer.
-
-### Tip #157
-Operator land now.
-
-### Tip #158
-Mac tarball upload.
-
-### Tip #159
-Ignore hermes-main-mirror noise.
-
-### Tip #160
-Soft-hold prefers hermes-mac-land path.
-
-### Tip #161
-ICS soft-hold reclaim notes.
-
-### Tip #162
-Path C Zapier credential gaps.
-
-### Tip #163
-One-shot banner tip-through sync.
-
-### Tip #164
-ENABLE/NAG/ONLY/STALL launcher sync.
-
-### Tip #165
-CURRENT_AUTHURL refresh.
-
-### Tip #166
-Join/oneshot restore discipline.
-
-### Tip #167
-Full restore OPERATOR + launchers.
-
-### Tip #168
-Grow OPERATOR when MCP size limits hit.
-
-### Tip #169
-Append Tip section when full replace stalls.
-
-### Tip #170
-Exact full-file SHA verify after grow.
-
-### Tip #171
-Prefer create_or_update_file for single-doc lands.
-
-### Tip #172
-push_files for multi-launcher batches.
-
-### Tip #173
-OPERATOR grow ladder 20k→28k→36k→exact.
-
-### Tip #174
-Tip pin must remain at soft-hold tip.
-
-### Tip #175
-Finish tip stack docs after soft-hold + TIP_PIN landed.
-
-### Tip #176 (finish tip after soft-hold + TIP_PIN)
-- Soft-hold + TIP_PIN already on main; finish OPERATOR + launchers only.
-- Verify TIP_PIN, one-shot "tip through #176", and `### Tip #176`.
-- Prefer Github MCP writes when local gh/PAT is 403.
-
-### Tip #177 (ICS soft-hold prefers hermes-mac-land)
-- Soft-hold reclaim should prefer `/tmp/hermes-mac-land` when tip pins tie.
-- Do not write tip-stale ICS/CURRENT into cloud-apply by mistake.
-- Keep Path C Zapier put_workflow / put_file_from_repo notes: Bad credentials still block that path.
-
-### Tip #178 (finish tip after soft-hold + TIP_PIN=178)
-- Soft-hold + TIP_PIN=178 already landed on main.
-- Finish OPERATOR-UNBLOCK.md + launcher banners for tip through #178.
-- Verify: TIP_PIN=178, one-shot contains "tip through #178", OPERATOR contains `### Tip #178`.
-
-### Tip #179 (ICS soft-hold prefers hermes-mac-land over cloud-apply)
-- hermes-ics-soft-hold.sh picks highest TIP_PIN, prefers /tmp/hermes-mac-land on ties.
-- Closes tip-stale soft-hold writing ICS/CURRENT into /tmp/hermes-cloud-apply.
-- Path C Zapier put_workflow / put_file_from_repo still Bad credentials.
-
-### Tip #180 (finish tip after soft-hold + TIP_PIN=180)
-- Soft-hold + TIP_PIN=180 already landed.
-- Land remaining OPERATOR tip body + launcher tip-through #180 text.
-- Report success/failure with commit and blob SHAs.
-
-### Tip #181 (ICS soft-hold prefers hermes-mac-land over cloud-apply)
-- hermes-ics-soft-hold.sh picks highest TIP_PIN, prefers /tmp/hermes-mac-land on ties.
-- Closes tip-stale soft-hold writing ICS/CURRENT into /tmp/hermes-cloud-apply.
-- Path C Zapier put_workflow / put_file_from_repo still Bad credentials.
-
-### Tip #182 (ICS soft-hold prefers hermes-mac-land over cloud-apply)
-- hermes-ics-soft-hold.sh picks highest TIP_PIN, prefers /tmp/hermes-mac-land on ties
-- Closes tip-stale soft-hold writing ICS/CURRENT into /tmp/hermes-cloud-apply
-- Path C Zapier put_workflow / put_file_from_repo still Bad credentials
+<!-- tip182 grow ladder: prefix 12000 of exact OPERATOR-UNBLOCK.md -->
