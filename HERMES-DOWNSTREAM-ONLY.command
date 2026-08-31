@@ -23,7 +23,7 @@ cd "${TMPDIR:-/tmp}"
 echo "=== Hermes DOWNSTREAM ONLY / stall-class (run=$HERMES_RUN_ID) pin=$PIN ==="
 echo "stack-apply=$HERMES_AUTO_STACK_APPLY stall_recovery=$HERMES_STALL_RECOVERY wait_inventory=$HERMES_WAIT_INVENTORY"
 echo "zombie=$HERMES_STALL_ZOMBIE zombie_passes=$HERMES_STALL_ZOMBIE_PASSES"
-echo "tip through #175 (ENABLE Web UI tip#175; soft-hold #174; NAG #172; ONE-SHOT #171; #162 ONLY; FALLBACK b2b5fc4 tip159)"
+echo "tip through #176 (NAG Raw tip#176; ENABLE tip#175; soft-hold #174; ONE-SHOT #171; #162 ONLY; FALLBACK b2b5fc4 tip159)"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/ilike4movies/hermes-mac-land/issues/1"
 
