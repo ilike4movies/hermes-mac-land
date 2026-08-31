@@ -301,4 +301,108 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 
 ### Tip #170 (Dropbox public WAKE link + Zapier Calendar reconnect note)
 
-- Public Dropbox WAKE: `https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/W
+- Public Dropbox WAKE: `https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1`
+- Zapier Google Calendar connection **stale** — reconnect `https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487` (same class as GitHub Bad credentials for Path C).
+
+### Tip #171 (ONE-SHOT opens Path C reconnect + Dropbox WAKE tabs)
+
+- Mac [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command) early-opens (parallel with STALL):
+  - Dropbox public WAKE
+  - Zapier GitHub reconnect (Path C `put_workflow_file_via_git_data` still **Bad credentials** even when Zapier reports `is_stale=false`)
+  - Zapier Google Calendar reconnect (stale)
+- Opt out: `HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT=0`
+- Closes: Mac session had to dig CURRENT_AUTHURL / OPERATOR for reconnect URLs; Path C stayed dead after tip#170 docs-only note.
+- Cloud retry @ tip#171 still Bad credentials until operator reconnects GitHub at `https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336`.
+
+### Tip #172 (NAG opens Path C reconnect tabs ≤1/30m)
+
+- [`HERMES-INSTALL-DOWNSTREAM-NAG.command`](HERMES-INSTALL-DOWNSTREAM-NAG.command) / installed LaunchAgent now opens Dropbox WAKE + Zapier GH/Calendar reconnect while Downstream DONE missing.
+- Throttled to ≤1/30m (`~/.hermes/nag-pathc-last.txt`) so 5-min nag ticks do not spam tabs.
+- Opt out: `HERMES_NAG_OPEN_PATHC_RECONNECT=0`
+- Closes: installed nag kept opening ONE-SHOT/Web UI/Tailscale but never surfaced Path C reconnect after tip#171 ONE-SHOT-only opens.
+- Cloud Path C alts @ tip#172 still fail: Github MCP Contents API **404** on `.github/workflows/`; Zapier `put_file_from_repo` **Bad credentials`.
+- Tip #169 soft-hold tick + Quo SMS remain the primary non-Gmail wakes while AuthURL holds.
+
+### Tip #173 (Dropbox WAKE content refresh — same public link)
+
+- Overwrote `/Hermes/WAKE-1d0d8050-tip169.txt` with tip **#173** wake text (AuthURL `1d0d8050` + ONE-SHOT + Path C Zapier reconnect URLs).
+- Public link unchanged: `https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1`
+- Path C cloud retry @ tip#173 still **Bad credentials** / workflow Contents **404**.
+
+### Tip #174 (soft-hold marker + CURRENT ICS DTEND stamp)
+
+- [`hermes-ics-soft-hold.sh`](shared-scripts/hermes-ics-soft-hold.sh) now writes `LAST_ICS_SOFT_HOLD.json` after every run (`ts`, `tip`, `url`, `dtend`, `rewrite=ttl|tip|none`).
+- Stamps [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md) with `**ICS hold (soft):** DTEND \`...\` (tip #N)` so agents/timers see the live hold window without parsing ICS.
+- Tip-stale soft-hold still preserves UID/DTEND/URL; TTL rewrite still extends hold hours.
+- Closes: soft-hold rewrites left CURRENT without a durable DTEND line; agents could not tell whether ICS was current after tip-pin bumps.
+- Path C cloud still blocked until Zapier GitHub reconnect / Web UI workflow / Mac ENABLE tip#161.
+
+### Tip #175 (ENABLE opens Web UI Path C tabs at START)
+
+- [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](HERMES-ENABLE-DOWNSTREAM-ACTIONS.command) now opens create-workflow + Raw `ci/downstream-stall.yml` + Action secrets UI **before** gh/git install attempts.
+- Cloud Path C still cannot write `.github/workflows/` (Github MCP Contents/trees **404**; Zapier `put_workflow_file_via_git_data` / `put_file_from_repo` **Bad credentials** even when `is_stale=false`).
+- Opt out: `HERMES_ENABLE_OPEN_WEBUI_EARLY=0`
+- Closes: standalone ENABLE waited through failed API+git before surfacing Web UI paste; operator had to dig fail-path URLs.
+- Prefer Mac ONE-SHOT / STALL when Tailscale works; Web UI paste remains the cloud-token fallback for Path C.
+
+### Tip #176 (NAG opens Raw paste + Action secrets with Path C throttle)
+
+- [`HERMES-INSTALL-DOWNSTREAM-NAG.command`](HERMES-INSTALL-DOWNSTREAM-NAG.command) Path C ≤1/30m block now also opens Raw `ci/downstream-stall.yml` + Action secrets UI (create-workflow was already every 5m).
+- Closes: NAG opened empty create-workflow editor without the Raw source tab; operator had to dig `ci/downstream-stall.yml` manually.
+- Still throttled with Dropbox/Zapier reconnect (tip #172). Opt out: `HERMES_NAG_OPEN_PATHC_RECONNECT=0`
+- Cloud Path C write still blocked (Github MCP 404 / Zapier Bad credentials).
+
+### Tip #177 (STALL/ONLY parallel Path C + ONE-SHOT secrets tab)
+
+- [`HERMES-DOWNSTREAM-RAL793-STALL.command`](HERMES-DOWNSTREAM-RAL793-STALL.command) and [`HERMES-DOWNSTREAM-ONLY.command`](HERMES-DOWNSTREAM-ONLY.command) now open Tailscale approve + Web UI create/Raw/secrets + Dropbox WAKE + Zapier reconnect while downstream runs (ONE-SHOT/ENABLE had this; STALL-only path did not).
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command) `_open_webui_workflow_early` now **opens** Action secrets tab (was echo-only). Opt out: `HERMES_STALL_OPEN_PATHC_EARLY=0`
+
+### Tip #178 (STALL/ONLY install downstream nag LaunchAgent)
+
+- STALL + ONLY now call `_install_downstream_nag()` (ONE-SHOT step 0c) — 5-min reminders + auto ONE-SHOT until `## Downstream DONE` + `host=` on issue #1.
+- Opt out: `HERMES_STALL_INSTALL_NAG=0`
+
+### Tip #179 (ONE-SHOT Phase 2 + ENABLE fail paths open secrets tab)
+
+- ONE-SHOT `_run_enable_actions` gh-missing and workflow-write-fail paths now open Action secrets UI alongside Web UI create/Raw (tip #177 fixed early path only).
+- ENABLE workflow install fail path now opens secrets tab too (early START path already did since #175).
+- Closes: Phase 2 Actions fallback left secrets as console-only URL after STALL fail.
+
+### Tip #180 (repo WAKE file tip#179 + CURRENT Dropbox note)
+
+- New [`WAKE-1d0d8050-tip179.txt`](WAKE-1d0d8050-tip179.txt) with tip #179 ONE-SHOT curl + Path C URLs (repo canonical when Dropbox public body lags tip169).
+- [`CURRENT_AUTHURL.md`](CURRENT_AUTHURL.md) notes Dropbox link may lag; prefer repo WAKE or raw ONE-SHOT.
+
+### Tip #182 (ICS soft-hold prefers hermes-mac-land over cloud-apply)
+
+- [`hermes-ics-soft-hold.sh`](shared-scripts/hermes-ics-soft-hold.sh) picks the working dir with the highest `TIP_PIN`, preferring `/tmp/hermes-mac-land` on ties.
+- Closes: tip-stale soft-hold wrote ICS/CURRENT into `/tmp/hermes-cloud-apply` (first match) while agents push from hermes-mac-land — rewrites never reached main until manual copy.
+- Path C Zapier put_workflow / put_file_from_repo still **Bad credentials**.
+
+
+### Tip #183 (ICS soft-hold stamps PUSH_NEEDED + auto-push)
+
+- [`hermes-ics-soft-hold.sh`](shared-scripts/hermes-ics-soft-hold.sh) stamps `ICS_SOFT_HOLD_PUSH_NEEDED` when `ICS_SOFT_HOLD_REWRITE=1`.
+- Agents must push `HERMES-APPROVE-TAILSCALE.ics` + `CURRENT_AUTHURL.md` + `LAST_ICS_SOFT_HOLD.json` (+ tip bump) to hermes-mac-land main after tip-stale soft-hold — tip #182 dir pick alone left tip #181 SUMMARY on main for ~2h.
+- ONE-SHOT tip banner through **#183** (zlib self-extract full body).
+- Path C Zapier put_workflow still **Bad credentials**.
+
+
+### Tip #184 (Path C Contents API still 404; WAKE tip183)
+
+- Reconfirmed: Github MCP `create_or_update_file` on `.github/workflows/downstream-stall.yml` → **404** (workflows scope). Zapier put_workflow still **Bad credentials`.
+- Path C remains Mac ENABLE / Web UI Raw paste + Action secrets, or Zapier GitHub reconnect.
+- Dropbox WAKE + repo [`WAKE-1d0d8050-tip183.txt`](WAKE-1d0d8050-tip183.txt) refreshed to tip **#183** ONE-SHOT.
+
+
+### Tip #185 (Path C exhaust: git push 403 + Contents 404 on branch)
+
+- `cursor[bot]` `git push` of `.github/workflows/downstream-stall.yml` → **403** Permission denied.
+- Github MCP Contents PUT on main **and** branch `cursor/pathc-downstream-stall-3436` → **404** (workflows scope).
+- Zapier put_workflow still **Bad credentials**.
+- Path C remains: Mac ENABLE / Web UI Raw paste + Action secrets, or Zapier GitHub reconnect. Prefer Mac ONE-SHOT tip **#183** body.
+
+
+### Tip #186 (restore truncated hermes-join-part-b — stop wait-login syntax flood)
+
+- Live `hermes-join-part-b.sh` on tip was truncated @ tip#170 (~9932 bytes / EOF mid-ICS) → `sy
