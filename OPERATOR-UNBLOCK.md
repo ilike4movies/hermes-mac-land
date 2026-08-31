@@ -98,7 +98,7 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 |---|-------------|--------|
 | 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
 | 5 | Media Studio canary + inventory | **OPEN** |
-| 6 | Operator docs | **DONE** — tip through #174 (soft-hold CURRENT DTEND stamp; #173–#160)|
+| 6 | Operator docs | **DONE** — tip through #175 (ENABLE Web UI Path C early; #174–#160)|
 
 ## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
 
@@ -336,3 +336,11 @@ Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed 
 - Tip-stale soft-hold still preserves UID/DTEND/URL; TTL rewrite still extends hold hours.
 - Closes: soft-hold rewrites left CURRENT without a durable DTEND line; agents could not tell whether ICS was current after tip-pin bumps.
 - Path C cloud still blocked until Zapier GitHub reconnect / Web UI workflow / Mac ENABLE tip#161.
+
+### Tip #175 (ENABLE opens Web UI Path C tabs at START)
+
+- [`HERMES-ENABLE-DOWNSTREAM-ACTIONS.command`](HERMES-ENABLE-DOWNSTREAM-ACTIONS.command) now opens create-workflow + Raw `ci/downstream-stall.yml` + Action secrets UI **before** gh/git install attempts.
+- Cloud Path C still cannot write `.github/workflows/` (Github MCP Contents/trees **404**; Zapier `put_workflow_file_via_git_data` / `put_file_from_repo` **Bad credentials** even when `is_stale=false`).
+- Opt out: `HERMES_ENABLE_OPEN_WEBUI_EARLY=0`
+- Closes: standalone ENABLE waited through failed API+git before surfacing Web UI paste; operator had to dig fail-path URLs.
+- Prefer Mac ONE-SHOT / STALL when Tailscale works; Web UI paste remains the cloud-token fallback for Path C.
