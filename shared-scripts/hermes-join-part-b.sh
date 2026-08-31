@@ -92,7 +92,7 @@ _refresh_authurl_file() {
   if [[ "$auth_changed" == "1" ]]; then
     {
       printf '%s\n' "$url"
-      printf 'ACTIVE \u2014 approve now (%s).\n' "$(date -u +%FT%TZ)"
+      printf 'ACTIVE — approve now (%s).\n' "$(date -u +%FT%TZ)"
       echo 'Cloud waiters armed; TS_AUTHKEY preferred. Proactive refresh before prior TTL.'
     } >"$authfile"
     echo "APPROVE_THIS_URL=$url"
@@ -129,4 +129,7 @@ PY
     then
       ics_need_refresh=1
     fi
-    if ! ICS_PATH="$ics_local" HERMES_AUTHURL_ICS
+    if ! ICS_PATH="$ics_local" HERMES_AUTHURL_ICS_EXPECTED_TIP="$ics_expected_tip" python3 - <<'PY'
+import os, re
+path = os.environ["ICS_PATH"]
+expec
