@@ -24,7 +24,7 @@ cd "${TMPDIR:-/tmp}"
 echo "=== Hermes DOWNSTREAM RAL-793 STALL (run=$HERMES_RUN_ID) pin=$PIN ==="
 echo "stack-apply=$HERMES_AUTO_STACK_APPLY stall_recovery=$HERMES_STALL_RECOVERY wait_inventory=$HERMES_WAIT_INVENTORY"
 echo "zombie=$HERMES_STALL_ZOMBIE zombie_passes=$HERMES_STALL_ZOMBIE_PASSES"
-echo "tip through #176 (NAG Raw tip#176; ENABLE tip#175; soft-hold #174; ONE-SHOT #171; #162 STALL; FALLBACK b2b5fc4 tip159)"
+echo "tip through #177 (STALL Path C early tip#177; ONE-SHOT secrets tab tip#177; NAG Raw tip#176; ENABLE tip#175; FALLBACK b2b5fc4 tip159)"
 echo "Host: $(hostname) user: $(whoami) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Status inbox: https://github.com/ilike4movies/hermes-mac-land/issues/1"
 
@@ -60,7 +60,6 @@ _preflight_mac_secrets() {
   if [[ -z "${HERMES_HOST_SSH_PRIVATE_KEY:-}" ]]; then
     echo "WARN: HERMES_HOST_SSH_PRIVATE_KEY not loaded — ensure ~/.hermes/.env has the host key or SSH agent works."
   fi
-  # Tip #159: pre-export GitHub status token so curl fallback works if gh hangs mid-post.
   if [[ -z "${HERMES_STATUS_GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}" ]] && command -v gh >/dev/null 2>&1; then
     _tok="$(timeout 5 gh auth token 2>/dev/null || true)"
     if [[ -n "$_tok" ]]; then
@@ -73,7 +72,41 @@ _preflight_mac_secrets() {
 
 }
 
+_open_stall_parallel_pathc() {
+  if [[ "${HERMES_STALL_OPEN_PATHC_EARLY:-1}" != "1" ]]; then
+    echo "SKIP STALL parallel Path C (HERMES_STALL_OPEN_PATHC_EARLY=0)"
+    return 0
+  fi
+  local REPO="${HERMES_MAC_LAND_REPO:-ilike4movies/hermes-mac-land}"
+  local WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+  local WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+  local SECRETS_UI="https://github.com/${REPO}/settings/secrets/actions"
+  local DROPBOX_WAKE="${HERMES_DROPBOX_WAKE_URL:-https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1}"
+  local ZAPIER_GH="${HERMES_ZAPIER_GH_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336}"
+  local ZAPIER_CAL="${HERMES_ZAPIER_CAL_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487}"
+  echo ""
+  echo "=== Parallel: Path C + Tailscale approve (tip #177) while STALL runs ==="
+  open "https://login.tailscale.com/admin/machines" 2>/dev/null || true
+  local auth=""
+  local f="/tmp/hermes-stall-current-authurl-$$.md"
+  if curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/CURRENT_AUTHURL.md" -o "$f" 2>/dev/null; then
+    auth=$(grep -Eo 'https://login\.tailscale\.com/a/[A-Za-z0-9]+' "$f" | head -1 || true)
+  fi
+  rm -f "$f"
+  [[ -n "$auth" ]] && open "$auth" 2>/dev/null || true
+  echo "Web UI create: $WEBUI_NEW"
+  echo "Paste Raw: $WEBUI_RAW"
+  echo "Action secrets: $SECRETS_UI"
+  open "$WEBUI_NEW" 2>/dev/null || true
+  open "$WEBUI_RAW" 2>/dev/null || true
+  open "$SECRETS_UI" 2>/dev/null || true
+  open "$DROPBOX_WAKE" 2>/dev/null || true
+  open "$ZAPIER_GH" 2>/dev/null || true
+  open "$ZAPIER_CAL" 2>/dev/null || true
+}
+
 _preflight_mac_secrets
+_open_stall_parallel_pathc
 
 osascript -e 'display notification "Inspecting stalled RAL-793 run on .11…" with title "Hermes STALL downstream" sound name "Glass"' 2>/dev/null || true
 xattr -d com.apple.quarantine "$0" 2>/dev/null || true
@@ -83,8 +116,6 @@ SCRIPT="/tmp/hermes-dispatcher-downstream-fetched-$$.sh"
 ONCE="/tmp/hermes-cloud-run-downstream-once-$$.sh"
 rm -f "$SCRIPT" "$ONCE"
 FETCHED=""
-# Tip #147: same class as tip #146 ONE-SHOT — prefer tip once + main; no stale pin default.
-# Old default HERMES_DOWNSTREAM_PIN=a657c617… pinned a pre-#145 SHA ahead of tip.
 DOWNSTREAM_PIN="${HERMES_DOWNSTREAM_PIN:-}"
 _is_good_once() {
   local f="$1"
@@ -94,16 +125,13 @@ _is_good_once() {
 }
 _is_good_downstream() {
   local f="$1"
-  # Self-healing curl|bash / ONE-SHOT entrypoint (tip #118+#120)
   if grep -q 'ONE-SHOT safe entrypoint' "$f" 2>/dev/null \
      && grep -q 'hermes-dispatcher-part-a.sh' "$f" 2>/dev/null \
      && grep -q 'raw.githubusercontent.com' "$f" 2>/dev/null \
      && grep -q '_parts_integrity_ok' "$f" 2>/dev/null \
      && grep -qE 'b2b5fc4|HERMES_STATUS_GITHUB_TOKEN|Downstream DONE beacon did not post' "$f" 2>/dev/null; then
-    # Tip #162: require tip #160 FALLBACK / tip #159 fail-closed markers (not pre-#159 silent WARN)
     return 0
   fi
-  # Legacy monolithic downstream body
   if grep -q 'RAL-793 run inspect' "$f" 2>/dev/null \
      && grep -q 'stack-apply' "$f" 2>/dev/null \
      && grep -q 'DISPATCH-NOW' "$f" 2>/dev/null \
@@ -117,7 +145,6 @@ _is_good_downstream() {
   fi
   return 1
 }
-# Prefer tip#142 once launcher (single-flight + CDN dispatcher resolve).
 for url in \
   "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/${PIN}/shared-scripts/hermes-cloud-run-downstream-once.sh" \
   "https://raw.githubusercontent.com/ilike4movies/hermes-mac-land/main/shared-scripts/hermes-cloud-run-downstream-once.sh"
