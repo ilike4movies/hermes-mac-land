@@ -116,3 +116,82 @@ _open_tailscale_approve_early() {
   # Calendar wake ICS (tip HERMES-APPROVE-TAILSCALE.ics). Opt out: HERMES_ONE_SHOT_OPEN_ICS=0
   if [[ "${HERMES_ONE_SHOT_OPEN_ICS:-1}" == "1" ]]; then
     local ics="${HOME}/Downloads/HERMES-APPROVE-TAILSCALE.ics"
+    if curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/HERMES-APPROVE-TAILSCALE.ics" -o "$ics" 2>/dev/null; then
+      echo "Calendar ICS: $ics"
+      open "$ics" 2>/dev/null || true
+    else
+      echo "WARN tip HERMES-APPROVE-TAILSCALE.ics not available yet"
+    fi
+  fi
+}
+
+_open_operator_linear_early() {
+  # Surface operator wake ticket so Mac session sees current AuthURL + ONE-SHOT paste.
+  # Opt out: HERMES_ONE_SHOT_OPEN_LINEAR=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_LINEAR:-1}" != "1" ]]; then
+    echo "SKIP early Linear operator ticket (HERMES_ONE_SHOT_OPEN_LINEAR=0)"
+    return 0
+  fi
+  local URL="${HERMES_OPERATOR_LINEAR_URL:-https://linear.app/ilike4/issue/RAL-823/operator-mac-one-shot-tailscale-approve-now-authurl-1d0d8050-canary}"
+  echo ""
+  echo "=== Parallel: Linear operator ticket ==="
+  echo "$URL"
+  open "$URL" 2>/dev/null || true
+}
+
+_open_webui_workflow_early() {
+  # Open create-file + Raw paste tabs while Phase 1 STALL runs so the operator can
+  # enable Actions in parallel (cloud API tokens cannot write .github/workflows/).
+  # Opt out: HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_WEBUI_EARLY:-1}" != "1" ]]; then
+    echo "SKIP early Web UI (HERMES_ONE_SHOT_OPEN_WEBUI_EARLY=0)"
+    return 0
+  fi
+  local WEBUI_NEW="https://github.com/${REPO}/new/main?filename=.github%2Fworkflows%2Fdownstream-stall.yml"
+  local WEBUI_RAW="https://github.com/${REPO}/raw/main/ci/downstream-stall.yml"
+  echo ""
+  echo "=== Parallel: Web UI workflow enable (paste Raw while STALL runs) ==="
+  echo "Create file: $WEBUI_NEW"
+  echo "Paste source (Raw): $WEBUI_RAW"
+  echo "Action secrets (if needed): https://github.com/${REPO}/settings/secrets/actions"
+  osascript -e 'display notification "Browser: paste Raw into workflow create tab while STALL runs" with title "Hermes ONE-SHOT Web UI" sound name "Glass"' 2>/dev/null || true
+  open "$WEBUI_NEW" 2>/dev/null || true
+  open "$WEBUI_RAW" 2>/dev/null || true
+}
+
+_open_pathc_reconnect_early() {
+  # Tip #171: surface Dropbox WAKE + Zapier reconnect tabs while STALL runs.
+  # Cloud Path C (Zapier put_workflow_file_via_git_data) still returns Bad credentials
+  # even when the connection reports is_stale=false — operator must reconnect GH.
+  # Opt out: HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT=0
+  if [[ "${HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT:-1}" != "1" ]]; then
+    echo "SKIP early Path C reconnect tabs (HERMES_ONE_SHOT_OPEN_PATHC_RECONNECT=0)"
+    return 0
+  fi
+  local DROPBOX_WAKE="${HERMES_DROPBOX_WAKE_URL:-https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1}"
+  local ZAPIER_GH="${HERMES_ZAPIER_GH_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GitHubCLIAPI?accountId=12547336}"
+  local ZAPIER_CAL="${HERMES_ZAPIER_CAL_RECONNECT_URL:-https://mcp.zapier.com/api/v1/connect-auth/GoogleCalendarCLIAPI?accountId=12547336&connectionId=55516487}"
+  echo ""
+  echo "=== Parallel: Path C reconnect + Dropbox WAKE (tip #171) ==="
+  echo "Dropbox WAKE (public): $DROPBOX_WAKE"
+  echo "Zapier GitHub reconnect (Path C Bad credentials): $ZAPIER_GH"
+  echo "Zapier Google Calendar reconnect (stale): $ZAPIER_CAL"
+  osascript -e 'display notification "Open Dropbox WAKE + Zapier GitHub reconnect if Path C still blocked" with title "Hermes ONE-SHOT Path C" sound name "Glass"' 2>/dev/null || true
+  open "$DROPBOX_WAKE" 2>/dev/null || true
+  open "$ZAPIER_GH" 2>/dev/null || true
+  open "$ZAPIER_CAL" 2>/dev/null || true
+}
+
+_install_downstream_nag() {
+  # Keep Mac reminding every 5 min until "## Downstream DONE" posts on issue #1.
+  # Opt out: HERMES_ONE_SHOT_INSTALL_NAG=0
+  if [[ "${HERMES_ONE_SHOT_INSTALL_NAG:-1}" != "1" ]]; then
+    echo "SKIP downstream nag install (HERMES_ONE_SHOT_INSTALL_NAG=0)"
+    return 0
+  fi
+  echo ""
+  echo "=== Install Downstream nag LaunchAgent (5 min + auto ONE-SHOT until DONE) ==="
+  local NAG="/tmp/hermes-install-downstream-nag-oneshot-$$.command"
+  local url
+  rm -f "$NAG"
+  for url in \
