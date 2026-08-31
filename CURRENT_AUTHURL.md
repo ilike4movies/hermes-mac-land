@@ -1,14 +1,14 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-30T22:09:31Z
+**Last refreshed:** 2026-08-31T01:20:00Z
 
 **Approve:** https://login.tailscale.com/a/1d0d805013867
 
 **ICS hold (soft):** DTEND `20260831T035822Z` (tip #174).
 
-Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#174** (soft-hold CURRENT DTEND stamp + `LAST_ICS_SOFT_HOLD.json`; #173 Dropbox WAKE; #172 NAG Path C; #171 ONE-SHOT Path C). **Ignore retired** predecessors.
+Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#174** (soft-hold CURRENT DTEND stamp + `LAST_ICS_SOFT_HOLD.json`; Dropbox WAKE tip#174 text; #173–#171 Path C wakes). **Ignore retired** predecessors.
 
-**Dropbox WAKE (public, tip#173 text — tip#174 stamp is ICS/CURRENT):** [https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1](https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1)
+**Dropbox WAKE (public, tip#174 text):** [https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1](https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1)
 
 Prefer **Mac ONE-SHOT** tip #174:
 
