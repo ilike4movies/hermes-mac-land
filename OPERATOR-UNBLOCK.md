@@ -76,4 +76,53 @@ Expect `## Downstream STARTED` → `DONE` on [issue #1](https://github.com/ilike
 | **RAL-798** | `52e94e17-69e6-4688-a60e-aea25b090ebf` | In Progress — WIP-park **#110 LIVE** on `.11` (canary PASS @ 00:05Z) |
 | **RAL-799** | `0d76e06f-bf49-4587-a733-1b6f397f1392` | **Done** |
 | **RAL-800** | `dae80aa2-e6d0-4225-9ae8-cdb72ccd8ec0` | **Done** |
-| **RAL-820** | `144b087c-79f2-4a31-aa21-
+| **RAL-820** | `144b087c-79f2-4a31-aa21-a98357547843` | **Done** |
+| **RAL-823** | `b444b07b-d9c5-496c-b5b0-79f31dd4d210` | In Progress — Mac ONE-SHOT operator wake (due 2026-08-28) |
+
+## Live stall — run `2954673` (CLAIMED @ 23:25Z 2026-08-26, silent ~44h+)
+
+| Item | Status |
+|------|--------|
+| Contract / inventory / Downstream DONE | **MISSING** |
+| False Done @ 00:17Z | **REVERTED** — still open |
+
+**Fastest tonight:** Mac Right-click → Open **ONE-SHOT**.command (STALL → Actions fallback), or Terminal paste above.
+
+Stall defaults: `HERMES_AUTO_STACK_APPLY=0` + dual DISPATCH-NOW + **fail-closed if Linear key missing** + **inventory wait default 15 min** (`HERMES_INVENTORY_WAIT_SECS=900`). Runtime ~15–20 min (STALL inventory wait 900s) or Actions ~10–15 min. Watch [issue #1](https://github.com/ilike4movies/hermes-mac-land/issues/1).
+
+**Zombie reclaim (#72):** when stall age ≥1h (auto-detected from `HERMES_RUN_ID` prefix), downstream escalates to **3× DISPATCH-NOW @ 120s** for ultra-stale CLAIM — fail stale CLAIM → reopen → second reopen if still stuck. Mac launchers + `ci/downstream-stall.yml` (GHA template) default `HERMES_STALL_ZOMBIE=1` + `HERMES_STALL_ZOMBIE_PASSES=3` for run `2954673`. Track operator work on **RAL-823**.
+
+## Program gates
+
+| # | Requirement | Status |
+|---|-------------|--------|
+| 1–4 | Interrupt / apply / WIP-park / miss-idle | **DONE** |
+| 5 | Media Studio canary + inventory | **OPEN** |
+| 6 | Operator docs | **DONE** — tip through #174 (soft-hold CURRENT DTEND stamp; #173–#160)|
+
+## ⚠️ Hermes work: hermes-mac-land / hermes-agent-cos / moltbot only — not Ooterverse
+
+
+### Tip #136 (AuthURL single-flight hold-roll)
+
+- Persist `DESIRED_UP_TIMEOUT.txt` on tip#135 finite hold-roll so sibling wait-login does not cold-start `forever=0` mid-roll (proven remint `184ff33a→e064be30`).
+- Take exclusive `tailscale-up` flock **before** kill+re-up.
+- Cold-start while AuthURL still advertised prefers finite `LOGIN_WAIT` (14400s) over forever unless `HERMES_AUTHURL_FORCE_FOREVER_START=1` (forever cold-start reminted `e064be30→6ad13a30`).
+
+### Tip #137 (attach-only wait-login)
+
+- Prefer [`shared-scripts/hermes-cloud-attach-wait-login.sh`](shared-scripts/hermes-cloud-attach-wait-login.sh) over `restart-authurl.sh` / manual `tailscale up` while NeedsLogin still advertises a live AuthURL.
+- Kills wait-login by exact PID only (no `pkill -f` self-match). Never kills interactive `up` unless `HERMES_FORCE_KILL_UP=1`.
+- Refuses cold-start when AuthURL is live and no up is running (`HERMES_FORCE_COLD_UP=1` to override — expect remint).
+- Supervisor spawn adopts `DESIRED_UP_TIMEOUT.txt` (tip #136) so respawns do not reintroduce forever=0 mid-roll.
+
+### Tip #138 (attach+supervisor share wait-login flock)
+
+- [`hermes-cloud-attach-wait-login.sh`](shared-scripts/hermes-cloud-attach-wait-login.sh) and [`hermes-cloud-wait-login-supervisor.sh`](shared-scripts/hermes-cloud-wait-login-supervisor.sh) both take `$DIR/wait-login.flock` before spawning `--wait-login`.
+- Attach is a **no-op** when exactly one healthy wait-login + forever/`timeout=0s` up already holds a live AuthURL (no kill, no remint). Force with `HERMES_FORCE_REATTACH=1`.
+- Supervisor skips spawn when the flock is busy or a waiter is already active under the flock.
+- Stops the attach↔supervisor race that reminted AuthURLs after tip #137 (duplicate wait-logins @ ~03:17Z).
+
+### Tip #139 (ONE-SHOT RAL-823 URL + tip banner)
+
+- [`HERMES-ONE-SHOT-UNBLOCK.command`](HERMES-ONE-SHOT-UNBLOCK.command) Linear default URL points at li
