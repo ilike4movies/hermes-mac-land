@@ -1,9 +1,10 @@
 {
-  "ts": "2026-08-31T11:42:13Z",
+  "ts": "2026-09-01T18:44:05Z",
   "tip": "189",
   "url": "https://login.tailscale.com/a/1d0d805013867",
-  "dtend": "20260831T153443Z",
+  "dtend": "20260902T003017Z",
   "summary": "ACTION: Approve Hermes Tailscale AuthURL 1d0d805013867 (tip #189)",
-  "rewrite": "tip",
-  "tip174": true
+  "rewrite": "ttl-sync-after-gap",
+  "tip174": true,
+  "note": "late tip189 watch after ~1d delivery gap; NeedsLogin; secrets unset; OPERATOR restored f2c5ee1"
 }

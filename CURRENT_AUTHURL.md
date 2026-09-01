@@ -1,12 +1,12 @@
 # Live cloud Tailscale AuthURL
 
-**Last refreshed:** 2026-08-31T11:42:13Z
+**Last refreshed:** 2026-09-01T18:44:05Z
 
 **Approve:** https://login.tailscale.com/a/1d0d805013867
 
-**ICS hold (soft):** DTEND `20260831T153443Z` (tip #189).
+**ICS hold (soft):** DTEND `20260902T003017Z` (tip #189).
 
-Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#189** (Path C re-probe tip#189; Zapier auth tip#188; ENABLE tip#187; join-part-b tip#186). **Ignore retired** predecessors.
+Remint chain (do **not** use older links): `184ff33a` → `e064be30` → `6ad13a30` → **`1d0d8050`** (live). Forever `up --timeout=0s` armed. Tip through **#189** (OPERATOR restore tip#189; Path C exhaust; Zapier auth tip#188). **Ignore retired** predecessors.
 
 **Dropbox WAKE (public link; repo text [`WAKE-1d0d8050-tip183.txt`](WAKE-1d0d8050-tip183.txt)):** [https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1](https://www.dropbox.com/scl/fi/t8p9b7qqnrrbrijhn1r1j/WAKE-1d0d8050-tip169.txt?rlkey=4p6zu480sotpw7lb34rjkbxli&dl=1) — Dropbox body may lag; prefer repo WAKE file or ONE-SHOT raw below.
 
